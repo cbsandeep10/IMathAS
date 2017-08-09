@@ -8,9 +8,9 @@
 
   //these settings must be editted before running dbsetup.php
   $dbserver = "localhost";  		//database server
-  $dbname = "imas";			//database name
-  $dbusername = "imasuser";		//database user
-  $dbpassword = "1234";	//database user's password
+  $dbname = "imathasdb";			//database name
+  $dbusername = "root";		//database user
+  $dbpassword = "Ra!nb0w";	//database user's password
 
 	//error reporting level.  Set to 0 for production servers.
 	error_reporting(E_ALL & ~E_NOTICE);
@@ -42,7 +42,7 @@
 
   //web root to imathas:  http://yoursite.com $imasroot
   //set = "" if installed in web root dir
-  $imasroot = "/imathas";
+  $imasroot = "/IMathAS";
 
   //base site url - use when generating full URLs to site pages.
   $httpmode = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on')
