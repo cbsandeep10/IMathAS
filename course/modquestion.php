@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 
 
@@ -82,13 +82,14 @@ if (!(isset($teacherid))) {
 				$_GET['qsetid'] = $stm->fetchColumn(0);
 			}
 		}
+		require_once("../includes/updateptsposs.php");
 		if (isset($_GET['qsetid'])) { //new - adding
 			//DB $query = "SELECT itemorder FROM imas_assessments WHERE id='$aid'";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB $itemorder = mysql_result($result,0,0);
-			$stm = $DBH->prepare("SELECT itemorder FROM imas_assessments WHERE id=:id");
+			$stm = $DBH->prepare("SELECT itemorder,defpoints FROM imas_assessments WHERE id=:id");
 			$stm->execute(array(':id'=>$aid));
-			$itemorder = $stm->fetchColumn(0);
+			list($itemorder,$defpoints) = $stm->fetch(PDO::FETCH_NUM);
 			for ($i=0;$i<$_POST['copies'];$i++) {
 				//DB $query = "INSERT INTO imas_questions (assessmentid,points,attempts,penalty,regen,showans,questionsetid,rubric,showhints) ";
 				//DB $query .= "VALUES ('$aid','$points','$attempts','$penalty','$regen','$showans','{$_GET['qsetid']}',$rubric,$showhints)";
@@ -119,6 +120,10 @@ if (!(isset($teacherid))) {
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			$stm = $DBH->prepare("UPDATE imas_assessments SET itemorder=:itemorder WHERE id=:id");
 			$stm->execute(array(':itemorder'=>$itemorder, ':id'=>$aid));
+			
+			updatePointsPossible($aid, $itemorder, $defpoints);
+		} else {
+			updatePointsPossible($aid);
 		}
 
 		header('Location: ' . $GLOBALS['basesiteurl'] . "/course/addquestions.php?cid=$cid&aid=$aid");
@@ -255,21 +260,22 @@ if ($overwriteBody==1) {
 
 <div id="headermodquestion" class="pagetitle"><h2>Modify Question Settings</h2></div>
 <p><?php
-	echo '<b>'.$qdescrip.'</b> ';
-	echo '<button type="button" onclick="previewq('.$qsetid.')">'._('Preview').'</button>';
+	echo '<b>'.Sanitize::encodeStringForDisplay($qdescrip).'</b> ';
+	echo '<button type="button" onclick="previewq('.Sanitize::encodeStringForJavascript($qsetid).')">'._('Preview').'</button>';
 ?>
 </p>
-<form method=post action="modquestion.php?process=true&<?php echo "cid=$cid&aid=$aid"; if (isset($_GET['id'])) {echo "&id={$_GET['id']}";} if (isset($_GET['qsetid'])) {echo "&qsetid={$_GET['qsetid']}";}?>">
-<p>Leave items blank to use the assessment's default values.</p>
+<form method=post action="modquestion.php?process=true&<?php echo "cid=$cid&aid=" . Sanitize::encodeUrlParam($aid); if (isset($_GET['id'])) {echo "&id=" . Sanitize::encodeUrlParam($_GET['id']);} if (isset($_GET['qsetid'])) {echo "&qsetid=" . Sanitize::encodeUrlParam($_GET['qsetid']);}?>">
+<p>Leave items blank to use the assessment's default values.
+<input type="submit" value="<?php echo ('Save Settings');?>"></p>
 
 <span class=form>Points for this problem:</span>
-<span class=formright> <input type=text size=4 name=points value="<?php echo $line['points'];?>"><br/><i class="grey">Default: <?php echo $defaults['defpoints'];?></i></span><BR class=form>
+<span class=formright> <input type=text size=4 name=points value="<?php echo Sanitize::encodeStringForDisplay($line['points']);?>"><br/><i class="grey">Default: <?php echo Sanitize::encodeStringForDisplay($defaults['defpoints']);?></i></span><BR class=form>
 
 <span class=form>Attempts allowed for this problem (0 for unlimited):</span>
-<span class=formright> <input type=text size=4 name=attempts value="<?php echo $line['attempts'];?>"><br/><i class="grey">Default: <?php echo $defaults['defattempts'];?></i></span><BR class=form>
+<span class=formright> <input type=text size=4 name=attempts value="<?php echo Sanitize::encodeStringForDisplay($line['attempts']);?>"><br/><i class="grey">Default: <?php echo Sanitize::encodeStringForDisplay($defaults['defattempts']);?></i></span><BR class=form>
 
 <span class=form>Penalty for missed attempts:</span>
-<span class=formright><input type=text size=4 name=penalty value="<?php echo $line['penalty'];?>">%
+<span class=formright><input type=text size=4 name=penalty value="<?php echo Sanitize::encodeStringForDisplay($line['penalty']);?>">%
    <select name="skippenalty" <?php if ($taken) {echo 'disabled=disabled';}?>>
      <option value="0" <?php if ($skippenalty==0) {echo "selected=1";} ?>>per missed attempt</option>
      <option value="1" <?php if ($skippenalty==1) {echo "selected=1";} ?>>per missed attempt, after 1</option>
@@ -279,7 +285,7 @@ if ($overwriteBody==1) {
      <option value="5" <?php if ($skippenalty==5) {echo "selected=1";} ?>>per missed attempt, after 5</option>
      <option value="6" <?php if ($skippenalty==6) {echo "selected=1";} ?>>per missed attempt, after 6</option>
      <option value="10" <?php if ($skippenalty==10) {echo "selected=1";} ?>>on last possible attempt only</option>
-     </select><br/><i class="grey">Default: <?php echo $defaults['penalty'];?></i></span><BR class=form>
+     </select><br/><i class="grey">Default: <?php echo Sanitize::encodeStringForDisplay($defaults['penalty']);?></i></span><BR class=form>
 
 <span class=form>New version on reattempt?</span>
 <span class=formright>
@@ -309,7 +315,7 @@ if ($overwriteBody==1) {
      <option value="6" <?php if ($line['showans']=="6") {echo "SELECTED";} ?>>After 6 attempts</option>
      <option value="7" <?php if ($line['showans']=="7") {echo "SELECTED";} ?>>After 7 attempts</option>
 
-    </select><br/><i class="grey">Default: <?php echo $defaults['showans'];?></i></span><br class="form"/>
+    </select><br/><i class="grey">Default: <?php echo Sanitize::encodeStringForDisplay($defaults['showans']);?></i></span><br class="form"/>
 
 <span class=form>Show hints and video/text buttons?</span><span class=formright>
     <select name="showhints">
@@ -321,8 +327,8 @@ if ($overwriteBody==1) {
 <span class=form>Use Scoring Rubric</span><span class=formright>
 <?php
     writeHtmlSelect('rubric',$rubric_vals,$rubric_names,$line['rubric']);
-    echo " <a href=\"addrubric.php?cid=$cid&amp;id=new&amp;from=modq&amp;aid=$aid&amp;qid={$_GET['id']}\">Add new rubric</a> ";
-    echo "| <a href=\"addrubric.php?cid=$cid&amp;from=modq&amp;aid=$aid&amp;qid={$_GET['id']}\">Edit rubrics</a> ";
+    echo " <a href=\"addrubric.php?cid=$cid&amp;id=new&amp;from=modq&amp;aid=" . Sanitize::encodeUrlParam($aid) . "&amp;qid=" . Sanitize::encodeUrlParam($_GET['id']) . "\">Add new rubric</a> ";
+    echo "| <a href=\"addrubric.php?cid=$cid&amp;from=modq&amp;aid=" . Sanitize::encodeUrlParam($aid) . "&amp;qid=" . Sanitize::encodeUrlParam($_GET['id']) . "\">Edit rubrics</a> ";
 ?>
     </span><br class="form"/>
 <?php
@@ -353,6 +359,7 @@ if ($overwriteBody==1) {
 		echo '</div>';
 	}
 	echo '<div class="submit"><input type="submit" value="'._('Save Settings').'"></div>';
+	echo '</form>';
 }
 
 require("../footer.php");

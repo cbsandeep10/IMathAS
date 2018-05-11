@@ -67,6 +67,12 @@ var $strokewidth = 1, $xunitlength, $yunitlength, $dotradius=8, $ticklength=4;
 var $fontsize = 12, $fontfile, $fontfill='', $fontbackground='';
 
 var $AScom;
+
+function __construct() {
+	$this->usegd2 = function_exists('imagesetthickness');
+	$this->usettf = function_exists('imagettftext');
+}
+
 function AStoIMG($w=200, $h=200) {
 	$this->xmin = -5; $this->xmax = 5; $this->ymin = -5; $this->ymax = 5; $this->border = array(5,5,5,5);
 	$this->stroke = 'black'; $this->fill = 'none'; $this->curdash=''; $this->isdashed=false; $this->marker='none';
@@ -78,8 +84,7 @@ function AStoIMG($w=200, $h=200) {
 
 	if ($w<=0) {$w=200;}
 	if ($h<=0) {$h=200;}
-	$this->usegd2 = function_exists('imagesetthickness');
-	$this->usettf = function_exists('imagettftext');
+
 	if ($this->usegd2) {
 		$this->img = imagecreatetruecolor($w,$h);
 		$this->colors['transblue'] = imagecolorallocatealpha($this->img, 0,0,255,90);
@@ -276,7 +281,7 @@ function addcolor($origcolor) {
 		$r = hexdec(substr($color,1,2));
 		$g = hexdec(substr($color,3,2));
 		$b = hexdec(substr($color,5,2));
-		$this->colors[$origcolor] = imagecolorallocatealpha($this->img, $r, $g, $b, $alpha); 
+		$this->colors[$origcolor] = imagecolorallocatealpha($this->img, $r, $g, $b, $alpha);
 	}
 }
 function ASsetdash() {
@@ -1112,7 +1117,8 @@ function ASplot($function) {
 		$dx = ($xmax - $xmin)/100;
 		$stopat = 101;
 	}
-
+	$yymax = $this->ymax + $this->border[3]/$this->yunitlength;
+	$yymin = $this->ymin - $this->border[1]/$this->yunitlength;
 	$px = null;
 	$py = null;
 	$lasty = 0;
@@ -1153,24 +1159,30 @@ function ASplot($function) {
 		}*/
 		if ($py===null) { //starting line
 
-		} else if ($y>$this->ymax || $y<$this->ymin) { //going or still out of bounds
-			if ($py<=$this->ymax && $py>=$this->ymin) { //going out
-				if ($y>$this->ymax) { //going up
-					$iy = $this->ymax + min($this->border[3],5)/$this->yunitlength;
+		} else if ($y>$yymax || $y<$yymin) { //going or still out of bounds
+			if ($py <= $yymax && $py >= $yymin) { //going out
+				if ($yymax-$py < .5*($yymax-$yymin)) { //closer to top
+					$iy = $yymax;
+					//if jumping from top of graph to bottom, change value
+					//for interpolation purposes
+					if ($y<$yymin) { $y = $yymax+.5*($ymax-$ymin);}
 				} else { //going down
-					$iy = $this->ymin - min($this->border[1],5)/$this->yunitlength;
+					$iy = $yymin;
+					if ($y>$yymax) { $y = $yymin-.5*($ymax-$ymin);}
 				}
 				$ix = ($x-$px)*($iy - $py)/($y-$py) + $px;
 				$this->ASline(array("[$px,$py]","[$ix,$iy]"));
 			} else { //still out
 
 			}
-		} else if ($py>$this->ymax || $py<$this->ymin) { //coming or staying in bounds
-			if ($y<=$this->ymax && $y>=$this->ymin) { //comin in
-				if ($py>$this->ymax) { //comin from top
-					$iy = $this->ymax + min($this->border[3],5)/$this->yunitlength;
+		} else if ($py>$yymax || $py<$yymin) { //coming or staying in bounds?
+			if ($y <= $yymax && $y >= $yymin) { //coming in
+				if ($yymax-$y < .5*($yymax-$yymin)) { //closer to top
+					$iy = $yymax;
+					if ($py<$yymin) { $py = $yymax+.5*($ymax-$ymin);}
 				} else { //coming from bottom
-					$iy = $this->ymin - min($this->border[1],5)/$this->yunitlength;
+					$iy = $yymin;
+					if ($py>$yymax) { $py = $yymin-.5*($ymax-$ymin);}
 				}
 				$ix = ($x-$px)*($iy - $py)/($y-$py) + $px;
 				$this->ASline(array("[$ix,$iy]","[$x,$y]"));

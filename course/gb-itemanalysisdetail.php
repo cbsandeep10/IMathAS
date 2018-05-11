@@ -2,7 +2,7 @@
 //IMathAS:  Item Analysis addon - get student list for different features
 //(c) 2013 David Lippman for Lumen Learning
 
-require("../validate.php");
+require("../init.php");
 $flexwidth = true;
 $nologo = true;
 require("../header.php");
@@ -207,7 +207,7 @@ if ($type=='notstart') {
 			} else {
 				$sc = round($sc/60,2) . ' min';
 			}
-			echo $sc;
+			echo Sanitize::encodeStringForDisplay($sc);
 			echo '</td></tr>';
 		}
 		echo '</tbody></table>';

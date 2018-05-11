@@ -4,13 +4,14 @@
 
 
 if (!isset($imasroot)) {
-	require("../validate.php");
+	require("../init.php");
 	if (!(isset($teacherid))) { // loaded by a NON-teacher
 		echo "You must be a teacher to access this page";
 		exit;
 	}
 }
 require_once("../includes/sanitize.php");
+require_once("../includes/htmLawed.php");
 
 	$cid = Sanitize::courseId($_GET['cid']);
 
@@ -18,20 +19,19 @@ require_once("../includes/sanitize.php");
 		$endmsg = array();
 		$endmsg['type'] = $_POST['type'];
 		//DB $endmsg['def'] = stripslashes($_POST['msg'][0]);
-		$endmsg['def'] = $_POST['msg'][0];
+		$endmsg['def'] = myhtmLawed($_POST['msg'][0]);
 		$i=1;
 		$msgarr = array();
 		while (isset($_POST['sc'][$i]) && !empty($_POST['sc'][$i]) ) {
 			$key = (int)$_POST['sc'][$i];
 			if ($key>0) {
 				//DB $msgarr[$key] = stripslashes($_POST['msg'][$i]);
-				$msgarr[$key] = $_POST['msg'][$i];
+				$msgarr[$key] = myhtmLawed($_POST['msg'][$i]);
 			}
 			$i++;
 		}
 		krsort($msgarr);
 		$endmsg['msgs'] = $msgarr;
-		require_once("../includes/htmLawed.php");
 		//DB $endmsg['commonmsg'] = myhtmLawed(stripslashes($_POST['commonmsg']));
 		$endmsg['commonmsg'] = myhtmLawed($_POST['commonmsg']);
 		//DB $msgstr = addslashes(serialize($endmsg));
@@ -92,7 +92,7 @@ require_once("../includes/sanitize.php");
 	echo '<div id="headerassessendmsg" class="pagetitle"><h2>End of Assessment Messages</h2></div>';
 	echo "<form method=\"post\" action=\"assessendmsg.php?cid=$cid&amp;record=true\" />";
 	if (isset($_POST['checked'])) {
-		echo '<input type="hidden" name="aidlist" value="'.implode(',',$_POST['checked']).'" />';
+		echo '<input type="hidden" name="aidlist" value="' . Sanitize::encodeStringForDisplay(implode(',',$_POST['checked'])) . '" />';
 	} else {
 		echo '<input type="hidden" name="aid" value="'.Sanitize::onlyInt($_GET['aid']).'" />';
 	}

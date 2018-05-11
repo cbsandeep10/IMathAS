@@ -2,11 +2,11 @@
 //IMathAS:  Redeem latepasses
 //(c) 2007 David Lippman
 
-	require("../validate.php");
+	require("../init.php");
 
 
 	$cid = Sanitize::courseId($_GET['cid']);
-	$fid = $_GET['fid'];
+	$fid = Sanitize::onlyInt($_GET['fid']);
 	$from = $_GET['from'];
 
 	//DB $query = "SELECT latepasshrs FROM imas_courses WHERE id='$cid'";
@@ -55,21 +55,21 @@
 					$row[3] = 'P';
 				}
 				if ($row[3]=='F' || $row[3]=='P') {
-					if ($now > $postby && $row[0] < $now + $hours*60*60) {
+					if ($now > $postby && $row[0] < strtotime("+".$hours." hours",$now)) {
 						$postn = 0;  //too late to un-use
 					} else if ($now < $postby) {//before postbydate, return all latepasses
 						$postn = $row[2];
 					} else {
-						$postn = floor(($row[0] - $now)/($hours*60*60));  //if ==$row[2] then returning all
+						$postn = floor(($row[0] - $now)/($hours*60*60) + .05);  //if ==$row[2] then returning all
 					}
 				}
 				if ($row[3]=='F' || $row[3]=='R') {
-					if ($now > $replyby && $row[1] < $now + $hours*60*60) {
+					if ($now > $replyby && $row[1] < strtotime("+".$hours." hours",$now)) {
 						$replyn = 0;  //too late to un-use
 					} else if ($now < $replyby) {//before replybydate, return all latepasses
 						$replyn = $row[2];
 					} else {
-						$replyn = floor(($row[1] - $now)/($hours*60*60));  //if ==$row[2] then returning all
+						$replyn = floor(($row[1] - $now)/($hours*60*60) + .05);  //if ==$row[2] then returning all
 					}
 				}
 
@@ -86,21 +86,24 @@
 					} else {
 						if ($row[3]=='F') {
 							$toreturn = min($postn,$replyn);
-							$newpostend = $row[0] - $toreturn*$hours*60*60;
-							$newreplyend = $row[1] - $toreturn*$hours*60*60;
+							$tothrs = $toreturn*$hours;
+							$newpostend = strtotime("-".$tothrs." hours", $row[0]); // - $toreturn*$hours*60*60;
+							$newreplyend = strtotime("-".$tothrs." hours", $row[1]); //$row[1] - $toreturn*$hours*60*60;
 						} else if ($row[3]=='R') {
 							$toreturn = $replyn;
-							$newreplyend = $row[1] - $replyn*$hours*60*60;
+							$tothrs = $toreturn*$hours;
+							$newreplyend = strtotime("-".$tothrs." hours", $row[1]); //$row[1] - $replyn*$hours*60*60;
 						} else if ($row[3]=='P') {
 							$toreturn = $postn;
-							$newpostend = $row[0] - $postn*$hours*60*60;
+							$tothrs = $toreturn*$hours;
+							$newpostend = strtotime("-".$tothrs." hours", $row[0]); //$row[0] - $postn*$hours*60*60;
 						}
 						//DB $query = "UPDATE imas_exceptions SET islatepass=islatepass-$toreturn,startdate=$newpostend,enddate=$newreplyend WHERE userid='$userid' AND assessmentid='$fid' AND (itemtype='F' OR itemtype='R' OR itemtype='P')";
 						//DB mysql_query($query) or die("Query failed : " . mysql_error());
 						$stm = $DBH->prepare("UPDATE imas_exceptions SET islatepass=islatepass-:toreturn,startdate=:startdate,enddate=:enddate WHERE userid=:userid AND assessmentid=:assessmentid AND (itemtype='F' OR itemtype='R' OR itemtype='P')");
 						$stm->execute(array(':startdate'=>$newpostend, ':enddate'=>$newreplyend, ':userid'=>$userid, ':assessmentid'=>$fid, ':toreturn'=>$toreturn));
 					}
-					echo "<p>Returning $toreturn LatePass".($toreturn>1?"es":"")."</p>";
+					echo "<p>Returning ".Sanitize::encodeStringForDisplay($toreturn)." LatePass".($toreturn>1?"es":"")."</p>";
 					//DB $query = "UPDATE imas_students SET latepass=latepass+$toreturn WHERE userid='$userid' AND courseid='$cid'";
 					//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
 					$stm = $DBH->prepare("UPDATE imas_students SET latepass=latepass+:toreturn WHERE userid=:userid AND courseid=:courseid");
@@ -109,15 +112,15 @@
 			}
 		}
 		if ($from=='forum') {
-			echo "<p><a href=\"../forums/thread.php?cid=$cid&forum=$fid\">Continue</a></p>";
+			echo "<p><a href=\"../forums/thread.php?cid=".Sanitize::courseId($cid)."&forum=".Sanitize::onlyInt($fid)."\">Continue</a></p>";
 		} else {
-			echo "<p><a href=\"course.php?cid=$cid\">Continue</a></p>";
+			echo "<p><a href=\"course.php?cid=".Sanitize::courseId($cid)."\">Continue</a></p>";
 		}
 
 		require("../footer.php");
 
-	} else if (isset($_GET['confirm'])) {
-		$addtime = $hours*60*60;
+	} else if (isset($_POST['confirm'])) {
+
 		//DB $query = "SELECT allowlate,postby,replyby FROM imas_forums WHERE id='$fid'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB list($allowlate,$postby,$replyby) = mysql_fetch_row($result);
@@ -133,7 +136,9 @@
 		$stm->execute(array(':userid'=>$userid, ':assessmentid'=>$fid));
 		$hasexception = false;
 		$usedlatepassespost = 0; $usedlatepassesreply = 0;
-		//DB if (mysql_num_rows($result)==0) {
+		
+		//start date is postby
+		//end date is replyby
 		if ($stm->rowCount()==0) {
 			$thispostby = $postby;
 			$thisreplyby = $replyby;
@@ -144,32 +149,36 @@
 			} else if ($allowlateon==3) {
 				$itemtype = 'R';
 			}
+			$startdate = 0;
+			$enddate = 0;
 		} else {
 			$hasexception = true;
 			//DB $r = mysql_fetch_row($result);
 			$r = $stm->fetch(PDO::FETCH_NUM);
-			$usedlatepassespost = min(max(0,round(($r[0] - $postby)/($hours*3600))), $r[2]);
+			$usedlatepassespost = min(max(0,round(($r[0] - $postby)/($hours*3600) + .05)), $r[2]);
 			$thispostby = $r[0];
-			$usedlatepassesreply = min(max(0,round(($r[1] - $replyby)/($hours*3600))), $r[2]);
+			$usedlatepassesreply = min(max(0,round(($r[1] - $replyby)/($hours*3600) + .05)), $r[2]);
 			$thisreplyby = $r[1];
 			$itemtype = $r[3];
+			$startdate = $thispostby;
+			$enddate = $thisreplyby;
 		}
 
-		$addtimepost = 0; $addtimereply = 0; $startdate = 0; $enddate = 0;
-		if (($itemtype=='F' || $itemtype=='P') && ($allowlaten==1 || $allowlaten-1>$usedlatepassespost) && ($now<$thispostby || ($allowlate>100 && ($now-$thispostby)<$hours*3600))) {
-			$addtimepost = $addtime;
-			$startdate = $postby + $addtimepost;
-		}
-		if (($itemtype=='F' || $itemtype=='R') && ($allowlaten==1 || $allowlaten-1>$usedlatepassesreply) && ($now<$thisreplyby || ($allowlate>100 && ($now-$thisreplyby)<$hours*3600))) {
-			$addtimereply = $addtime;
-			$enddate = $replyby + $addtimereply;
+		$addtimepost = 0; $addtimereply = 0;												
+		if (($itemtype=='F' || $itemtype=='P') && $postby<2000000000 && $postby>0 && ($allowlaten==1 || $allowlaten-1>$usedlatepassespost) && ($now<$thispostby || ($allowlate>100 && $now < strtotime("+".$hours." hours", $thispostby)))) {
+			$addtimepost = $hours;
+			$startdate = strtotime("+".$hours." hours",$thispostby); 
+		}																
+		if (($itemtype=='F' || $itemtype=='R') && $replyby<2000000000 && $replyby>0 && ($allowlaten==1 || $allowlaten-1>$usedlatepassesreply) && ($now<$thisreplyby || ($allowlate>100 && $now < strtotime("+".$hours." hours", $thisreplyby)))) {
+			$addtimereply = $hours;
+			$enddate = strtotime("+".$hours." hours",$thisreplyby);
 		}
 		if ($addtimepost>0 || $addtimereply>0) {
 			if ($hasexception) {
 				//DB $query = "UPDATE imas_exceptions SET startdate=startdate+$addtimepost,enddate=enddate+$addtimereply,islatepass=islatepass+1 WHERE userid='$userid' AND assessmentid='$fid' AND itemtype='$itemtype'";
 				//DB mysql_query($query) or die("Query failed : " . mysql_error());
-				$stm = $DBH->prepare("UPDATE imas_exceptions SET startdate=startdate+:addtimepost,enddate=enddate+:addtimereply,islatepass=islatepass+1 WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype=:itemtype");
-				$stm->execute(array(':userid'=>$userid, ':assessmentid'=>$fid, ':itemtype'=>$itemtype, ':addtimepost'=>$addtimepost, ':addtimereply'=>$addtimereply));
+				$stm = $DBH->prepare("UPDATE imas_exceptions SET startdate=:startdate,enddate=:enddate,islatepass=islatepass+1 WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype=:itemtype");
+				$stm->execute(array(':userid'=>$userid, ':assessmentid'=>$fid, ':itemtype'=>$itemtype, ':startdate'=>$startdate, ':enddate'=>$enddate));
 			} else {
 				//DB $query = "INSERT INTO imas_exceptions (userid,assessmentid,startdate,enddate,islatepass,itemtype) VALUES ('$userid','$fid','$startdate','$enddate',1,'$itemtype')";
 				//DB mysql_query($query) or die("Query failed : " . mysql_error());
@@ -177,10 +186,11 @@
 				$stm->execute(array(':userid'=>$userid, ':assessmentid'=>$fid, ':startdate'=>$startdate, ':enddate'=>$enddate, ':islatepass'=>1, ':itemtype'=>$itemtype));
 			}
 		}
+
 		if ($from=='forum') {
-			header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/thread.php?cid=$cid&forum=$fid");
+			header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/thread.php?cid=".Sanitize::courseId($cid)."&forum=".Sanitize::onlyInt($fid));
 		} else {
-			header('Location: ' . $GLOBALS['basesiteurl'] . "/course/course.php?cid=$cid");
+			header('Location: ' . $GLOBALS['basesiteurl'] . "/course/course.php?cid=".Sanitize::courseId($cid));
 		}
 
 	} else {
@@ -232,17 +242,17 @@
 			$hasexception = true;
 			//DB $r = mysql_fetch_row($result);
 			$r = $stm->fetch(PDO::FETCH_NUM);
-			$usedlatepassespost = min(max(0,round(($r[0] - $postby)/($hours*3600))), $r[2]);
+			$usedlatepassespost = min(max(0,round(($r[0] - $postby)/($hours*3600) + .05)), $r[2]);
 			$thispostby = $r[0];
-			$usedlatepassesreply = min(max(0,round(($r[1] - $replyby)/($hours*3600))), $r[2]);
+			$usedlatepassesreply = min(max(0,round(($r[1] - $replyby)/($hours*3600) + .05)), $r[2]);
 			$thisreplyby = $r[1];
 			$itemtype = $r[3];
 		}
 		$canuselatepass = false;
-		if (($itemtype=='F' || $itemtype=='P') && $postby!=2000000000 && ($allowlaten==1 || $allowlaten-1>$usedlatepassespost) && ($now<$thispostby || ($allowlate>100 && ($now-$thispostby)<$hours*3600))) {
+		if (($itemtype=='F' || $itemtype=='P') && $postby!=2000000000 && ($allowlaten==1 || $allowlaten-1>$usedlatepassespost) && ($now<$thispostby || ($allowlate>100 && $now < strtotime("+".$hours." hours", $thispostby)))) {
 			$canuselatepasspost = true;
 		}
-		if (($itemtype=='F' || $itemtype=='R') && $replyby!=2000000000 && ($allowlaten==1 || $allowlaten-1>$usedlatepassesreply) && ($now<$thisreplyby || ($allowlate>100 && ($now-$thisreplyby)<$hours*3600))) {
+		if (($itemtype=='F' || $itemtype=='R') && $replyby!=2000000000 && ($allowlaten==1 || $allowlaten-1>$usedlatepassesreply) && ($now<$thisreplyby || ($allowlate>100 && $now < strtotime("+".$hours." hours", $thisreplyby)))) {
 			$canuselatepassreply = true;
 		}
 
@@ -250,12 +260,12 @@
 			echo "<p>You have no late passes remaining.</p>";
 		} else if ($canuselatepasspost || $canuselatepassreply) {
 			echo '<div id="headerredeemlatepass" class="pagetitle"><h2>Redeem LatePass</h2></div>';
-			echo "<form method=post action=\"redeemlatepassforum.php?cid=$cid&fid=$fid&from=$from&confirm=true\">";
+			echo "<form method=post action=\"redeemlatepassforum.php?cid=".Sanitize::courseId($cid)."&fid=".Sanitize::onlyInt($fid)."&from=".Sanitize::encodeUrlParam($from)."\">";
 			if ($allowlaten>1) {
 				echo '<p>You may use up to '.($allowlaten-1-$usedlatepasses).' more LatePass(es) on this forum assignment.</p>';
 			}
-			echo "<p>You have $numlatepass LatePass(es) remaining.</p>";
-			echo "<p>You can redeem one LatePass for a $hours hour extension on ";
+			echo "<p>You have ".Sanitize::onlyInt($numlatepass)." LatePass(es) remaining.</p>";
+			echo "<p>You can redeem one LatePass for a ".Sanitize::onlyInt($hours)." hour extension on ";
 			if ($canuselatepasspost) {
 				echo " the <b>New Threads</b> due date ";
 				if ($canuselatepassreply) {
@@ -266,11 +276,12 @@
 				echo " the <b>Replies</b> due date ";
 			}
 			echo "for this forum assignment.</p><p>Are you sure you want to redeem a LatePass?</p>";
+			echo '<input type="hidden" name="confirm" value="true" />';
 			echo "<input type=submit value=\"Yes, Redeem LatePass\"/> ";
 			if ($from=='forum') {
-				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='../forums/thread.php?cid=$cid&forum=$fid'\"/>";
+				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='../forums/thread.php?cid=".Sanitize::courseId($cid)."&forum=".Sanitize::onlyInt($fid)."'\"/>";
 			} else {
-				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='course.php?cid=$cid'\"/>";
+				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='course.php?cid=".Sanitize::courseId($cid)."'\"/>";
 
 			}
 

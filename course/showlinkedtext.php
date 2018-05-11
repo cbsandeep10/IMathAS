@@ -1,7 +1,7 @@
 <?php
 //IMathAS:  Displays a linked text item
 //(c) 2006 David Lippman
-	require("../validate.php");
+	require("../init.php");
 
 
 	$cid = Sanitize::courseId($_GET['cid']);
@@ -35,7 +35,7 @@
 	$titlesimp = strip_tags($title);
 
 	if (substr($text,0,8)=='exttool:') {
-		$param = "linkid={$_GET['id']}&cid=$cid";
+		$param = "linkid=".Sanitize::encodeUrlParam($_GET['id'])."&cid=$cid";
 
 		if ($target==0) {
 			$height = '500px';
@@ -43,8 +43,6 @@
 			$param .= '&target=iframe';
 			$text = '<iframe id="exttoolframe" src="'.$imasroot.'/filter/basiclti/post.php?'.$param.'" height="'.$height.'" width="'.$width.'" ';
 			$text .= 'scrolling="auto" frameborder="1" transparency>   <p>Error</p> </iframe>';
-			$text .= '<script type="text/javascript">$(function() {$("#exttoolframe").css("height",$(window).height() - $(".midwrapper").position().top - ($(".midwrapper").height()-500) - ($("body").outerHeight(true) - $("body").innerHeight()));});</script>';
-
 		} else {
 			//redirect to post page
 			$param .= '&target=new';
@@ -52,17 +50,17 @@
 			exit;
 		}
 	} else if ((substr($text,0,4)=="http") && (strpos(trim($text)," ")===false)) { //is a web link
-		$text = '<p><a href="'.$text.'" target="_blank">'.$title.'</a> (will open in a new tab or window)</p>';
+		$text = '<p><a href="'.Sanitize::url($text).'" target="_blank">'.Sanitize::encodeStringForDisplay($title).'</a> (will open in a new tab or window)</p>';
 	} else if (substr(strip_tags($text),0,5)=="file:") {
 		$filename = substr(strip_tags($text),5);
 		require_once("../includes/filehandler.php");
 		$alink = getcoursefileurl($filename);//$imasroot . "/course/files/".$filename;
-		$text = '<p>Download file: <a href="'.$alink.'">'.$title.'</a></p>';
+		$text = '<p>Download file: <a href="'.Sanitize::url($alink).'">'.Sanitize::encodeStringForDisplay($title).'</a></p>';
 	}
 
 	$placeinhead = '';
 	if (isset($studentid)) {
-		$rec = "data-base=\"linkedintext-{$_GET['id']}\" ";
+		$rec = "data-base=\"linkedintext-".Sanitize::onlyInt($_GET['id'])."\" ";
 		$text = str_replace('<a ','<a '.$rec, $text);
 		$placeinhead = '<script type="text/javascript">
 			function recunload() {
@@ -70,7 +68,7 @@
 					$.ajax({
 						type: "POST",
 						url: "'.$imasroot.'/course/rectrack.php?cid='.$cid.'",
-						data: "unloadinglinked='.$_GET['id'].'",
+						data: "unloadinglinked='.Sanitize::encodeStringForJavascript($_GET['id']).'",
 						async: false
 					   });
 					recordedunload = true;
@@ -84,6 +82,7 @@
 		$(el).attr("title",$(el).next(".im_glossdef").text());
 	   });
 	});
+	$(function() {$("#exttoolframe").css("height",$(window).height() - $(".midwrapper").position().top - ($(".midwrapper").height()-500) - ($("body").outerHeight(true) - $("body").innerHeight()));});
 	</script>';
 	require("../header.php");
 	if ((isset($sessiondata['ltiitemtype']) && $sessiondata['ltiitemtype']==3)) {
@@ -95,11 +94,11 @@
 	if ($shownav) {
 		if (isset($_SESSION['backtrack'])) {
 			echo '<div class="breadcrumb" '.$fixbc.'>'.$_SESSION['backtrack'][0];
-			echo " &gt; $titlesimp</div>";
+			echo " &gt; ".Sanitize::encodeStringForDisplay($titlesimp)."</div>";
 		} else {
 			echo "<div class=breadcrumb $fixbc>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-			echo "&gt; $titlesimp</div>";
-			echo '<div id="headershowlinkedtext" class="pagetitle"><h2>'.$titlesimp.'</h2></div>';
+			echo "&gt; ".Sanitize::encodeStringForDisplay($titlesimp)."</div>";
+			echo '<div id="headershowlinkedtext" class="pagetitle"><h2>'.Sanitize::encodeStringForDisplay($titlesimp).'</h2></div>';
 		}
 	}
 	echo '<div class="linkedtextholder" style="padding-left:10px; padding-right: 10px;'.$pad.'">';
@@ -158,23 +157,23 @@
 		if ($thisitemloc>0) {
 			$p = $itemdata[$flatlist[$thisitemloc-1]];
 			if (isset($studentid) && !isset($sessiondata['stuview'])) {
-				$rec = "data-base=\"linkedlink-{$p['id']}\" ";
+				$rec = "data-base=\"linkedlink-".Sanitize::onlyInt($p['id'])."\" ";
 			} else {
 				$rec = '';
 			}
-			$navbuttons .= '<div class="floatleft" style="width:45%;text-align:center"><a '.$rec.' class="abutton" style="width:100%;padding:4px 0;height:auto;" href="showlinkedtext.php?cid='.$cid.'&id='.$p['id'].'">&lt; '._('Previous');
-			$navbuttons .= '</a><p class="small" style="line-height:1.4em">'.$p['title'];
+			$navbuttons .= '<div class="floatleft" style="width:45%;text-align:center"><a '.$rec.' class="abutton" style="width:100%;padding:4px 0;height:auto;" href="showlinkedtext.php?cid='.$cid.'&id='.Sanitize::encodeUrlParam($p['id']).'">&lt; '._('Previous');
+			$navbuttons .= '</a><p class="small" style="line-height:1.4em">'.Sanitize::encodeStringForDisplay($p['title']);
 			$navbuttons .= '</p></div>';
 		}
 		if ($thisitemloc<count($flatlist)-2) {
 			$p = $itemdata[$flatlist[$thisitemloc+1]];
 			if (isset($studentid) && !isset($sessiondata['stuview'])) {
-				$rec = "data-base=\"linkedlink-{$p['id']}\" ";
+				$rec = "data-base=\"linkedlink-".Sanitize::onlyInt($p['id'])."\" ";
 			} else {
 				$rec = '';
 			}
-			$navbuttons .= '<div class="floatright" style="width:45%;text-align:center"><a '.$rec.' class="abutton" style="width:100%;padding:4px 0;height:auto;" href="showlinkedtext.php?cid='.$cid.'&id='.$p['id'].'"> '._('Next');
-			$navbuttons .= ' &gt;</a><p class="small" style="line-height:1.4em">'.$p['title'];
+			$navbuttons .= '<div class="floatright" style="width:45%;text-align:center"><a '.$rec.' class="abutton" style="width:100%;padding:4px 0;height:auto;" href="showlinkedtext.php?cid='.$cid.'&id='.Sanitize::encodeUrlParam($p['id']).'"> '._('Next');
+			$navbuttons .= ' &gt;</a><p class="small" style="line-height:1.4em">'.Sanitize::encodeStringForDisplay($p['title']);
 			$navbuttons .= '</p></div>';
 		}
 		$navbuttons .= '<div class="clear"></div>';
@@ -186,7 +185,7 @@
 			$text .= '<hr/>'.$navbuttons;
 		}
 	}
-	echo filter($text);
+	echo Sanitize::outgoingHtml(filter($text));
 	echo '</div>';
 	if ($shownav) {
 		if (isset($_SESSION['backtrack'])) {

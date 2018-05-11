@@ -3,7 +3,7 @@
 //(c) 2014 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
 
  //set some page specific variables and counters
@@ -28,7 +28,7 @@ if (!(isset($teacherid))) {
 $aid = Sanitize::onlyInt($_GET['aid']);
 $sessiondata['texdisp'] = true;
 $sessiondata['texdoubleescape'] = true;
-$sessiondata['texalignformatrix'] = true;
+$texusealignsformatrix = true;
 
 $sessiondata['graphdisp'] = 1;
 $sessiondata['mathdisp'] = 2;
@@ -44,6 +44,7 @@ if ($overwriteBody==1) {
 
 	require("../header.php");
 	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+	echo "&gt; <a href=\"addquestions.php?cid=$cid&aid=$aid\">Add/Remove Questions</a> ";
 	echo "&gt; Print Test</div>\n";
 
 	echo '<div class="cpmid"><a href="printtest.php?cid='.$cid.'&amp;aid='.$aid.'">Generate for in-browser printing</a> | <a href="printlayoutbare.php?cid='.$cid.'&amp;aid='.$aid.'">Generate for cut-and-paste</a></div>';
@@ -139,7 +140,7 @@ if ($overwriteBody==1) {
 		$qn[$row[0]] = $row[2];
 		if ($row[3]!==null && $row[3]!='') {
 			$fixedseeds[$row[0]] = explode(',',$row[3]);
-		}
+	}
 	}
 
 
@@ -171,8 +172,8 @@ if ($overwriteBody==1) {
 					if (isset($fixedseeds[$questions[$i]])) {
 						$seeds[$j][] = $fixedseeds[$questions[$i]][$j%count($fixedseeds[$questions[$i]])];
 					} else {
-						$seeds[$j][] = $aid + $i + $j;
-					}
+					$seeds[$j][] = $aid + $i + $j;
+				}
 				}
 			} else {
 				for ($i = 0; $i<count($questions);$i++) {
@@ -186,11 +187,11 @@ if ($overwriteBody==1) {
 						}
 						$seeds[$j][] = $fixedseeds[$questions[$i]][($x+$j)%$n];
 					} else {
-						$seeds[$j][] = rand(1,9999);
-					}
+					$seeds[$j][] = rand(1,9999);
 				}
 			}
 		}
+	}
 	}
 
 
@@ -307,7 +308,7 @@ if ($overwriteBody==1) {
 
 	/*
 
-	$data = 'html='.Sanitize::encodeStringForUrl($out);
+	$data = 'html='.Sanitize::encodeUrlParam($out);
 
 	$params = array (
             'http' => array (
@@ -362,8 +363,10 @@ function printq($qn,$qsetid,$seed,$pts,$showpts) {
 		$stm = $DBH->prepare("SELECT var,filename,alttext FROM imas_qimages WHERE qsetid=:qsetid");
 		$stm->execute(array(':qsetid'=>$qsetid));
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-			if(isset($GLOBALS['CFG']['GEN']['AWSforcoursefiles']) && $GLOBALS['CFG']['GEN']['AWSforcoursefiles'] == true) {
-				${$row[0]} = "<img src=\"{$urlmode}s3.amazonaws.com/{$GLOBALS['AWSbucket']}/qimages/{$row[1]}\" alt=\"".htmlentities($row[2],ENT_QUOTES)."\" />";
+			if (substr($row[1],0,4)=='http') {
+				${$row[0]} = "<img src=\"{$row[1]}\" alt=\"".htmlentities($row[2],ENT_QUOTES)."\" />";
+			} else if(isset($GLOBALS['CFG']['GEN']['AWSforcoursefiles']) && $GLOBALS['CFG']['GEN']['AWSforcoursefiles'] == true) {
+				${$row[0]} = "<img src=\"{$urlmode}{$GLOBALS['AWSbucket']}.s3.amazonaws.com/qimages/{$row[1]}\" alt=\"".htmlentities($row[2],ENT_QUOTES)."\" />";
 			} else {
 				${$row[0]} = "<img src=\"$imasroot/assessment/qimages/{$row[1]}\" alt=\"".htmlentities($row[2],ENT_QUOTES)."\" />";
 			}
@@ -415,9 +418,19 @@ function printq($qn,$qsetid,$seed,$pts,$showpts) {
 		}
 		$laparts = explode("&",$la);
 		foreach ($anstypes as $kidx=>$anstype) {
+			if (($anstype=='matrix' || $anstype=='calcmatrix') && isset($answersize)) {
+				$oldoptionsanswersize = $options['answersize'];
+				unset($options['answersize']);
+			}
 			list($answerbox[$kidx],$tips[$kidx],$shans[$kidx]) = makeanswerbox($anstype,$kidx,$laparts[$kidx],$options,$qn+1);
+			if (($anstype=='matrix' || $anstype=='calcmatrix') && isset($answersize)) {
+				$options['answersize'] = $oldoptionsanswersize;
+			}
 		}
 	} else {
+		if ($qdata['qtype']=='matrix' || $qdata['qtype']=='calcmatrix') {
+			unset($options['answersize']); //pandoc doesn't like nested tables
+		}
 		list($answerbox,$tips[0],$shans[0]) = makeanswerbox($qdata['qtype'],$qn,$la,$options,0);
 	}
 

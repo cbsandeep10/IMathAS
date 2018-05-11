@@ -13,7 +13,7 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 		require("../footer.php");
 		exit;
 	}
-	if (isset($_GET['confirmed'])) { //do unenroll
+	if (isset($_POST['dolockstu']) || isset($_POST['lockinstead'])) { //do lockout - postback
 		if ($_GET['uid']=="selected") {
 			$tolock = explode(",",$_POST['tolock']);
 		} else if ($_GET['uid']=="all") {
@@ -28,6 +28,7 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 		} else {
 			$tolock[] = $_GET['uid'];
 		}
+
 		$locklist = implode(',', array_map('intval',$tolock));
 		$now = time();
 		//DB $query = "UPDATE imas_students SET locked='$now' WHERE courseid='$cid' AND userid IN ($locklist)";
@@ -39,7 +40,7 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 			header('Location: ' . $GLOBALS['basesiteurl'] . "/course/listusers.php?cid=$cid");
 			exit;
 		} else if ($calledfrom == 'gb') {
-			header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gradebook.php?cid=$cid&gbmode={$_GET['gbmode']}");
+			header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gradebook.php?cid=$cid&gbmode=" . Sanitize::encodeUrlParam($_GET['gbmode']));
 			exit;
 		}
 	} else { //get confirm
@@ -73,9 +74,9 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 		require("../header.php");
 		echo  "<div class=breadcrumb>$curBreadcrumb</div>";
 		if ($calledfrom=='lu') {
-			echo "<form method=post action=\"listusers.php?cid=$cid&action=lock&uid={$_GET['uid']}&confirmed=true\">";
+			echo "<form method=post action=\"listusers.php?cid=$cid&action=lock&uid=" . Sanitize::simpleString($_GET['uid']) . "&confirmed=true\">";
 		} else if ($calledfrom=='gb') {
-			echo "<form method=post action=\"gradebook.php?cid=$cid&action=lock&uid={$_GET['uid']}&confirmed=true\">";
+			echo "<form method=post action=\"gradebook.php?cid=$cid&action=lock&uid=" . Sanitize::simpleString($_GET['uid']) . "&confirmed=true\">";
 		}
 
 
@@ -98,7 +99,7 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 					}
 ?>
 		</ul>
-		<input type=hidden name="tolock" value="<?php echo implode(",",$_POST['checked']) ?>">
+		<input type=hidden name="tolock" value="<?php echo Sanitize::encodeStringForDisplay(implode(",",$_POST['checked'])); ?>">
 <?php
 				}
 			} else {
@@ -107,12 +108,12 @@ require_once(__DIR__ . "/../includes/sanitize.php");
 ?>
 
 		<p>
-			<input type=submit value="Yes, Lock Out Student">
+			<input type=submit name="dolockstu" value="Yes, Lock Out Student">
 <?php
 			if ($calledfrom=='lu') {
 				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='listusers.php?cid=$cid'\">";
 			} else if ($calledfrom=='gb') {
-				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='gradebook.php?cid=$cid&gbmode={$_GET['gbmode']}'\">";
+				echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='gradebook.php?cid=$cid&gbmode=" . Sanitize::encodeUrlParam($_GET['gbmode']) . "'\">";
 			}
 ?>
 		</p>

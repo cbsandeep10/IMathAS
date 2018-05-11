@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
 
 /*** pre-html data manipulation, including function code *******/
@@ -32,6 +32,13 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 
 		$cnt = $_POST['chgcnt'];
 		$blockchg = 0;
+
+		$assesstoupdate = array();
+		$inlinetoupdate = array();
+		$wikitoupdate = array();
+		$linktoupdate = array();
+		$forumbasictoupdate = array();
+		$forumfulltoupdate = array();
 		for ($i=0; $i<$cnt; $i++) {
 			require_once("../includes/parsedatetime.php");
 
@@ -110,44 +117,39 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 			$avail = intval($data[7]);
 			if ($type=='Assessment') {
 				if ($id>0) {
-					//DB $query = "UPDATE imas_assessments SET startdate='$startdate',enddate='$enddate',reviewdate='$reviewdate',avail='$avail' WHERE id='$id'";
-					//DB mysql_query($query) or die("Query failed : " . mysql_error());
-					$stm = $DBH->prepare("UPDATE imas_assessments SET startdate=:startdate,enddate=:enddate,reviewdate=:reviewdate,avail=:avail WHERE id=:id");
-					$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':reviewdate'=>$reviewdate, ':avail'=>$avail, ':id'=>$id));
+					//$stm = $DBH->prepare("UPDATE imas_assessments SET startdate=:startdate,enddate=:enddate,reviewdate=:reviewdate,avail=:avail WHERE id=:id");
+					//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':reviewdate'=>$reviewdate, ':avail'=>$avail, ':id'=>$id));
+					array_push($assesstoupdate, $id, $startdate, $enddate, $reviewdate, $avail);
 				}
 			} else if ($type=='Forum') {
 				if ($id>0) {
 					if ($data[3] != 'NA' && $data[4] != 'NA') {
-						//DB $query = "UPDATE imas_forums SET startdate='$startdate',enddate='$enddate',postby='$fpdate',replyby='$frdate',avail='$avail' WHERE id='$id'";
-						$stm = $DBH->prepare("UPDATE imas_forums SET startdate=:startdate,enddate=:enddate,postby=:postby,replyby=:replyby,avail=:avail WHERE id=:id");
-						$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':postby'=>$fpdate, ':replyby'=>$frdate, ':avail'=>$avail, ':id'=>$id));
+						//$stm = $DBH->prepare("UPDATE imas_forums SET startdate=:startdate,enddate=:enddate,postby=:postby,replyby=:replyby,avail=:avail WHERE id=:id");
+						//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':postby'=>$fpdate, ':replyby'=>$frdate, ':avail'=>$avail, ':id'=>$id));
+						array_push($forumfulltoupdate, $id, $startdate, $enddate, $avail, $fpdate, $frdate);
 					} else {
-						//DB $query = "UPDATE imas_forums SET startdate='$startdate',enddate='$enddate',avail='$avail' WHERE id='$id'";
-						$stm = $DBH->prepare("UPDATE imas_forums SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
-						$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+						//$stm = $DBH->prepare("UPDATE imas_forums SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
+						//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+						array_push($forumbasictoupdate, $id, $startdate, $enddate, $avail);
 					}
-					//DB mysql_query($query) or die("Query failed : " . mysql_error());
 				}
 			} else if ($type=='Wiki') {
 				if ($id>0) {
-					//DB $query = "UPDATE imas_wikis SET startdate='$startdate',enddate='$enddate',avail='$avail' WHERE id='$id'";
-					//DB mysql_query($query) or die("Query failed : " . mysql_error());
-					$stm = $DBH->prepare("UPDATE imas_wikis SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
-					$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					//$stm = $DBH->prepare("UPDATE imas_wikis SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
+					//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					array_push($wikitoupdate, $id, $startdate, $enddate, $avail);
 				}
 			} else if ($type=='InlineText') {
 				if ($id>0) {
-					//DB $query = "UPDATE imas_inlinetext SET startdate='$startdate',enddate='$enddate',avail='$avail' WHERE id='$id'";
-					//DB mysql_query($query) or die("Query failed : " . mysql_error());
-					$stm = $DBH->prepare("UPDATE imas_inlinetext SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
-					$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					//$stm = $DBH->prepare("UPDATE imas_inlinetext SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
+					//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					array_push($inlinetoupdate, $id, $startdate, $enddate, $avail);
 				}
 			} else if ($type=='Link') {
 				if ($id>0) {
-					//DB $query = "UPDATE imas_linkedtext SET startdate='$startdate',enddate='$enddate',avail='$avail' WHERE id='$id'";
-					//DB mysql_query($query) or die("Query failed : " . mysql_error());
-					$stm = $DBH->prepare("UPDATE imas_linkedtext SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
-					$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					//$stm = $DBH->prepare("UPDATE imas_linkedtext SET startdate=:startdate,enddate=:enddate,avail=:avail WHERE id=:id");
+					//$stm->execute(array(':startdate'=>$startdate, ':enddate'=>$enddate, ':avail'=>$avail, ':id'=>$id));
+					array_push($linktoupdate, $id, $startdate, $enddate, $avail);
 				}
 			} else if ($type=='Block') {
 				$blocktree = explode('-',$id);
@@ -164,6 +166,48 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 				$blockchg++;
 			}
 
+		}
+		if (count($assesstoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($assesstoupdate, 5);
+			$query = "INSERT INTO imas_assessments (id,startdate,enddate,reviewdate,avail) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),reviewdate=VALUES(reviewdate),avail=VALUES(avail)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($assesstoupdate);
+		}
+		if (count($inlinetoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($inlinetoupdate, 4);
+			$query = "INSERT INTO imas_inlinetext (id,startdate,enddate,avail) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),avail=VALUES(avail)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($inlinetoupdate);
+		}
+		if (count($linktoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($linktoupdate, 4);
+			$query = "INSERT INTO imas_linkedtext (id,startdate,enddate,avail) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),avail=VALUES(avail)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($linktoupdate);
+		}
+		if (count($wikitoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($wikitoupdate, 4);
+			$query = "INSERT INTO imas_wikis (id,startdate,enddate,avail) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),avail=VALUES(avail)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($wikitoupdate);
+		}
+		if (count($forumbasictoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($forumbasictoupdate, 4);
+			$query = "INSERT INTO imas_forums (id,startdate,enddate,avail) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),avail=VALUES(avail)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($forumbasictoupdate);
+		}
+		if (count($forumfulltoupdate)>0) {
+			$placeholders = Sanitize::generateQueryPlaceholdersGrouped($forumfulltoupdate, 6);
+			$query = "INSERT INTO imas_forums (id,startdate,enddate,avail,postby,replyby) VALUES $placeholders ";
+			$query .= "ON DUPLICATE KEY UPDATE startdate=VALUES(startdate),enddate=VALUES(enddate),avail=VALUES(avail),postby=VALUES(postby),replyby=VALUES(replyby)";
+			$stm = $DBH->prepare($query);
+			$stm->execute($forumfulltoupdate);
 		}
 		if ($blockchg>0) {
 			//DB $itemorder = addslashes(serialize($items));
@@ -202,7 +246,7 @@ if ($overwriteBody==1) {
 	$availnames = array(_("Hidden"),_("By Dates"),_("Always"));
 
 	if (isset($_GET['orderby'])) {
-		$orderby = $_GET['orderby'];
+		$orderby = Sanitize::onlyInt($_GET['orderby']);
 		$sessiondata['mcdorderby'.$cid] = $orderby;
 		writesessiondata();
 	} else if (isset($sessiondata['mcdorderby'.$cid])) {
@@ -211,7 +255,7 @@ if ($overwriteBody==1) {
 		$orderby = 3;
 	}
 	if (isset($_GET['filter'])) {
-		$filter = $_GET['filter'];
+		$filter = Sanitize::simpleString($_GET['filter']);
 		$sessiondata['mcdfilter'.$cid] = $filter;
 		writesessiondata();
 	} else if (isset($sessiondata['mcdfilter'.$cid])) {
@@ -252,9 +296,9 @@ if ($overwriteBody==1) {
 	echo "&gt; Mass Change Dates</div>\n";
 	echo '<div id="headermasschgdates" class="pagetitle"><h2>Mass Change Dates</h2></div>';
 
-	echo "<script type=\"text/javascript\">var filteraddr = \"$imasroot/course/masschgdates.php?cid=$cid&orderby=$orderby\";";
+	echo "<script type=\"text/javascript\">var filteraddr = \"$imasroot/course/masschgdates.php?cid=$cid&orderby=" . Sanitize::encodeUrlParam($orderby) . "\";";
 
-	echo "var orderaddr = \"$imasroot/course/masschgdates.php?cid=$cid&filter=$filter\";</script>";
+	echo "var orderaddr = \"$imasroot/course/masschgdates.php?cid=$cid&filter=" . Sanitize::encodeUrlParam($filter) . "\";</script>";
 
 	echo '<p>Order by: <select id="orderby" onchange="chgorderby()">';
 	echo '<option value="0" ';
@@ -552,20 +596,20 @@ if ($overwriteBody==1) {
 			}
 			echo '"/><div>';
 		}
-		echo "{$names[$i]}<input type=hidden id=\"id$cnt\" value=\"{$ids[$i]}\"/></div>";
+		echo Sanitize::encodeStringForDisplay($names[$i])."<input type=hidden id=\"id" . Sanitize::encodeStringForDisplay($cnt) . "\" value=\"" . Sanitize::encodeStringForDisplay($ids[$i]) . "\"/></div>";
 		echo "<script> basesdates[$cnt] = ";
 		//if ($startdates[$i]==0) { echo '"NA"';} else {echo $startdates[$i];}
-		echo $startdates[$i];
+		echo Sanitize::encodeStringForJavascript($startdates[$i]);
 		echo "; baseedates[$cnt] = ";
 		//if ($enddates[$i]==0 || $enddates[$i]==2000000000) { echo '"NA"';} else {echo $enddates[$i];}
-		echo $enddates[$i];
+		echo Sanitize::encodeStringForJavascript($enddates[$i]);
 		echo "; baserdates[$cnt] = ";
 		//if ($reviewdates[$i]==0 || $reviewdates[$i]==2000000000) {echo '"NA"';} else { echo $reviewdates[$i];}
-		if ($reviewdates[$i]==-1) {echo '"NA"';} else { echo $reviewdates[$i];}
+		if ($reviewdates[$i]==-1) {echo '"NA"';} else { echo Sanitize::encodeStringForJavascript($reviewdates[$i]);}
 		echo "; basefpdates[$cnt] = ";
-		if ($fpdates[$i]==-1) {echo '"NA"';} else { echo $fpdates[$i];}
+		if ($fpdates[$i]==-1) {echo '"NA"';} else { echo Sanitize::encodeStringForJavascript($fpdates[$i]);}
 		echo "; basefrdates[$cnt] = ";
-		if ($frdates[$i]==-1) {echo '"NA"';} else { echo $frdates[$i];}
+		if ($frdates[$i]==-1) {echo '"NA"';} else { echo Sanitize::encodeStringForJavascript($frdates[$i]);}
 		echo ";</script>";
 		echo "</td>";
 		if ($picicons==0) {
@@ -574,7 +618,7 @@ if ($overwriteBody==1) {
 			echo "</td>";
 		}
 
-		echo '<td><span class="nowrap"><img src="'.$imasroot.'/img/swap.gif" alt="Swap" onclick="MCDtoggle(\'a\','.$cnt.')"/><span id="availname'.$cnt.'">'.$availnames[$avails[$i]].'</span><input type="hidden" id="avail'.$cnt.'" value="'.$avails[$i].'"/></span></td>';
+		echo '<td><span class="nowrap"><img src="'.$imasroot.'/img/swap.gif" alt="Swap" onclick="MCDtoggle(\'a\','.$cnt.')"/><span id="availname'.Sanitize::encodeStringForDisplay($cnt).'">'.Sanitize::encodeStringForDisplay($availnames[$avails[$i]]).'</span><input type="hidden" id="avail'.Sanitize::encodeStringForDisplay($cnt).'" value="'.Sanitize::encodeStringForDisplay($avails[$i]).'"/></span></td>';
 
 		echo "<td class=\"togdis".($avails[$i]!=1?' dis':'')."\"><img src=\"$imasroot/img/swap.gif\" alt=\"Swap\" onclick=\"MCDtoggle('s',$cnt)\"/>";
 		if ($startdates[$i]==0) {

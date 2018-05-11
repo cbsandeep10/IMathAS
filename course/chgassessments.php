@@ -3,9 +3,10 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 require("../includes/copyiteminc.php");
+require("../includes/loaditemshowdata.php");
 
 /*** pre-html data manipulation, including function code *******/
 
@@ -292,8 +293,9 @@ if (!(isset($teacherid))) {
 		if (isset($_POST['chgreqscoretype'])) {
 			if ($_POST['reqscoretype']==0) {
 				$sets[] = 'reqscore=ABS(reqscore)';
+				$sets[] = 'reqscoretype=(reqscoretype & ~1)';
 			} else {
-				$sets[] = 'reqscore=-1*ABS(reqscore)';
+				$sets[] = 'reqscoretype=(reqscoretype | 1)';
 			}
 		}
 
@@ -366,7 +368,13 @@ if (!(isset($teacherid))) {
 			//DB mysql_query($query) or die("Query failed : " . mysql_error());
 			$stm = $DBH->query("UPDATE imas_questions SET points=9999,attempts=9999,penalty=9999,regen=0,showans=0,fixedseeds=NULL WHERE assessmentid IN ($checkedlist)");
 		}
-
+		if (isset($_POST['docopyopt']) || isset($_POST['chgdefpoints']) || isset($_POST['removeperq'])) {
+			//update points possible
+			require_once("../includes/updateptsposs.php");
+			foreach ($checked as $aid) {
+				updatePointsPossible($aid);
+			}
+		}
 		if (isset($_POST['chgendmsg'])) {
 			include("assessendmsg.php");
 		} else {
@@ -418,6 +426,7 @@ if (!(isset($teacherid))) {
 		$parents = array();
 		$agbcats = array();
 		$prespace = array();
+		$itemshowdata = loadItemShowData($items,false,true,false,false,'Assessment',true);
 		getsubinfo($items,'0','','Assessment','&nbsp;&nbsp;');
 
 		//DB $query = "SELECT id,name,gbcategory FROM imas_assessments WHERE courseid='$cid' ORDER BY name";
@@ -622,7 +631,7 @@ $(function() {
 					$blockout = '';
 				}
 				echo '<li>';
-				echo "<input type=checkbox name='checked[]' value='{$gitypeids[$i]}' id='{$parents[$i]}.{$ids[$i]}:{$agbcats[$gitypeids[$i]]}' checked=checked ";
+				echo "<input type=checkbox name='checked[]' value='" . Sanitize::encodeStringForDisplay($gitypeids[$i]) . "' id='" . Sanitize::encodeStringForDisplay($parents[$i] . "." . $ids[$i] . ":" . $agbcats[$gitypeids[$i]]) . "' checked=checked ";
 				echo '/>';
 				$pos = strrpos($types[$i],'-');
 				if ($pos!==false) {
@@ -1022,7 +1031,7 @@ $deffb = _("This assessment contains items that are not automatically graded.  Y
 		</table>
 	</fieldset>
 	<div class=submit><input type=submit value="<?php echo _('Apply Changes')?>"></div>
-
+	</form>
 <?php
 }
 require("../footer.php");

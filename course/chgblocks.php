@@ -3,7 +3,7 @@
 //(c) 2014 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 
 /*** pre-html data manipulation, including function code *******/
@@ -185,12 +185,12 @@ Check: <a href="#" onclick="return chkAllNone('qform','checked[]',true)"><?php e
 <ul class="nomark">
 <?php
 foreach ($existblocks as $pos=>$name) {
-	echo '<li><input type="checkbox" name="checked[]" value="'.$existblockids[$pos].'"/>';
+	echo '<li><input type="checkbox" name="checked[]" value="' . Sanitize::encodeStringForDisplay($existblockids[$pos]) . '"/>';
 	$n = substr_count($pos,"-")-1;
 	for ($i=0;$i<$n;$i++) {
 		echo '&nbsp;&nbsp;';
 	}
-	echo $name.'</li>';
+	echo Sanitize::encodeStringForDisplay($name) . '</li>';
 }
 ?>
 </ul>
@@ -277,6 +277,7 @@ foreach ($existblocks as $pos=>$name) {
 </tbody>
 </table>
 <div class=submit><input type=submit value="<?php echo _('Apply Changes')?>"></div>
+</form>
 <?php
 }
 require("../footer.php");

@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
 
 
@@ -29,6 +29,7 @@ if ($overwriteBody==1) {
 } else {
 
 	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+	echo "&gt; <a href=\"addquestions.php?cid=$cid&aid=$aid\">Add/Remove Questions</a> ";
 	echo "&gt; Print Test</div>\n";
 	if (!isset($_POST['heights'])) {
 		echo '<div class="cpmid"><a href="printlayoutbare.php?cid='.$cid.'&amp;aid='.$aid.'">Generate for cut-and-paste</a>';
@@ -71,9 +72,9 @@ if ($overwriteBody==1) {
 		echo "</form>\n";
 	} else {
 		echo "<form method=post action=\"printlayout.php?cid=$cid&aid=$aid&final=1\">\n";
-		echo "<input type=hidden name=heights value=\"{$_POST['heights']}\">\n";
-		echo "<input type=hidden name=pw value=\"{$_POST['pw']}\">\n";
-		echo "<input type=hidden name=ph value=\"{$_POST['ph']}\">\n";
+		echo "<input type=hidden name=heights value=\"".Sanitize::encodeStringForDisplay($_POST['heights'])."\">\n";
+		echo "<input type=hidden name=pw value=\"".Sanitize::encodeStringForDisplay($_POST['pw'])."\">\n";
+		echo "<input type=hidden name=ph value=\"".Sanitize::encodeStringForDisplay($_POST['ph'])."\">\n";
 		if (isset($_POST['points'])) {
 			echo "<input type=hidden name=points value=1>\n";
 		}
@@ -94,7 +95,7 @@ if ($overwriteBody==1) {
 		}
 		if (isset($_POST['otherheader'])) {
 			echo "<input type=hidden name=otherheader value=1>\n";
-			echo "<input type=hidden name=otherheadertext value=\"{$_POST['otherheadertext']}\">\n";
+			echo "<input type=hidden name=otherheadertext value=\"".Sanitize::encodeStringForDisplay($_POST['otherheadertext'])."\">\n";
 		}
 		echo "<h4>Final print settings</h4>\n";
 		echo "<p>Number of different versions to print: <input type=text name=versions value=\"1\"></p>\n";
@@ -102,6 +103,7 @@ if ($overwriteBody==1) {
 		echo "<p>When you press Continue, your print-ready version of the test will display.  You may wish to go into the File menu of ";
 		echo "your browser and select Page Setup to change the default headers and footers printed by your browser</p>\n";
 		echo "<p><input type=submit value=\"Continue\"></p>\n";
+		echo '</form>';
 	}
 }
 

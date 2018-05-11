@@ -3,10 +3,10 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 require("../includes/parsedatetime.php");
-require("../includes/filehandler.php");
+require_once("../includes/filehandler.php");
 
 @set_time_limit(0);
 ini_set("max_input_time", "600");
@@ -45,7 +45,7 @@ if (isset($_GET['id'])) {
 	$pagetitle = "Add Inline Text";
 }
 if (isset($_GET['tb'])) {
-	$totb = $_GET['tb'];
+	$totb = Sanitize::encodeStringForDisplay($_GET['tb']);
 } else {
 	$totb = 'b';
 }
@@ -58,8 +58,9 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 	$body = "You need to access this page from the course page menu";
 } else { // PERMISSIONS ARE OK, PROCEED WITH PROCESSING
 	$cid = Sanitize::courseId($_GET['cid']);
-	$block = $_GET['block'];
-	$page_formActionTag = "addinlinetext.php?block=$block&cid=$cid&folder=" . $_GET['folder'];
+	$block = Sanitize::encodeStringForDisplay($_GET['block']);
+	$page_formActionTag = "addinlinetext.php?" . Sanitize::generateQueryStringFromMap(array('block' => $block,
+            'cid' => $cid, 'folder' => $_GET['folder']));
 	$page_formActionTag .= "&tb=$totb";
 	$caltag = $_POST['caltag'];
 	if ($_POST['title']!= null || $_POST['text']!=null || $_POST['sdate']!=null) { //if the form has been submitted
@@ -142,18 +143,20 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 			$stm->execute(array(':itemid'=>$_GET['id']));
 			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
 				if (isset($_POST['delfile-'.$row[0]])) {
-					$filestoremove[] = $row[0];
 					//DB $query = "DELETE FROM imas_instr_files WHERE id='{$row[0]}'";
 					//DB mysql_query($query) or die("Query failed : " . mysql_error());
 					$del_file_stm->execute(array(':id'=>$row[0]));
 					//DB $query = "SELECT id FROM imas_instr_files WHERE filename='{$row[2]}'";
 					//DB $r2 = mysql_query($query) or die("Query failed : " . mysql_error());
 					//DB if (mysql_num_rows($r2)==0) {
-					$src_file_stm->execute(array(':filename'=>$row[2]));
-					if ($src_file_stm->rowCount()==0) {
-						//$uploaddir = rtrim(dirname(__FILE__), '/\\') .'/files/';
-						//unlink($uploaddir . $row[2]);
-						deletecoursefile($row[2]);
+					if (substr($row[2],0,4)!='http') {
+						$filestoremove[] = $row[0];
+						$src_file_stm->execute(array(':filename'=>$row[2]));
+						if ($src_file_stm->rowCount()==0) {
+							//$uploaddir = rtrim(dirname(__FILE__), '/\\') .'/files/';
+							//unlink($uploaddir . $row[2]);
+							deletecoursefile($row[2]);
+						}
 					}
 				} else if ($_POST['filedescr-'.$row[0]]!=$row[1]) {
 					//DB $query = "UPDATE imas_instr_files SET description='{$_POST['filedescr-'.$row[0]]}' WHERE id='{$row[0]}'";
@@ -215,7 +218,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 		}
 		if ($_FILES['userfile']['name']!='') {
 			$uploaddir = rtrim(dirname(__FILE__), '/\\') .'/files/';
-            $userfilename = Sanitize::sanitizeFilenameAndCheckBlacklist($_FILES['userfile']['name']);
+      $userfilename = Sanitize::sanitizeFilenameAndCheckBlacklist(basename(str_replace('\\','/',$_FILES['userfile']['name'])));
 			$filename = $userfilename;
 			$extension = strtolower(strrchr($userfilename,"."));
 			$badextensions = array(".php",".php3",".php4",".php5",".bat",".com",".exe",".pl",".p");
@@ -244,7 +247,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 					*/
 				if (($filename=storeuploadedcoursefile('userfile',$cid.'/'.$filename))!==false) {
 					if (trim($_POST['newfiledescr'])=='') {
-						$_POST['newfiledescr'] = $filename;
+						$_POST['newfiledescr'] = basename($filename);
 					}
 					//DB $query = "INSERT INTO imas_instr_files (description,filename,itemid) VALUES ('{$_POST['newfiledescr']}','$filename','$newtextid')";
 					//DB mysql_query($query) or die("Query failed :$query " . mysql_error());
@@ -305,7 +308,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB $line = mysql_fetch_array($result, MYSQL_ASSOC);
 		$stm = $DBH->prepare("SELECT * FROM imas_inlinetext WHERE id=:id");
-		$stm->execute(array(':id'=>$_GET['id']));
+		$stm->execute(array(':id'=>Sanitize::onlyInt($_GET['id'])));
 		$line = $stm->fetch(PDO::FETCH_ASSOC);
 		if ($line['title']=='##hidden##') {
 			$hidetitle = true;
@@ -378,7 +381,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 		if ($stm->rowCount()>0) {
 			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
 				$filedescr[$row[0]] = $row[1];
-				$filenames[$row[0]] = rawurlencode($row[2]);
+				$filenames[$row[0]] = $row[2];
 			}
 			foreach ($fileorder as $k=>$fid) {
 				$page_FileLinks[$k]['link'] = $filenames[$fid];
@@ -433,7 +436,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 	}
 	flattenarr($outcomearr);
 
-$page_formActionTag .= (isset($_GET['id'])) ? "&id=" . $_GET['id'] : "";
+$page_formActionTag .= (isset($_GET['id'])) ? "&id=" . Sanitize::onlyInt($_GET['id']) : "";
 }
 
 
@@ -455,6 +458,26 @@ function movefile(from) {
   	window.location = toopen;
   }
 }
+function chghidetitle() {
+	var titleinput = $("input[name=title]");
+	var hidetitle = $("input[name=hidetitle]").prop("checked");
+	if (hidetitle) {
+		$("#titlewrap").hide();
+		console.log(titleinput.prop("required"));
+		if (!!titleinput.prop("required")) {
+			titleinput.data("hasrequired",true);
+			titleinput.prop("required", false);
+		}
+	} else {
+		$("#titlewrap").show();
+		if (!!titleinput.data("hasrequired")) {
+			titleinput.prop("required", true);
+		}
+	}	
+}
+$(function() { chghidetitle(); });
+
+
 </script>
 
 
@@ -464,8 +487,10 @@ function movefile(from) {
 	<form enctype="multipart/form-data" method=post action="<?php echo $page_formActionTag ?>">
 	<span class=form>Title: </span>
 	<span class=formright>
+		<span id="titlewrap" <?php if ($hidetitle==true) {echo 'style="display:none;"';} ?>>
 		<input type=text size=60 name=title value="<?php echo str_replace('"','&quot;',$line['title']);?>"><br/>
-		<input type="checkbox" name="hidetitle" value="1" <?php writeHtmlChecked($hidetitle,true) ?>/>
+		</span>
+		<input type="checkbox" name="hidetitle" value="1" onclick="chghidetitle()" <?php writeHtmlChecked($hidetitle,true) ?>/>
 		Hide title and icon
 	</span><BR class=form>
 
@@ -541,7 +566,7 @@ function movefile(from) {
 			<input type=radio name="oncal" value=0 <?php writeHtmlChecked($line['oncal'],0); ?> /> No<br/>
 			<input type=radio name="oncal" value=1 <?php writeHtmlChecked($line['oncal'],1); ?> /> Yes, on Available after date (will only show after that date)<br/>
 			<input type=radio name="oncal" value=2 <?php writeHtmlChecked($line['oncal'],2); ?> /> Yes, on Available until date<br/>
-			With tag: <input name="caltag" type=text size=8 value="<?php echo $line['caltag'];?>"/>
+			With tag: <input name="caltag" type=text size=8 value="<?php echo Sanitize::encodeStringForDisplay($line['caltag']); ?>"/>
 		</span><br class="form" />
 		</div>
 		<div id="altcaldiv" style="display:<?php echo ($line['avail']==2)?"block":"none"; ?>">
@@ -552,7 +577,7 @@ function movefile(from) {
 			<input type=text size=10 name="cdate" value="<?php echo $sdate;?>">
 			<a href="#" onClick="displayDatePicker('cdate', this); return false">
 			<img src="../img/cal.gif" alt="Calendar"/></a> <br/>
-			With tag: <input name="altcaltag" type=text size=8 value="<?php echo $line['caltag'];?>"/>
+			With tag: <input name="altcaltag" type=text size=8 value="<?php echo Sanitize::encodeStringForDisplay($line['caltag']); ?>"/>
 		</span><BR class=form>
 		</div>
 <?php

@@ -4,7 +4,8 @@
 //(c) 2010 David Lippman
 
 /*** master includes ***/
-require("./validate.php");
+require("./init.php");
+$now = time();
 
 //0: classes you're teaching
 //1: classes you're tutoring
@@ -17,9 +18,12 @@ require("./validate.php");
 //DB $query = "SELECT homelayout,hideonpostswidget FROM imas_users WHERE id='$userid'";
 //DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 //DB list($homelayout,$hideonpostswidget) = mysql_fetch_row($result);
-$stm = $DBH->prepare("SELECT homelayout,hideonpostswidget FROM imas_users WHERE id=:id");
+$stm = $DBH->prepare("SELECT homelayout,hideonpostswidget,jsondata FROM imas_users WHERE id=:id");
 $stm->execute(array(':id'=>$userid));
-list($homelayout,$hideonpostswidget) = $stm->fetch(PDO::FETCH_NUM);
+list($homelayout,$hideonpostswidget,$jsondata) = $stm->fetch(PDO::FETCH_NUM);
+$jsondata = json_decode($jsondata, true);
+$courseListOrder = isset($jsondata['courseListOrder'])?$jsondata['courseListOrder']:null;
+
 if ($hideonpostswidget!='') {
 	$hideonpostswidget = explode(',',$hideonpostswidget);
 } else {
@@ -59,17 +63,24 @@ $placeinhead = '
    #homefullwidth { clear: both;}
   </style>';
 $placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/tablesorter.js\"></script>\n";
-$placeinhead .= '<script type="text/javascript">$(function() {
+if ($myrights>15) {
+  $placeinhead .= '<script type="text/javascript">$(function() {
   var html = \'<div class="coursedd dropdown"><a role="button" tabindex=0 class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="img/gears.png" alt="Options"/></a>\';
   html += \'<ul role="menu" class="dropdown-menu dropdown-menu-right">\';
-  $(".courselist-teach li").css("clear","both").each(function (i,el) {
-  	if ($(el).attr("data-isowner")=="true") {
+  $(".courselist-teach li:not(.coursegroup)").css("clear","both").each(function (i,el) {
+  	if ($(el).attr("data-isowner")=="true" && '.($myrights>39?'true':'false').') {
   		var cid = $(el).attr("data-cid");
   		var thishtml = html + \' <li><a href="admin/forms.php?from=home&action=modify&id=\'+cid+\'">'._('Settings').'</a></li>\';
   		thishtml += \' <li><a href="#" onclick="hidefromcourselist(this,\'+cid+\',\\\'teach\\\');return false;">'._('Hide from course list').'</a></li>\';
-  		thishtml += \' <li><a href="admin/forms.php?from=home&action=chgteachers&id=\'+cid+\'">'._('Add/remove teachers').'</a></li>\';
-  		thishtml += \' <li><a href="admin/forms.php?from=home&action=transfer&id=\'+cid+\'">'._('Transfer ownership').'</a></li>\';
+  		thishtml += \' <li><a href="admin/addremoveteachers.php?from=home&id=\'+cid+\'">'._('Add/remove teachers').'</a></li>\';
+  		thishtml += \' <li><a href="admin/transfercourse.php?from=home&id=\'+cid+\'">'._('Transfer ownership').'</a></li>\';
   		thishtml += \' <li><a href="admin/forms.php?from=home&action=delete&id=\'+cid+\'">'._('Delete').'</a></li>\';
+  		thishtml += \'</ul></div>\';
+  		$(el).append(thishtml);
+  	} else if ($(el).attr("data-isowner")!="true") {
+  		var cid = $(el).attr("data-cid");
+  		var thishtml = html + \' <li><a href="#" onclick="hidefromcourselist(this,\'+cid+\',\\\'teach\\\');return false;">'._('Hide from course list').'</a></li>\';
+  		thishtml += \' <li><a href="#" onclick="removeSelfAsCoteacher(this,\'+cid+\');return false;">'._('Remove yourself as a co-teacher').'</a></li>\';
   		thishtml += \'</ul></div>\';
   		$(el).append(thishtml);
   	}
@@ -77,6 +88,7 @@ $placeinhead .= '<script type="text/javascript">$(function() {
   $(".dropdown-toggle").dropdown();
   });
   </script>';
+}
 $nologo = true;
 
 
@@ -119,20 +131,18 @@ if ($showmessagesgadget) {
 	$stm = $DBH->prepare("SELECT courseid,COUNT(id) FROM imas_msgs WHERE msgto=:msgto AND (isread=0 OR isread=4) GROUP BY courseid");
 	$stm->execute(array(':msgto'=>$userid));
 	while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-		$newmsgcnt[$row[0]] = $row[1];
+		$newmsgcnt[$row[0]] = Sanitize::onlyInt($row[1]);
 	}
 }
 
 $page_studentCourseData = array();
 
 // check to see if the user is enrolled as a student
-//DB $query = "SELECT imas_courses.name,imas_courses.id,imas_students.hidefromcourselist FROM imas_students,imas_courses ";
-//DB $query .= "WHERE imas_students.courseid=imas_courses.id AND imas_students.userid='$userid' ";
-//DB $query .= "AND (imas_courses.available=0 OR imas_courses.available=2) ORDER BY imas_courses.name";
-//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-$query = "SELECT imas_courses.name,imas_courses.id,imas_students.hidefromcourselist FROM imas_students,imas_courses ";
+$query = "SELECT imas_courses.name,imas_courses.id,imas_courses.startdate,imas_courses.enddate,imas_students.hidefromcourselist,";
+$query .= "IF(UNIX_TIMESTAMP()<imas_courses.startdate OR UNIX_TIMESTAMP()>imas_courses.enddate,0,1) as active ";
+$query .= "FROM imas_students,imas_courses ";
 $query .= "WHERE imas_students.courseid=imas_courses.id AND imas_students.userid=:userid ";
-$query .= "AND (imas_courses.available=0 OR imas_courses.available=2) ORDER BY imas_courses.name";
+$query .= "AND (imas_courses.available=0 OR imas_courses.available=2) ORDER BY active DESC,imas_courses.name";
 $stm = $DBH->prepare($query);
 $stm->execute(array(':userid'=>$userid));
 $stuhashiddencourses = false;
@@ -146,7 +156,11 @@ if ($stm->rowCount()==0) {
 			$stuhashiddencourses = true;
 		} else {
 			$noclass = false;
-			$page_studentCourseData[] = $line;
+			if (!empty($courseListOrder) && isset($courseListOrder['take'])) {
+				$page_studentCourseData[$line['id']] = $line;
+			} else {
+				$page_studentCourseData[] = $line;
+			}
 			$page_coursenames[$line['id']] = $line['name'];
 			if (!in_array($line['id'],$hideonpostswidget)) {
 				$postcheckstucids[] = $line['id'];
@@ -163,9 +177,11 @@ if ($myrights>10) {
 	//DB $query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY imas_courses.name";
 	//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 	//DB if (mysql_num_rows($result)==0) {
-	$query = "SELECT imas_courses.name,imas_courses.id,imas_courses.available,imas_courses.lockaid,imas_courses.ownerid,imas_teachers.hidefromcourselist FROM imas_teachers,imas_courses ";
+	$query = "SELECT imas_courses.name,imas_courses.id,imas_courses.available,imas_courses.startdate,imas_courses.enddate,imas_courses.lockaid,imas_courses.ownerid,imas_teachers.hidefromcourselist,";
+	$query .= "IF(UNIX_TIMESTAMP()<imas_courses.startdate OR UNIX_TIMESTAMP()>imas_courses.enddate,0,1) as active ";
+	$query .= "FROM imas_teachers,imas_courses ";
 	$query .= "WHERE imas_teachers.courseid=imas_courses.id AND imas_teachers.userid=:userid ";
-	$query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY imas_courses.name";
+	$query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY active DESC,imas_courses.name";
 	$stm = $DBH->prepare($query);
 	$stm->execute(array(':userid'=>$userid));
 	$teachhashiddencourses = false;
@@ -178,7 +194,12 @@ if ($myrights>10) {
 				$teachhashiddencourses = true;
 			} else {
 				$noclass = false;
-				$page_teacherCourseData[] = $line;
+				if (!empty($courseListOrder) && isset($courseListOrder['teach'])) {
+					$page_teacherCourseData[$line['id']] = $line;
+				} else {
+					$page_teacherCourseData[] = $line;
+				}
+				
 				$page_coursenames[$line['id']] = $line['name'];
 				if (!in_array($line['id'],$hideonpostswidget)) {
 					$postcheckcids[] = $line['id'];
@@ -195,9 +216,11 @@ $page_tutorCourseData = array();
 //DB $query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY imas_courses.name";
 //DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 //DB if (mysql_num_rows($result)==0) {
-$query = "SELECT imas_courses.name,imas_courses.id,imas_courses.available,imas_courses.lockaid,imas_tutors.hidefromcourselist FROM imas_tutors,imas_courses ";
+$query = "SELECT imas_courses.name,imas_courses.id,imas_courses.available,imas_courses.startdate,imas_courses.enddate,imas_courses.lockaid,imas_tutors.hidefromcourselist,";
+$query .= "IF(UNIX_TIMESTAMP()<imas_courses.startdate OR UNIX_TIMESTAMP()>imas_courses.enddate,0,1) as active ";
+$query .= "FROM imas_tutors,imas_courses ";
 $query .= "WHERE imas_tutors.courseid=imas_courses.id AND imas_tutors.userid=:userid ";
-$query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY imas_courses.name";
+$query .= "AND (imas_courses.available=0 OR imas_courses.available=1) ORDER BY active DESC,imas_courses.name";
 $stm = $DBH->prepare($query);
 $stm->execute(array(':userid'=>$userid));
 $tutorhashiddencourses = false;
@@ -210,7 +233,11 @@ if ($stm->rowCount()==0) {
 			$tutorhashiddencourses = true;
 		} else {
 			$noclass = false;
-			$page_tutorCourseData[] = $line;
+			if (!empty($courseListOrder) && isset($courseListOrder['tutor'])) {
+				$page_tutorCourseData[$line['id']] = $line;
+			} else {
+				$page_tutorCourseData[] = $line;
+			}
 			$page_coursenames[$line['id']] = $line['name'];
 			if (!in_array($line['id'],$hideonpostswidget)) {
 				$postcheckstucids[] = $line['id'];
@@ -244,10 +271,10 @@ if ($showpostsgadget && count($postcheckcids)>0) {
 	$query .= "JOIN imas_forums ON imas_forum_threads.forumid=imas_forums.id ";
 	$query .= "AND imas_forums.courseid IN ($postcidlist) ";  //is int's from DB - safe
 	$query .= "LEFT JOIN imas_forum_views as mfv ON mfv.threadid=imas_forum_threads.id AND mfv.userid=:userid ";
-	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
+	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) AND imas_forum_threads.lastposttime<:now ";
 	$query .= "ORDER BY imas_forum_threads.lastposttime DESC";
 	$stm = $DBH->prepare($query);
-	$stm->execute(array(':userid'=>$userid));
+	$stm->execute(array(':userid'=>$userid, ':now'=>$now));
 	while ($line = $stm->fetch(PDO::FETCH_ASSOC)) {
 		if (!isset($newpostcnt[$line['courseid']])) {
 			$newpostcnt[$line['courseid']] = 1;
@@ -282,12 +309,12 @@ if ($showpostsgadget && count($postcheckcids)>0) {
 	$query .= "JOIN imas_forums ON imas_forum_threads.forumid=imas_forums.id ";
 	$query .= "AND imas_forums.courseid IN ($postcidlist) ";    //is int's from DB - safe
 	$query .= "LEFT JOIN imas_forum_views as mfv ON mfv.threadid=imas_forum_threads.id AND mfv.userid=:userid ";
-	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
+	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) AND imas_forum_threads.lastposttime<:now ";
 	//this is not consistent with above...
 	//$query .= "AND (imas_forum_threads.stugroupid=0 OR imas_forum_threads.stugroupid IN (SELECT stugroupid FROM imas_stugroupmembers WHERE userid=:useridB)) ";
 	$query .= "GROUP BY imas_forums.courseid";
 	$stm2 = $DBH->prepare($query);
-	$stm2->execute(array(':userid'=>$userid));
+	$stm2->execute(array(':userid'=>$userid, ':now'=>$now));
 	while ($row = $stm2->fetch(PDO::FETCH_NUM)) {
 		$newpostcnt[$row[0]] = $row[1];
 	}
@@ -315,11 +342,11 @@ if ($showpostsgadget && count($postcheckstucids)>0) {
 	$query .= "AND (imas_forums.avail=2 OR (imas_forums.avail=1 AND imas_forums.startdate<$now && imas_forums.enddate>$now)) ";
 	$query .= "AND imas_forums.courseid IN ($poststucidlist) "; //is int's from DB - safe
 	$query .= "LEFT JOIN imas_forum_views as mfv ON mfv.threadid=imas_forum_threads.id AND mfv.userid=:userid ";
-	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
+	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) AND imas_forum_threads.lastposttime<:now ";
 	$query .= "AND (imas_forum_threads.stugroupid=0 OR imas_forum_threads.stugroupid IN (SELECT stugroupid FROM imas_stugroupmembers WHERE userid=:useridB)) ";
 	$query .= "ORDER BY imas_forum_threads.lastposttime DESC";
 	$stm = $DBH->prepare($query);
-	$stm->execute(array(':userid'=>$userid, ':useridB'=>$userid));
+	$stm->execute(array(':userid'=>$userid, ':useridB'=>$userid, ':now'=>$now));
 	while ($line = $stm->fetch(PDO::FETCH_ASSOC)) {
 		if (!isset($newpostcnt[$line['courseid']])) {
 			$newpostcnt[$line['courseid']] = 1;
@@ -356,11 +383,11 @@ if ($showpostsgadget && count($postcheckstucids)>0) {
 	$query .= "AND (imas_forums.avail=2 OR (imas_forums.avail=1 AND imas_forums.startdate<$now && imas_forums.enddate>$now)) ";
 	$query .= "AND imas_forums.courseid IN ($poststucidlist) "; //int's from DB - safe
 	$query .= "LEFT JOIN imas_forum_views as mfv ON mfv.threadid=imas_forum_threads.id AND mfv.userid=:userid ";
-	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
+	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) AND imas_forum_threads.lastposttime<:now ";
 	$query .= "AND (imas_forum_threads.stugroupid=0 OR imas_forum_threads.stugroupid IN (SELECT stugroupid FROM imas_stugroupmembers WHERE userid=:useridB)) ";
 	$query .= "GROUP BY imas_forums.courseid";
 	$stm2 = $DBH->prepare($query);
-	$stm2->execute(array(':userid'=>$userid, ':useridB'=>$userid));
+	$stm2->execute(array(':userid'=>$userid, ':useridB'=>$userid, ':now'=>$now));
 	while ($row = $stm2->fetch(PDO::FETCH_NUM)) {
 		$newpostcnt[$row[0]] = $row[1];
 	}
@@ -379,28 +406,32 @@ if ($myrights==100) {
 /*** done pulling stuff.  Time to display something ***/
 require("header.php");
 $msgtotal = array_sum($newmsgcnt);
-echo '<div class="floatright" id="homelinkbox" role="navigation" aria-label="'._('Site tools').'">';
-if (!isset($CFG['GEN']['hidedefindexmenu'])) {
-	if ($myrights>5) {
-		echo "<a href=\"forms.php?action=chguserinfo\">", _('Change User Info'), "</a> | \n";
-		echo "<a href=\"forms.php?action=chgpwd\">", _('Change Password'), "</a> | \n";
+if (!isset($CFG['GEN']['homelinkbox'])) {
+	echo '<div class="floatright" id="homelinkbox" role="navigation" aria-label="'._('Site tools').'">';
+	if (!isset($CFG['GEN']['hidedefindexmenu'])) {
+		if ($myrights>5) {
+			echo "<a href=\"forms.php?action=chguserinfo\">", _('Change User Info'), "</a> | \n";
+			echo "<a href=\"forms.php?action=chgpwd\">", _('Change Password'), "</a> | \n";
+		}
+		echo '<a href="actions.php?action=logout">', _('Log Out'), '</a><br/>';
 	}
-	echo '<a href="actions.php?action=logout">', _('Log Out'), '</a><br/>';
-}
-echo '<a href="msgs/msglist.php?cid=0">', _('Messages'), '</a>';
-if ($msgtotal>0) {
-	echo ' <a href="msgs/newmsglist.php?cid=0" class="noticetext">', sprintf(_('New (%d)'), $msgtotal), '</a>';
-}
-if ($myrights > 10) {
-	echo " | <a href=\"docs/docs.php\">", _('Documentation'), "</a>\n";
-} else if ($myrights > 9) {
-	echo " | <a href=\"help.php?section=usingimas\">", _('Help'), "</a>\n";
-}
-if ($myrights >=75) {
-	echo '<br/><a href="admin/admin.php">'._('Admin Page').'</a>';
+	echo '<a href="msgs/msglist.php?cid=0">', _('Messages'), '</a>';
+	if ($msgtotal>0) {
+		echo ' <a href="msgs/newmsglist.php?cid=0" class="noticetext">', sprintf(_('New (%d)'), Sanitize::onlyFloat($msgtotal)), '</a>';
+	}
+	if ($myrights > 10) {
+		echo " | <a href=\"docs/docs.php\">", _('Documentation'), "</a>\n";
+	} else if ($myrights > 9) {
+		echo " | <a href=\"help.php?section=usingimas\">", _('Help'), "</a>\n";
+	}
+	if ($myrights >=75) {
+		echo '<br/><a href="admin/admin2.php">'._('Admin Page').'</a>';
+	} else if (($myspecialrights&4)==4) {
+		echo '<br/><a href="admin/listdiag.php">'._('Diagnostics').'</a>';
+	}
+	echo '</div>';
 }
 
-echo '</div>';
 echo '<div class="pagetitle" id="headerhome" role="banner"><h2>';
 if (isset($CFG['GEN']['hometitle'])) {
 	echo $CFG['GEN']['hometitle'];
@@ -408,10 +439,34 @@ if (isset($CFG['GEN']['hometitle'])) {
 	echo _('Welcome to'), " $installname, " . Sanitize::encodeStringForDisplay($userfullname);
 }
 echo '</h2>';
-if ($myrights==100 && count($brokencnt)>0) {
-	echo '<span class="noticetext">'.array_sum($brokencnt).'</span> questions, '.(array_sum($brokencnt)-$brokencnt[0]).' public, reported broken systemwide';
-}
 echo '</div>';
+if (isset($sessiondata['emulateuseroriginaluser'])) {
+	echo '<p>Currenting emulating this user.  <a href="util/utils.php?unemulateuser=true">Stop emulating user</a></p>';
+}
+if ($myrights==100 && count($brokencnt)>0) {
+	echo '<div><span class="noticetext">'.Sanitize::onlyFloat(array_sum($brokencnt)).'</span> questions, '.(array_sum($brokencnt)-$brokencnt[0]).' public, reported broken systemwide</div>';
+}
+if ($myrights<75 && ($myspecialrights&(16+32))!=0) {
+	echo '<div>';
+	if (($myspecialrights&(16+32))!=0) {
+		echo '<a href="admin/forms.php?from=home&action=newadmin">'._('Add New User').'</a> ';
+	}
+	echo '</div>';
+}
+if ($myrights==100 || ($myspecialrights&64)!=0) {
+	$stm = $DBH->query("SELECT status,count(userid) FROM imas_instr_acct_reqs WHERE status<10 GROUP BY status ORDER BY status");
+	$newreqs = array();
+	while ($row = $stm->fetch(PDO::FETCH_NUM)) {
+		$newreqs[$row[0]] = $row[1];
+	}
+	if (count($newreqs)>0) {
+		echo '<div> There are <span class=noticetext>'.(isset($newreqs[0])?$newreqs[0]:0).'</span> new account requests';
+		if (count($newreqs)>1 || !isset($newreqs[0])) {
+			echo ' and <span class=noticetext>'.array_sum($newreqs).'</span> pending requests';
+		}
+		echo '. <a href="admin/approvepending2.php?from=home">'._('Approve Pending Instructor Accounts').'</a>';
+	}
+}
 if (isset($tzname) && isset($sessiondata['logintzname']) && $tzname!=$sessiondata['logintzname']) {
 	echo '<div class="sysnotice">'.sprintf(_('Notice: You have requested that times be displayed based on the <b>%s</b> time zone, and your computer is reporting you are currently in a different time zone. Be aware that times will display based on the %s timezone as requested, not your local time'),$tzname,$tzname).'</div>';
 }
@@ -456,39 +511,26 @@ for ($i=0; $i<3; $i++) {
 
 require('./footer.php');
 
-
 function printCourses($data,$title,$type=null,$hashiddencourses=false) {
-	global $shownewmsgnote, $shownewpostnote, $imasroot,$userid;
+	global $myrights, $shownewmsgnote, $shownewpostnote, $imasroot, $userid, $courseListOrder;
 	if (count($data)==0 && $type=='tutor') {return;}
-	global $myrights,$showmessagesgadget,$showpostsgadget,$newmsgcnt,$newpostcnt;
+	
 	echo '<div role="navigation" aria-label="'.$title.'">';
 	echo '<div class="block"><h3>'.$title.'</h3></div>';
-	echo '<div class="blockitems"><ul class="nomark courselist courselist-'.$type.'">';
-	for ($i=0; $i<count($data); $i++) {
-		echo '<li';
-		if ($type=='teach' && $myrights>39) {
-			echo ' data-isowner="'.($data[$i]['ownerid']==$userid?'true':'false').'"';
-			echo ' data-cid="'.$data[$i]['id'].'"';
+	echo '<div class="blockitems"><ul class="courselist courselist-'.$type.'">';
+	if (!empty($courseListOrder) && isset($courseListOrder[$type])) {
+		$printed = array();
+		printCourseOrder($courseListOrder[$type], $data, $type, $printed);
+		$notlisted = array_diff(array_keys($data), $printed);
+		foreach ($notlisted as $i) {
+			if (isset($data[$i])) {
+				printCourseLine($data[$i], $type);
+			}
 		}
-		echo '>';
-		echo '<a href="course/course.php?folder=0&cid='.$data[$i]['id'].'">';
-		echo Sanitize::encodeStringForDisplay($data[$i]['name']).'</a>';
-		if (isset($data[$i]['available']) && (($data[$i]['available']&1)==1)) {
-			echo ' <span style="color:green;">', _('Hidden'), '</span>';
+	} else {
+		for ($i=0; $i<count($data); $i++) {
+			printCourseLine($data[$i], $type);
 		}
-		if (isset($data[$i]['lockaid']) && $data[$i]['lockaid']>0) {
-			echo ' <span style="color:green;">', _('Lockdown'), '</span>';
-		}
-		if ($shownewmsgnote && isset($newmsgcnt[$data[$i]['id']]) && $newmsgcnt[$data[$i]['id']]>0) {
-			echo ' <a class="noticetext" href="msgs/msglist.php?cid='.$data[$i]['id'].'">', sprintf(_('Messages (%d)'), $newmsgcnt[$data[$i]['id']]), '</a>';
-		}
-		if ($shownewpostnote && isset($newpostcnt[$data[$i]['id']]) && $newpostcnt[$data[$i]['id']]>0) {
-			echo ' <a class="noticetext" href="forums/newthreads.php?from=home&cid='.$data[$i]['id'].'">', sprintf(_('Posts (%d)'), $newpostcnt[$data[$i]['id']]), '</a>';
-		}
-		if ($type != 'teach' || $data[$i]['ownerid']!=$userid || $myrights<40) {
-			echo '<div class="delx"><a href="#" onclick="return hidefromcourselist(this,'.$data[$i]['id'].',\''.$type.'\');" title="'._("Hide from course list").'" aria-label="'._("Hide from course list").'">x</a></div>';
-		}
-		echo '</li>';
 	}
 	if ($type=='teach' && $myrights>39 && count($data)==0) {
 		echo '<li>', _('To add a course, click the button below'), '</li>';
@@ -496,6 +538,7 @@ function printCourses($data,$title,$type=null,$hashiddencourses=false) {
 		echo '<li>', _('Your instructor account has not been approved yet. Please be patient.'), '</li>';
 	}
 	echo '</ul>';
+
 	if ($type=='take') {
 		echo '<div class="center"><a class="abutton" href="forms.php?action=enroll">', _('Enroll in a New Class'), '</a></div>';
 	} else if ($type=='teach' && $myrights>39) {
@@ -503,13 +546,79 @@ function printCourses($data,$title,$type=null,$hashiddencourses=false) {
 	}
 
 	echo '<div class="center">';
+	if (count($data)>0) {
+		echo '<a class="small" href="admin/modcourseorder.php?type='.$type.'">Change Course Order</a>';
+	}
+	echo '</div><div class="center">';
 	echo '<a id="unhidelink'.$type.'" '.($hashiddencourses?'':'style="display:none"').' class="small" href="admin/unhidefromcourselist.php?type='.$type.'">View hidden courses</a>';
 	echo '</div>';
 	if ($type=='teach' && ($myrights>=75 || ($myspecialrights&4)==4)) {
-		echo '<div class="center"><a class="abutton" href="admin/admin.php">', _('Admin Page'), '</a></div>';
+		echo '<div class="center"><a class="abutton" href="admin/admin2.php">', _('Admin Page'), '</a></div>';
 	}
 	echo '</div>';
 	echo '</div>';
+}
+
+function printCourseOrder($order, $data, $type, &$printed) {
+	foreach ($order as $item) {
+		if (is_array($item)) {
+			echo '<li class="coursegroup"><b>'.Sanitize::encodeStringForDisplay($item['name']).'</b>';
+			echo '<ul class="courselist">';
+			printCourseOrder($item['courses'], $data, $type, $printed);
+			echo '</ul></li>';
+		} else if (isset($data[$item])) {
+			printCourseLine($data[$item], $type);
+			$printed[] = $item;
+		}
+	}		
+}
+
+function printCourseLine($data, $type=null) {
+	global $shownewmsgnote, $shownewpostnote, $userid;
+	global $myrights, $newmsgcnt, $newpostcnt;
+	$now = time();
+	
+	echo '<li';
+	if ($type=='teach' && $myrights>19) {
+		echo ' data-isowner="'.($data['ownerid']==$userid?'true':'false').'"';
+		echo ' data-cid="'.$data['id'].'"';
+	}
+	echo '>';
+	if ($type!='take' || $now>$data['startdate']) {
+		echo '<a href="course/course.php?folder=0&cid='.$data['id'].'">';
+		echo Sanitize::encodeStringForDisplay($data['name']).'</a>';
+	} else {
+		echo Sanitize::encodeStringForDisplay($data['name']);
+	}
+	if (isset($data['available']) && (($data['available']&1)==1)) {
+		echo ' <em style="color:green;">', _('Unavailable'), '</em>';
+	}
+	if (isset($data['startdate']) && $now<$data['startdate']) {
+		echo ' <em style="color:green;">';
+		echo _('Starts ').tzdate('m/d/Y', $data['startdate']);
+		echo '</em>';
+	} else if (isset($data['enddate']) && $now>$data['enddate']) {
+		echo ' <em style="color:green;">';
+		echo _('Ended ').tzdate('m/d/Y', $data['enddate']);
+		echo '</em>';
+	}
+	
+	if (isset($data['lockaid']) && $data['lockaid']>0) {
+		echo ' <em style="color:green;">', _('Lockdown'), '</em>';
+	}
+	if ($shownewmsgnote && isset($newmsgcnt[$data['id']]) && $newmsgcnt[$data['id']]>0) {
+		echo ' <a class="noticetext" href="msgs/msglist.php?page=-1&cid='.$data['id'].'">', sprintf(_('Messages (%d)'), $newmsgcnt[$data['id']]), '</a>';
+	}
+	if ($shownewpostnote && isset($newpostcnt[$data['id']]) && $newpostcnt[$data['id']]>0) {
+		printf(' <a class="noticetext" href="forums/newthreads.php?from=home&cid=%d">%s</a>',$data['id'],
+		_('Posts ('.Sanitize::onlyInt($newpostcnt[$data['id']]).')'));
+		// echo ' <a class="noticetext" href="forums/newthreads.php?from=home&cid='.Sanitize::encodeUrlParam($data['id']).'">', sprintf(_('Posts (%d)'), $newpostcnt[$data['id']]), '</a>';
+	}
+	if ($type != 'teach' || ($data['ownerid']==$userid && $myrights<40) || $myrights<20) {
+		echo '<div class="delx"><a href="#" onclick="return hidefromcourselist(this,'.$data['id'].',\''.$type.'\');" title="'._("Hide from course list").'" aria-label="'._("Hide from course list").'">x</a></div>';
+	}
+	echo '</li>';
+	
 }
 
 function printMessagesGadget() {

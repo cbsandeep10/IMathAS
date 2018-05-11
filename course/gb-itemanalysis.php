@@ -1,7 +1,7 @@
 <?php
 //IMathAS:  Item Analysis (averages)
 //(c) 2007 David Lippman
-	require("../validate.php");
+	require("../init.php");
 
 	$isteacher = isset($teacherid);
 	$cid = Sanitize::courseId($_GET['cid']);
@@ -92,24 +92,29 @@
 	$stm = $DBH->prepare("SELECT defpoints,name,itemorder,defoutcome,showhints FROM imas_assessments WHERE id=:id");
 	$stm->execute(array(':id'=>$aid));
 	list($defpoints, $aname, $itemorder, $defoutcome, $showhints) = $stm->fetch(PDO::FETCH_NUM);
-	echo $aname.'</h2></div>';
+	echo Sanitize::encodeStringForDisplay($aname) . '</h2></div>';
 
 
 	$itemarr = array();
 	$itemnum = array();
+	$curqnum = 1;
 	foreach (explode(',',$itemorder) as $k=>$itel) {
 		if (strpos($itel,'~')!==false) {
 			$sub = explode('~',$itel);
 			if (strpos($sub[0],'|')!==false) {
-				array_shift($sub);
+				$grppts = explode('|', array_shift($sub));
+			} else {
+				$grppts = array(1);
 			}
 			foreach ($sub as $j=>$itsub) {
 				$itemarr[] = $itsub;
-				$itemnum[$itsub] = ($k+1).'-'.($j+1);
+				$itemnum[$itsub] = $curqnum.'-'.($j+1);
 			}
+			$curqnum += $grppts[0];
 		} else {
 			$itemarr[] = $itel;
-			$itemnum[$itel] = ($k+1);
+			$itemnum[$itel] = $curqnum;
+			$curqnum++;
 		}
 	}
 
@@ -317,15 +322,11 @@
 					$avgtota = round($timeontask[$qid]/($tcnt[$qid]),2);
 					if ($avgtot==0) {
 						$avgtot = 'N/A';
-					} else if ($avgtot<60) {
-						$avgtot .= ' sec';
 					} else {
 						$avgtot = round($avgtot/60,2) . ' min';
 					}
 					if ($avgtota==0) {
 						$avgtot = 'N/A';
-					} else if ($avgtota<60) {
-						$avgtota .= ' sec';
 					} else {
 						$avgtota = round($avgtota/60,2) . ' min';
 					}
@@ -347,24 +348,24 @@
 				echo '<span class="noticetext">Withdrawn</span> ';
 			}
 			echo Sanitize::encodeStringForDisplay($descrips[$qid]) . "</td>";
-			echo "<td><a href=\"gradeallq.php?stu=$stu&cid=$cid&asid=average&aid=$aid&qid=$qid\" ";
+			echo "<td><a href=\"gradeallq.php?stu=" . Sanitize::encodeUrlParam($stu) . "&cid=$cid&asid=average&aid=" . Sanitize::onlyInt($aid) . "&qid=" . Sanitize::onlyInt($qid) . "\" ";
 			if (isset($needmanualgrade[$qid])) {
 				echo 'class="manualgrade" ';
 			}
 			echo ">Grade</a></td>";
 			//echo "<td>$avg/$pts ($pc%)</td>";
 			echo sprintf("<td class=\"pointer c\" onclick=\"GB_show('Low Scores','gb-itemanalysisdetail.php?cid=%s&aid=%d&qid=%d&type=score',500,500);return false;\"><b>%.0f%%</b></td>",
-                $cid, $aid, $qid, $pc2);
+                $cid, Sanitize::onlyInt($aid), Sanitize::onlyInt($qid), $pc2);
 			echo sprintf("<td class=\"pointer\" onclick=\"GB_show('Most Attempts and Regens','gb-itemanalysisdetail.php?cid=%s&aid=%d&qid=%d&type=att',500,500);return false;\">%s (%s)</td>",
-                $cid, $aid, $qid, Sanitize::encodeStringForDisplay($avgatt), Sanitize::encodeStringForDisplay($avgreg));
+                $cid, Sanitize::onlyInt($aid), Sanitize::onlyInt($qid), Sanitize::encodeStringForDisplay($avgatt), Sanitize::encodeStringForDisplay($avgreg));
 			echo sprintf("<td class=\"pointer c\" onclick=\"GB_show('Incomplete','gb-itemanalysisdetail.php?cid=%s&aid=%d&qid=%d&type=incomp',500,500);return false;\">%s%%</td>",
-                $cid, $aid, $qid, Sanitize::encodeStringForDisplay($pi));
+                $cid, Sanitize::onlyInt($aid), Sanitize::onlyInt($qid), Sanitize::encodeStringForDisplay($pi));
 			echo sprintf("<td class=\"pointer\" onclick=\"GB_show('Most Time','gb-itemanalysisdetail.php?cid=%s&aid=%d&qid=%d&type=time',500,500);return false;\">%s (%s)</td>",
-                $cid, $aid, $qid, Sanitize::encodeStringForDisplay($avgtot), Sanitize::encodeStringForDisplay($avgtota));
+                $cid, Sanitize::onlyInt($aid), Sanitize::onlyInt($qid), Sanitize::encodeStringForDisplay($avgtot), Sanitize::encodeStringForDisplay($avgtota));
 			if ($showhints==1) {
-				if ($showextref[$qid]) {
+				if ($showextref[$qid] && $qcnt[$qid]!=$qincomplete[$qid]) {
 					echo sprintf("<td class=\"pointer c\" onclick=\"GB_show('Got Help','gb-itemanalysisdetail.php?cid=%s&aid=%d&qid=%d&type=help',500,500);return false;\">%.0f%%</td>",
-                        $cid, $aid, $qid, round(100*$vidcnt[$qid]/($qcnt[$qid] - $qincomplete[$qid])));
+                        $cid, Sanitize::onlyInt($aid), Sanitize::onlyInt($qid), round(100*$vidcnt[$qid]/($qcnt[$qid] - $qincomplete[$qid])));
 				} else {
 					echo '<td class="c">N/A</td>';
 				}

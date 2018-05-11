@@ -1,21 +1,41 @@
 <?php
 //IMathAS:  Admin forms
 //(c) 2006 David Lippman
-require("../validate.php");
+require("../init.php");
+$placeinhead = '<script type="text/javascript" src="'.$imasroot.'/javascript/jquery.validate.min.js?v=122917"></script>';
+$placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/DatePicker.js\"></script>";
 require("../header.php");
+require("../includes/htmlutil.php");
 
-$from = 'admin';
-$backloc = 'admin.php';
-if (isset($_GET['from'])) {
+$from = 'admin2';
+$backloc = 'admin2.php';
+if (!empty($_GET['from'])) {
 	if ($_GET['from']=='home') {
 		$from = 'home';
 		$backloc = '../index.php';
+	} else if ($_GET['from']=='admin2') {
+		$from = 'admin2';
+		$backloc = 'admin2.php';
+	} else if (substr($_GET['from'],0,2)=='ud') {
+		$userdetailsuid = Sanitize::onlyInt(substr($_GET['from'],2));
+		$from = 'ud'.$userdetailsuid;
+		$backloc = 'userdetails.php?id='.Sanitize::encodeUrlParam($userdetailsuid);
+	} else if (substr($_GET['from'],0,2)=='gd') {
+		$groupdetailsgid = Sanitize::onlyInt(substr($_GET['from'],2));
+		$from = 'gd'.$groupdetailsgid;
+		$backloc = 'admin2.php?groupdetails='.Sanitize::encodeUrlParam($groupdetailsgid);
 	}
 }
 if (!isset($_GET['cid'])) {
 	echo "<div class=breadcrumb>$breadcrumbbase ";
-	if ($from != 'home') {
-		echo "<a href=\"admin.php\">Admin</a> &gt; ";
+	if ($from == 'admin') {
+		echo "<a href=\"admin2.php\">Admin</a> &gt; ";
+	} else if ($from == 'admin2') {
+		echo '<a href="admin2.php">'._('Admin').'</a> &gt; ';
+	} else if (substr($_GET['from'],0,2)=='ud') {
+		echo '<a href="admin2.php">'._('Admin').'</a> &gt; <a href="'.$backloc.'">'._('User Details').'</a> &gt; ';
+	} else if (substr($_GET['from'],0,2)=='gd') {
+		echo '<a href="admin2.php">'._('Admin').'</a> &gt; <a href="'.$backloc.'">'._('Group Details').'</a> &gt; ';
 	}
 	echo "Form</div>\n";
 }
@@ -30,45 +50,71 @@ switch($_GET['action']) {
 		$stm->execute(array(':id'=>$_GET['id']));
 		$name = $stm->fetchColumn(0);
 		echo '<div id="headerforms" class="pagetitle"><h2>Delete Course</h2></div>';
-		echo "<p>Are you sure you want to delete the course <b>$name</b>?</p>\n";
-		echo "<p><input type=button value=\"Delete\" onclick=\"window.location='actions.php?from=$from&action=delete&id=".Sanitize::encodeUrlParam($_GET['id'])."'\">\n";
-		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='$backloc'\"></p>\n";
+		echo "<p>Are you sure you want to delete the course <b>".Sanitize::encodeStringForDisplay($name)."</b>?</p>\n";
+		echo '<form method="POST" action="actions.php?from='.Sanitize::encodeUrlParam($from).'&id='.Sanitize::encodeUrlParam($_GET['id']).'">';
+		echo '<p><button type=submit name="action" value="delete">'._('Delete').'</button>';
+		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='".Sanitize::encodeStringForJavascript($backloc)."'\"></p>\n";
+		echo '</form>';
 		break;
 	case "deladmin":
-		echo "<p>Are you sure you want to delete this user?</p>\n";
-		echo "<p><input type=button value=\"Delete\" onclick=\"window.location='actions.php?from=$from&action=deladmin&id=".Sanitize::encodeUrlParam($_GET['id'])."'\">\n";
-		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='$backloc'\"></p>\n";
+		if ($myrights < 75) { echo "You don't have the authority for this action"; break;}
+		if ($myrights==100) {
+			$stm = $DBH->query("SELECT iu.id,iu.FirstName,iu.LastName,ig.name FROM imas_users AS iu JOIN imas_groups AS ig ON iu.groupid=ig.id WHERE iu.rights>12 AND iu.rights<>76 AND iu.rights<>77 ORDER BY iu.LastName,iu.FirstName");
+		} else {
+			$stm = $DBH->prepare("SELECT id,FirstName,LastName FROM imas_users WHERE groupid=? AND rights>12 AND rights<>76 AND rights<>77 ORDER BY LastName,FirstName");
+			$stm->execute(array($groupid));
+		}
+		$otherusers = array();
+		while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+			$otherusers[$row['id']] = $row['LastName'].', '.$row['FirstName'].(isset($row['name'])?' ('.$row['name'].')':'');
+		}
+		
+		$stm = $DBH->prepare("SELECT courseid FROM imas_students WHERE userid=? and lastaccess>?");
+		$stm->execute(array($_GET['id'], time()-2*365*24*60*60));
+		$hasstu = false;
+		while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+			if (!isset($CFG['GEN']['enrollonnewinstructor']) || !in_array($row['courseid'], $CFG['GEN']['enrollonnewinstructor'])) {
+				$hasstu = true;
+				break;
+			}
+		}
+		$stm = $DBH->prepare("SELECT FirstName,LastName,SID FROM imas_users WHERE id=:id");
+		$stm->execute(array(':id'=>$_GET['id']));
+		$line = $stm->fetch(PDO::FETCH_ASSOC);
+		echo "<p>Are you sure you want to delete this user, <b>";
+		printf("%s, %s (%s)", Sanitize::encodeStringForDisplay($line['LastName']), Sanitize::encodeStringForDisplay($line['FirstName']), Sanitize::encodeStringForDisplay($line['SID']));
+		echo "</b>?</p>\n";
+		if ($hasstu) {
+			echo '<p class="noticetext">WARNING! This user has student activity within the last two years. Double-check you will not ';
+			echo 'be deleting any important data before deleting this user.</p>';
+		}
+		echo '<form method="POST" action="actions.php?from='.Sanitize::encodeUrlParam($from).'&id='.Sanitize::encodeUrlParam($_GET['id']).'">';
+		echo '<p>Any questions or libraries owned by this user need to be transfered to another user. <br/>Select user to transfer them to: ';
+		writeHtmlSelect('transferto',array_keys($otherusers),array_values($otherusers), $userid);
+		echo '</p>';
+		echo '<p><button type=submit name="action" value="deladmin">'._('Delete').'</button>';
+		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='".Sanitize::encodeStringForJavascript($backloc)."'\"></p>\n";
+		echo '</form>';
 		break;
-	case "chgpwd":
-		echo '<div id="headerforms" class="pagetitle"><h2>Change Your Password</h2></div>';
-		echo "<form method=post action=\"actions.php?from=$from&action=chgpwd\">\n";
-		echo "<span class=form>Enter old password:</span>  <input class=form type=password name=oldpw size=40> <BR class=form>\n";
-		echo "<span class=form>Enter new password:</span> <input class=form type=password name=newpw1 size=40> <BR class=form>\n";
-		echo "<span class=form>Verify new password:</span>  <input class=form type=password name=newpw2 size=40> <BR class=form>\n";
-		echo '<div class=submit><input type="submit" value="'._('Save').'"></div></form>';
-		break;
-
 	case "chgrights":
 	case "newadmin":
-		echo "<form method=post action=\"actions.php?from=$from&action=".Sanitize::encodeUrlParam($_GET['action']);
+		if ($myrights < 75 && ($myspecialrights&16)!=16 && ($myspecialrights&32)!=32) { echo "You don't have the authority for this action"; break;}
+		echo "<form method=post id=userform class=limitaftervalidate action=\"actions.php?from=".Sanitize::encodeUrlParam($from);
 		if ($_GET['action']=="chgrights") { echo "&id=".Sanitize::encodeUrlParam($_GET['id']); }
 		echo "\">\n";
+		echo '<input type=hidden name=action value="'.Sanitize::encodeStringForDisplay($_GET['action']).'" />';
 		if ($_GET['action'] == "newadmin") {
-			echo "<span class=form>New User username:</span>  <input class=form type=text size=40 name=adminname><BR class=form>\n";
-			echo "<span class=form>First Name:</span> <input class=form type=text size=40 name=firstname><BR class=form>\n";
-			echo "<span class=form>Last Name:</span> <input class=form type=text size=40 name=lastname><BR class=form>\n";
-			echo "<span class=form>Email:</span> <input class=form type=text size=40 name=email><BR class=form>\n";
-			echo '<span class="form">Password:</span> <input class="form" type="text" size="40" name="password"/><br class="form"/>';
-			$oldgroup = 0;
+			echo '<div class="pagetitle"><h2>'._('New User').'</h2></div>';
+			$oldgroup = (isset($_GET['group'])?Sanitize::onlyInt($_GET['group']):0);
 			$oldrights = 10;
 		} else {
 			//DB $query = "SELECT FirstName,LastName,rights,groupid,specialrights FROM imas_users WHERE id='{$_GET['id']}'";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB $line = mysql_fetch_array($result, MYSQL_ASSOC);
-			$stm = $DBH->prepare("SELECT FirstName,LastName,rights,groupid,specialrights FROM imas_users WHERE id=:id");
+			$stm = $DBH->prepare("SELECT SID,FirstName,LastName,email,rights,groupid,specialrights FROM imas_users WHERE id=:id");
 			$stm->execute(array(':id'=>$_GET['id']));
 			$line = $stm->fetch(PDO::FETCH_ASSOC);
-			printf("<h2>%s %s</h2>\n", Sanitize::encodeStringForDisplay($line['FirstName']),
+			printf("<div class=pagetitle><h2>%s %s</h2></div>\n", Sanitize::encodeStringForDisplay($line['FirstName']),
 				Sanitize::encodeStringForDisplay($line['LastName']));
 			$oldgroup = $line['groupid'];
 			$oldrights = $line['rights'];
@@ -80,16 +126,56 @@ switch($_GET['action']) {
 				if (selrights<75) {
 					$("input[name^=specialrights]").prop("checked",false);
 				} else if (selrights==75) {
-					$("#specialrights1,#specialrights4,#specialrights8").prop("checked",true);
-					$("#specialrights2").prop("checked",false);
+					$("input[name^=specialrights]").prop("checked",false);
+					$("#specialrights1,#specialrights4,#specialrights8,#specialrights16").prop("checked",true);
 				} else if (selrights==100) {
 					$("input[name^=specialrights]").prop("checked",true);
 				}
 			}
+			function chknewgroup(el) {
+				$("#newgroup").toggle(el.value==-1);
+			}
 			$(function() {
 				$("input[name=newrights]").on("change", onrightschg);
 				});
+			function checkgroupisnew() {
+				var proposedgroup = $("input[name=newgroupname]").val().replace(/^\s+/,"").replace(/\s+$/,"").replace(/\s+/g," ").toLowerCase();
+				$("#group").find("option").each(function(i) {
+					if ($(this).text().toLowerCase()==proposedgroup) {
+						alert("That group name already exists!");
+						$("#group").val(this.value).trigger("change");
+						break;
+					}
+				});
+			}
 			</script>';
+		echo "<span class=form>Username:</span>  <input class=form type=text size=40 name=SID ";
+		if ($_GET['action'] != "newadmin") {
+			echo 'value="'.Sanitize::encodeStringForDisplay($line['SID']).'"';
+		}
+		echo "><BR class=form>\n";
+		echo "<span class=form>First Name:</span> <input class=form type=text size=40 name=firstname ";
+		if ($_GET['action'] != "newadmin") {
+			echo 'value="'.Sanitize::encodeStringForDisplay($line['FirstName']).'"';
+		}
+		echo "><BR class=form>\n";
+		echo "<span class=form>Last Name:</span> <input class=form type=text size=40 name=lastname ";
+		if ($_GET['action'] != "newadmin") {
+			echo 'value="'.Sanitize::encodeStringForDisplay($line['LastName']).'"';
+		}
+		echo "><BR class=form>\n";
+		echo "<span class=form>Email:</span> <input class=form type=text size=40 name=email ";
+		if ($_GET['action'] != "newadmin") {
+			echo 'value="'.Sanitize::encodeStringForDisplay($line['email']).'"';
+		}
+		echo "><BR class=form>\n";
+		if ($_GET['action'] == "newadmin") {
+			echo '<span class="form">Password:</span> <input class="form" type="text" size="40" name="pw1"/><br class="form"/>';
+		} else {
+			echo '<span class=form>Reset password?</span><span class=formright><input type=checkbox name="doresetpw" value="1" onclick="$(\'#newpwwrap\').toggle(this.checked)"/> ';
+			echo '<span id="newpwwrap" style="display:none">Set temporary password to: <input type=text size=20 name="newpassword" /></span></span><br class=form />';
+		}
+
 		echo "<BR><span class=form><img src=\"$imasroot/img/help.gif\" alt=\"Help\" onClick=\"window.open('$imasroot/help.php?section=rights','help','top=0,width=400,height=500,scrollbars=1,left='+(screen.width-420))\"/> Set User rights to: </span> \n";
 		echo "<span class=formright><input type=radio name=\"newrights\" value=\"5\" ";
 		if ($oldrights == 5) {echo "CHECKED";}
@@ -107,16 +193,19 @@ switch($_GET['action']) {
 		echo "<input type=radio name=\"newrights\" value=\"40\" ";
 		if ($oldrights == 40) {echo "CHECKED";}
 		echo "> Limited Course Creator <BR>\n";
-		echo "<input type=radio name=\"newrights\" value=\"75\" ";
-		if ($oldrights == 75) {echo "CHECKED";}
-		echo "> Group Admin <BR>\n";
+		if ($myrights>=75) {
+			echo "<input type=radio name=\"newrights\" value=\"75\" ";
+			if ($oldrights == 75) {echo "CHECKED";}
+			echo "> Group Admin <BR>\n";
+		}
 		if ($myrights==100) {
 			echo "<input type=radio name=\"newrights\" value=\"100\" ";
 			if ($oldrights == 100) {echo "CHECKED";}
-			echo "> Full Admin </span><BR class=form>\n";
+			echo "> Full Admin";
 		}
+		echo "</span><BR class=form>\n";
 		echo '<span class="form">Task Rights:</span><span class="formright">';
-		if ($myrights>=75) {
+		if ($myrights==100 || ($myrights>=75 && ($myspecialrights&1)==1)) {
 			echo '<input type="checkbox" name="specialrights1" id="specialrights1" ';
 			if (($oldspecialrights&1)==1) { echo 'checked';}
 			echo '><label for="specialrights1">Designate group template courses</label><br/>';
@@ -126,38 +215,66 @@ switch($_GET['action']) {
 			if (($oldspecialrights&2)==2) { echo 'checked';}
 			echo '><label for="specialrights2">Designate global template courses</label><br/>';
 		}
-		if ($myrights>=75) {
+		if ($myrights==100 || ($myrights>=75 && ($myspecialrights&4)==4)) {
 			echo '<input type="checkbox" name="specialrights4" id="specialrights4" ';
 			if (($oldspecialrights&4)==4) { echo 'checked';}
 			echo '><label for="specialrights4">Create Diagnostic logins</label><br/>';
 		}
-		if ($myrights>=75 && !$allownongrouplibs) {
+		if (($myrights==100 || ($myrights>=75 && ($myspecialrights&8)==8)) && !$allownongrouplibs) {
 			echo '<input type="checkbox" name="specialrights8" id="specialrights8" ';
 			if (($oldspecialrights&8)==8) { echo 'checked';}
 			echo '><label for="specialrights8">Create public (open to all) question libraries</label><br/>';
 		}
+		if ($myrights>=75) {
+			echo '<input type="checkbox" name="specialrights16" id="specialrights16" ';
+			if (($oldspecialrights&16)==16) { echo 'checked';}
+			echo '><label for="specialrights16">Create new instructor accounts (own group)</label><br/>';
+		}
+		if ($myrights==100) {
+			echo '<input type="checkbox" name="specialrights32" id="specialrights32" ';
+			if (($oldspecialrights&32)==32) { echo 'checked';}
+			echo '><label for="specialrights32">Create new instructor accounts (any group)</label><br/>';
+
+			echo '<input type="checkbox" name="specialrights64" id="specialrights64" ';
+			if (($oldspecialrights&64)==64) { echo 'checked';}
+			echo '><label for="specialrights64">Approve instructor account requests</label><br/>';
+		}
 		echo '</span><br class="form"/>';
 
-		if ($myrights == 100) {
+		if ($myrights == 100 || ($myspecialrights&32)==32) {
 			echo "<span class=form>Assign to group: </span>";
-			echo "<span class=formright><select name=\"group\" id=\"group\">";
-			echo "<option value=0>Default</option>\n";
+			echo "<span class=formright><select name=\"group\" id=\"group\" onchange=\"chknewgroup(this)\">";
+			echo '<option value="-1">New Group</option>';
+			echo "<option value=0 ";
+			if ($oldgroup==0) {
+				echo "selected=1";
+			}
+			echo ">Default</option>\n";
 			//DB $query = "SELECT id,name FROM imas_groups ORDER BY name";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB while ($row = mysql_fetch_row($result)) {
 			$stm = $DBH->query("SELECT id,name FROM imas_groups ORDER BY name");
 			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-				echo "<option value=\"{$row[0]}\" ";
+				printf('<option value="%d" ', Sanitize::onlyInt($row[0]));
 				if ($oldgroup==$row[0]) {
 					echo "selected=1";
 				}
-				echo ">{$row[1]}</option>\n";
+				$row[1] = preg_replace('/\s+/', ' ', trim($row[1]));
+				printf(">%s</option>\n", Sanitize::encodeStringForDisplay($row[1]));
 			}
-			echo "</select><br class=form />\n";
+			echo "</select>";
+			echo '<span id="newgroup" style="display:none"><br/>New group name: ';
+			echo ' <input name=newgroupname size=20 onblur="checkgroupisnew()"/></span>';
+			echo "</span><br class=form />\n";
 		}
-
-
 		echo "<div class=submit><input type=submit value=Save></div></form>\n";
+		if ($_GET['action'] == "newadmin") {
+			require_once("../includes/newusercommon.php");
+			showNewUserValidation("userform");
+		} else if ($myrights==100) {
+			echo '<p>&nbsp;</p><p>&nbsp;</p>';
+			echo '<a href="forms.php?action=deladmin&id='.Sanitize::encodeUrlParam($_GET['id']).'">Delete User</a>';
+		}
 		break;
 	case "modify":
 	case "addcourse":
@@ -180,9 +297,12 @@ switch($_GET['action']) {
 				//DB $query = "SELECT iu.FirstName, iu.LastName, iu.groupid, ig.name FROM imas_users AS iu JOIN imas_groups AS ig ON ig.id=iu.groupid WHERE iu.id={$line['ownerid']}";
 				//DB $result = mysql_query($query) or die("Query failed : $query" . mysql_error());
 				//DB $udat = mysql_fetch_array($result, MYSQL_ASSOC);
-				$stm = $DBH->prepare("SELECT iu.FirstName, iu.LastName, iu.groupid, ig.name FROM imas_users AS iu JOIN imas_groups AS ig ON ig.id=iu.groupid WHERE iu.id=:id");
+				$stm = $DBH->prepare("SELECT iu.FirstName, iu.LastName, iu.groupid, ig.name FROM imas_users AS iu LEFT JOIN imas_groups AS ig ON ig.id=iu.groupid WHERE iu.id=:id");
 				$stm->execute(array(':id'=>$line['ownerid']));
 				$udat = $stm->fetch(PDO::FETCH_ASSOC);
+				if ($udat['groupid']==0) {
+					$udat['name'] = _('Default Group');
+				}
 				if ($myrights===75 && $udat['groupid']!=$groupid) {
 					echo "You don't have the authority for this action"; break;
 				}
@@ -206,6 +326,15 @@ switch($_GET['action']) {
 			$istemplate = $line['istemplate'];
 			$deflatepass = $line['deflatepass'];
 			$deftime = $line['deftime'];
+			$jsondata = json_decode($line['jsondata'], true);
+			$dates_by_lti = $line['dates_by_lti']; 
+			if ($jsondata===null || !isset($jsondata['browser'])) {
+				$browser = array();
+			} else {
+				$browser = $jsondata['browser'];
+			}
+			$startdate = $line['startdate'];
+			$enddate = $line['enddate'];
 		} else {
 			$courseid = _("Will be assigned when the course is created");
 			$name = "Enter course name here";
@@ -229,6 +358,10 @@ switch($_GET['action']) {
 			$deftime = isset($CFG['CPS']['deftime'])?$CFG['CPS']['deftime'][0]:600;
 			$deflatepass = isset($CFG['CPS']['deflatepass'])?$CFG['CPS']['deflatepass'][0]:0;
 			$ltisecret = "";
+			$browser = array();
+			$dates_by_lti = 0;
+			$startdate = 0;
+			$enddate = 2000000000;
 		}
 		$defetime = $deftime%10000;
 		$hr = floor($defetime/60)%12;
@@ -256,20 +389,50 @@ switch($_GET['action']) {
 			echo _('Add New Course');
 		}
 		echo '</h2></div>';
-		echo "<form method=post action=\"actions.php?from=$from&action=".Sanitize::encodeUrlParam($_GET['action']);
+		echo "<form method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from);
 		if (isset($_GET['cid'])) {
 			echo "&cid=$cid";
 		}
 		if ($_GET['action']=="modify") { echo "&id=".Sanitize::encodeUrlParam($_GET['id']); }
 		echo "\">\n";
-		echo "<span class=form>Course ID:</span><span class=formright>$courseid</span><br class=form>\n";
+		echo '<script type="text/javascript">
+		$(function() {
+			$("form").on("submit",function(e) {
+				var needsgrp = $("input[name=isgrptemplate]:checked").length;
+				var needsall = $("input[name=istemplate]:checked,input[name=isselfenroll]:checked").length;
+
+				var copyrights = $("input[name=copyrights]:checked").val();
+				var ok = true;
+				if (copyrights<2 && $("input[name=promote]:checked").length>0) {
+					alert(_("Promoting a course requires setting the copy permissions to: no key required for anyone"));
+					ok = false;
+				}
+				if (copyrights<2 && needsall>0) {
+					alert(_("Setting a course as a template or self enroll requires setting the copy permissions to: no key required for anyone"));
+					ok = false;
+				}
+				if (copyrights<1 && needsgrp) {
+					alert(_("Setting a course as a group template requires setting the copy permissions to: no key required for group (or no key required for anyone)"));
+					ok = false;
+				}
+				if (!ok) {
+					setTimeout(function() {
+						$("form").removeClass("submitted").removeClass("submitted2");
+					}, 500);
+					return false;
+				}
+			});
+		})
+		</script>';
+		echo '<input type=hidden name=action value="'.Sanitize::encodeStringForDisplay($_GET['action']) .'" />';
+		echo "<span class=form>Course ID:</span><span class=formright>".Sanitize::encodeStringForDisplay($courseid)."</span><br class=form>\n";
 		if ($isadminview) {
 			echo '<span class="form">Owner:</span><span class="formright">';
 			printf('%s, %s (%s)</span><br class="form"/>', Sanitize::encodeStringForDisplay($udat['LastName']),
 				Sanitize::encodeStringForDisplay($udat['FirstName']), Sanitize::encodeStringForDisplay($udat['name']));
 		}
-		echo "<span class=form>Enter Course name:</span><input class=form type=text size=80 name=\"coursename\" value=\"$name\"><BR class=form>\n";
-		echo "<span class=form>Enter Enrollment key:</span><input class=form type=text size=30 name=\"ekey\" value=\"$ekey\"><BR class=form>\n";
+		echo "<span class=form>Enter Course name:</span><input class=form type=text size=80 name=\"coursename\" value=\"".Sanitize::encodeStringForDisplay($name)."\"><BR class=form>\n";
+		echo "<span class=form>Enter Enrollment key:</span><input class=form type=text size=30 name=\"ekey\" value=\"".Sanitize::encodeStringForDisplay($ekey)."\"><BR class=form>\n";
 		echo '<span class=form>Available?</span><span class=formright>';
 		echo '<input type="checkbox" name="stuavail" value="1" ';
 		if (($avail&1)==0) { echo 'checked="checked"';}
@@ -285,17 +448,36 @@ switch($_GET['action']) {
 			$stm = $DBH->prepare("SELECT id,name FROM imas_assessments WHERE courseid=:courseid ORDER BY name");
 			$stm->execute(array(':courseid'=>$_GET['id']));
 			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-				echo "<option value=\"{$row[0]}\" ";
+				printf('<option value="%d" ', Sanitize::onlyInt($row[0]));
 				if ($lockaid==$row[0]) { echo 'selected="1"';}
-				echo ">{$row[1]}</option>";
+				printf(">%s</option>", Sanitize::encodeStringForDisplay($row[1]));
 			}
 			echo '</select></span><br class="form"/>';
 		}
-
+		echo '<span class=form>Course start/end dates:<br/><span class=small>Blank for no limit</span></span>';
+		echo '<span class=formright>';
+		if ($startdate==0) {
+			$sdate = '';
+		} else {
+			$sdate = tzdate("m/d/Y",$startdate);
+		}
+		if ($enddate==2000000000) {
+			$edate = '';
+		} else {
+			$edate = tzdate("m/d/Y",$enddate);
+		}
+		echo 'Start: <input type=text size=10 name="sdate" value="'.$sdate.'">
+			<a href="#" onClick="displayDatePicker(\'sdate\', this); return false">
+			<img src="../img/cal.gif" alt="Calendar"/></a> ';
+		echo 'End: <input type=text size=10 name="edate" value="'.$edate.'">
+			<a href="#" onClick="displayDatePicker(\'edate\', this); return false">
+			<img src="../img/cal.gif" alt="Calendar"/></a> ';
+		echo '</span><br class=form />';
+		
 		if (!isset($CFG['CPS']['deftime']) || $CFG['CPS']['deftime'][1]==1) {
 			echo "<span class=form>Default start/end time for new items:</span><span class=formright>";
-			echo 'Start: <input name="defstime" type="text" size="8" value="'.$defstimedisp.'"/>, ';
-			echo 'end: <input name="deftime" type="text" size="8" value="'.$deftimedisp.'"/>';
+			echo 'Start: <input name="defstime" type="text" size="8" value="'.Sanitize::encodeStringForDisplay($defstimedisp).'"/>, ';
+			echo 'end: <input name="deftime" type="text" size="8" value="'.Sanitize::encodeStringForDisplay($deftimedisp).'"/>';
 			echo '</span><br class="form"/>';
 		}
 
@@ -318,7 +500,7 @@ switch($_GET['action']) {
 				sort($themes);
 			}
 			foreach ($themes as $k=>$file) {
-				echo "<option value=\"$file\" ";
+				printf('<option value="%s" ', Sanitize::encodeStringForDisplay($file));
 				if ($file==$theme) { echo 'selected="selected"';}
 				echo '>';
 				if (isset($themenames)) {
@@ -390,7 +572,7 @@ switch($_GET['action']) {
 
 		if (!isset($CFG['CPS']['deflatepass']) || $CFG['CPS']['deflatepass'][1]==1) {
 			echo '<span class="form">Auto-assign LatePasses on course enroll:</span><span class="formright">';
-			echo '<input type="text" size="3" name="deflatepass" value="'.$deflatepass.'"/> LatePasses</span><br class="form" />';
+			echo '<input type="text" size="3" name="deflatepass" value="'.Sanitize::encodeStringForDisplay($deflatepass).'"/> LatePasses</span><br class="form" />';
 		}
 		if (!isset($CFG['CPS']['msgonenroll']) || $CFG['CPS']['msgonenroll'][1]==1) {
 			echo '<span class="form">'._('Send teachers a message when students enroll').':</span><span class="formright">';
@@ -408,7 +590,7 @@ switch($_GET['action']) {
 
 		if (isset($enablebasiclti) && $enablebasiclti==true && isset($_GET['id'])) {
 			echo '<span class="form">LTI access secret (max 10 chars; blank to not use)</span>';
-			echo '<span class="formright"><input name="ltisecret" type="text" value="'.$ltisecret.'" maxlength="10"/> ';
+			echo '<span class="formright"><input name="ltisecret" type="text" value="'.Sanitize::encodeStringForDisplay($ltisecret).'" maxlength="10"/> ';
 			echo '<button type="button" onclick="document.getElementById(\'ltiurl\').style.display=\'\';this.parentNode.removeChild(this);">'._('Show LTI key and URL').'</button>';
 			echo '<span id="ltiurl" style="display:none;">';
 			if (isset($_GET['id'])) {
@@ -419,7 +601,13 @@ switch($_GET['action']) {
 				echo 'Course ID not yet set.';
 			}
 			echo '</span></span><br class="form" />';
+			echo '<span class="form">Allow the LMS to set assessment due dates?<br/><span class="small">(Only supported by Canvas)</span></span>';
+			echo '<span class="formright"><input type="checkbox" name="setdatesbylti" value="1" ';
+			if ($dates_by_lti>0) { echo 'checked="checked"';}
+			echo '/> </span><br class="form" />';
+			
 		}
+
 		if (($myspecialrights&1)==1 || ($myspecialrights&2)==2 || $myrights==100) {
 			echo '<span class="form">Mark course as template?</span>';
 			echo '<span class="formright">';
@@ -446,161 +634,233 @@ switch($_GET['action']) {
 			echo '</span><br class="form" />';
 		}
 
+		if (!isset($CFG['coursebrowserRightsToPromote'])) {
+			$CFG['coursebrowserRightsToPromote'] = 40;
+		}
+		if ($_GET['action']=='modify' && isset($CFG['coursebrowser']) && $CFG['coursebrowserRightsToPromote']<=$myrights) {
+			$browserprops = json_decode(file_get_contents(__DIR__.'/../javascript/'.$CFG['coursebrowser'], false, null, 25), true);
+			echo '<script type="text/javascript">
+				function changepromote() {
+					$("#promotediv").toggle($("input[name=promote]").prop("checked"));
+					//TODO: Add required to name and descrip field on show
+				}
+				function chgother(el) {
+					var id = el.id;
+					if (el.value != "other") {
+						$("#"+id+"otherwrap").hide();
+					} else {
+						$("#"+id+"otherwrap").show();
+					}
+				}
+			</script>';
+
+			echo '<span class="form">'._('Promote Course').'</span>';
+			echo '<span class=formright><label><input type=checkbox name=promote value=1 onchange="changepromote()" ';
+			if (($istemplate&16)==16) {echo 'checked="checked"';};
+			echo ' /> '._('Promote in Course Browser').'</label></span><br class="form">';
+			echo '<fieldset id=promotediv '.((($istemplate&16)==16)?'':'style="display:none"').'>';
+			echo '<legend>'._('Course Browser Settings').'</legend>';
+			echo '<p class="noticetext">'._('Before sharing your course, check to ensure that it only contains materials you created or have the rights to share.');
+			echo ' '._('Your course should contain no commercial, copyrighted content, including textbook pages, activites, test bank items, etc.');
+			echo ' '._('Openly licensed material, clearly marked with an open license, is fine to include.');
+			echo ' '._('If sharing your own materials (textbook, activities, paper assessments), please mark the materials with an open license, or include a blanket license statement somewhere in the course.');
+			echo '</p><p>';
+
+			if (empty($browser['name'])) {
+				$browser['name'] = trim($name);
+			}
+			if (empty($browser['owner'])) {
+				if (!isset($udat)) {
+					$stm = $DBH->prepare("SELECT iu.FirstName, iu.LastName, ig.name FROM imas_users AS iu JOIN imas_groups AS ig ON ig.id=iu.groupid WHERE iu.id=:id");
+					$stm->execute(array(':id'=>$userid));
+					$udat = $stm->fetch(PDO::FETCH_ASSOC);
+				}
+				$browser['owner'] = $udat['FirstName'].' '.$udat['LastName'].' ('.$udat['name'].')';
+			}
+
+			foreach ($browserprops as $propname=>$propvals) {
+				if (!empty($propvals['fixed'])) { continue; }
+				echo '<span class=form>'.$propvals['name'];
+				if (!empty($propvals['subname'])) {
+					echo '<br/><span class=small>'.$propvals['subname'].'</span>';
+				}
+				echo '</span>';
+				echo '<span class=formright>';
+				if (isset($propvals['options'])) {  //is select
+					if (!empty($propvals['multi'])) { //checkboxes
+						if (isset($browser[$propname]) && !is_array($browser[$propname])) {
+							$browser[$propname] = array($browser[$propname]);
+						}
+						foreach ($propvals['options'] as $k=>$v) {
+							echo '<label><input type=checkbox name="browser'.$propname.'[]" value="'. Sanitize::encodeStringForDisplay($k).'" ';
+							echo ((isset($browser[$propname]) && in_array($k,$browser[$propname]))?'checked':'').' /> '.Sanitize::encodeStringForDisplay($v).'</label><br/>';
+						}
+					} else { //single select
+						$ingroup = false;
+						echo '<select name="browser'.$propname.'" id="browser'.$propname.'"';
+						if (isset($propvals['options']['other'])) {
+							echo ' onchange="chgother(this)"';
+						}
+						echo '>';
+
+						foreach ($propvals['options'] as $k=>$v) {
+							if (substr($k,0,5)=='group') {
+								if ($ingroup) {
+									echo '</optgroup>';
+								}
+								echo '<optgroup label="'.Sanitize::encodeStringForDisplay($v).'">';
+								$ingroup = true;
+							} else {
+								echo '<option value="'.Sanitize::encodeStringForDisplay($k).'"';
+								if ($k==$browser[$propname]) { echo ' selected';}
+								echo '>';
+								echo Sanitize::encodeStringForDisplay($v).'</option>';
+							}
+						}
+						if ($ingroup) {
+							echo '</optgroup>';
+						}
+						echo '</select>';
+
+						if (isset($propvals['options']['other'])) {
+							echo '<span id="browser'.$propname.'otherwrap" '.($browser[$propname]!='other'?'style="display:none"':'').'>';
+							echo '<br/>Other: <input type=text size=40 name="browser'.$propname.'other" value="'.($browser[$propname]=='other'?Sanitize::encodeStringForDisplay($browser[$propname.'other']):'').'"></span>';
+						}
+					}
+				} else if ($propvals['type']=='string') {
+					echo '<input type=text name="browser'.$propname.'" size=50 value="'.Sanitize::encodeStringForDisplay($browser[$propname]).'" />';
+				} else if ($propvals['type']=='textarea') {
+					echo '<textarea rows=6 cols=70 name=browser'.$propname.'>'.Sanitize::encodeStringForDisplay($browser[$propname]).'</textarea>';
+				}
+				echo '</span><br class="form">';
+			}
+			echo '</p></fieldset>';
+		}
+
 		if (isset($CFG['CPS']['templateoncreate']) && $_GET['action']=='addcourse' ) {
-			echo '<span class="form">Use content from a template course:</span>';
-			echo '<span class="formright"><select name="usetemplate" onchange="templatepreviewupdate(this)">';
-			echo '<option value="0" selected="selected">Start with blank course</option>';
-			//$query = "SELECT ic.id,ic.name,ic.copyrights FROM imas_courses AS ic,imas_teachers WHERE imas_teachers.courseid=ic.id AND imas_teachers.userid='$templateuser' ORDER BY ic.name";
-			$globalcourse = array();
-			$groupcourse = array();
-			$terms = array();
-			//DB $query = "SELECT id,name,copyrights,istemplate,termsurl FROM imas_courses WHERE (istemplate&1)=1 AND available<4 AND copyrights=2 ORDER BY name";
-			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB while ($row = mysql_fetch_row($result)) {
-			$stm = $DBH->query("SELECT id,name,copyrights,istemplate,termsurl FROM imas_courses WHERE (istemplate&1)=1 AND available<4 AND copyrights=2 ORDER BY name");
-			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-				$globalcourse[$row[0]] = $row[1];
-				if ($row[4]!='') {
-					$terms[$row[0]] = $row[4];
+			if (isset($CFG['coursebrowser'])) {
+				//use the course browser
+				if (isset($CFG['coursebrowsermsg'])) {
+					echo '<span class="form">'.$CFG['coursebrowsermsg'].'</span>';
+				} else {
+					echo '<span class="form">'._('Copy a template or promoted course').'</span>';
 				}
-			}
-			//DB $query = "SELECT ic.id,ic.name,ic.copyrights,ic.termsurl FROM imas_courses AS ic JOIN imas_users AS iu ON ic.ownerid=iu.id WHERE ";
-			//DB $query .= "iu.groupid='$groupid' AND (ic.istemplate&2)=2 AND ic.copyrights>0 AND ic.available<4 ORDER BY ic.name";
-			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB while ($row = mysql_fetch_row($result)) {
-			$query = "SELECT ic.id,ic.name,ic.copyrights,ic.termsurl FROM imas_courses AS ic JOIN imas_users AS iu ON ic.ownerid=iu.id WHERE ";
-			$query .= "iu.groupid=:groupid AND (ic.istemplate&2)=2 AND ic.copyrights>0 AND ic.available<4 ORDER BY ic.name";
-			$stm = $DBH->prepare($query);
-			$stm->execute(array(':groupid'=>$groupid));
-			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-				$groupcourse[$row[0]] = $row[1];
-				if ($row[3]!='') {
-					$terms[$row[0]] = $row[3];
+				echo '<span class="formright" id="browsertocopy"><input type="hidden" id="usetemplate" name="usetemplate" ';
+				if (isset($_GET['tocopyid']) && isset($_GET['tocopyname'])) {
+					echo 'value="'.Sanitize::onlyInt($_GET['tocopyid']).'">';
+					echo '<span id="templatename">'.Sanitize::encodeStringForDisplay($_GET['tocopyname']).'</span>';
+				} else {
+					echo 'value="0">';
+					echo '<span id="templatename">'._('Start with a blank course').'</span>';
 				}
-			}
-			if (count($groupcourse)>0) {
-				echo '<optgroup label="Group Templates">';
-				foreach ($groupcourse as $id=>$name) {
-					echo '<option value="'.$id.'"';
-					if (isset($terms[$id])) {
-						echo ' data-termsurl="'.$terms[$id].'"';
+				echo '<br/><button type="button" onclick="showCourseBrowser()">'._('Browse Courses').'</button>';
+				echo '<span id="termsbox" style="display:none;"><br/>';
+				echo 'This course has additional <a target="_blank" href="" id="termsurl">Terms of Use</a> you must agree to before copying the course.<br/>';
+				echo '<input type="checkbox" name="termsagree" /> I agree to the Terms of Use specified in the link above.</span>';
+				echo '</span><br class="form" />';
+
+				echo '<script type="text/javascript">
+					function showCourseBrowser() {
+						GB_show("Course Browser","coursebrowser.php?embedded=true",800,"auto");
 					}
-					echo '>'.$name.'</option>';
-				}
-				echo '</optgroup>';
-			}
-			if (count($globalcourse)>0) {
-				if (count($groupcourse)>0) {
-					echo '<optgroup label="System-wide Templates">';
-				}
-				foreach ($globalcourse as $id=>$name) {
-					echo '<option value="'.$id.'"';
-					if (isset($terms[$id])) {
-						echo ' data-termsurl="'.$terms[$id].'"';
+					function setCourse(course) {
+						$("#usetemplate").val(course.id);
+						$("#templatename").text(course.name);
+						if (course.termsurl && course.termsurl != "") {
+							$("#termsbox").show(); $("#termsurl").attr("href",course.termsurl);
+						} else {
+							$("#termsbox").hide();
+						}
+						GB_hide();
 					}
-					echo '>'.$name.'</option>';
+					</script>';
+
+			} else {
+				//select a template course from a pulldown
+				echo '<span class="form">Use content from a template course:</span>';
+				echo '<span class="formright"><select name="usetemplate" onchange="templatepreviewupdate(this)">';
+				echo '<option value="0" selected="selected">Start with blank course</option>';
+				//$query = "SELECT ic.id,ic.name,ic.copyrights FROM imas_courses AS ic,imas_teachers WHERE imas_teachers.courseid=ic.id AND imas_teachers.userid='$templateuser' ORDER BY ic.name";
+				$globalcourse = array();
+				$groupcourse = array();
+				$terms = array();
+				//DB $query = "SELECT id,name,copyrights,istemplate,termsurl FROM imas_courses WHERE (istemplate&1)=1 AND available<4 AND copyrights=2 ORDER BY name";
+				//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
+				//DB while ($row = mysql_fetch_row($result)) {
+				$stm = $DBH->query("SELECT id,name,copyrights,istemplate,termsurl FROM imas_courses WHERE (istemplate&1)=1 AND available<4 AND copyrights=2 ORDER BY name");
+				while ($row = $stm->fetch(PDO::FETCH_NUM)) {
+					$globalcourse[$row[0]] = $row[1];
+					if ($row[4]!='') {
+						$terms[$row[0]] = $row[4];
+					}
+				}
+				//DB $query = "SELECT ic.id,ic.name,ic.copyrights,ic.termsurl FROM imas_courses AS ic JOIN imas_users AS iu ON ic.ownerid=iu.id WHERE ";
+				//DB $query .= "iu.groupid='$groupid' AND (ic.istemplate&2)=2 AND ic.copyrights>0 AND ic.available<4 ORDER BY ic.name";
+				//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
+				//DB while ($row = mysql_fetch_row($result)) {
+				$query = "SELECT ic.id,ic.name,ic.copyrights,ic.termsurl FROM imas_courses AS ic JOIN imas_users AS iu ON ic.ownerid=iu.id WHERE ";
+				$query .= "iu.groupid=:groupid AND (ic.istemplate&2)=2 AND ic.copyrights>0 AND ic.available<4 ORDER BY ic.name";
+				$stm = $DBH->prepare($query);
+				$stm->execute(array(':groupid'=>$groupid));
+				while ($row = $stm->fetch(PDO::FETCH_NUM)) {
+					$groupcourse[$row[0]] = $row[1];
+					if ($row[3]!='') {
+						$terms[$row[0]] = $row[3];
+					}
 				}
 				if (count($groupcourse)>0) {
+					echo '<optgroup label="Group Templates">';
+					foreach ($groupcourse as $id=>$name) {
+						printf('<option value="%d"', $id);
+						if (isset($terms[$id])) {
+							printf(' data-termsurl="%s"', Sanitize::encodeStringForDisplay($terms[$id]));
+						}
+						printf('>%s</option>', Sanitize::encodeStringForDisplay($name));
+					}
 					echo '</optgroup>';
 				}
+				if (count($globalcourse)>0) {
+					if (count($groupcourse)>0) {
+						echo '<optgroup label="System-wide Templates">';
+					}
+					foreach ($globalcourse as $id=>$name) {
+						printf('<option value="%d"', $id);
+						if (isset($terms[$id])) {
+							printf(' data-termsurl="%s"', Sanitize::encodeStringForDisplay($terms[$id]));
+						}
+						printf('>%s</option>', Sanitize::encodeStringForDisplay($name));
+					}
+					if (count($groupcourse)>0) {
+						echo '</optgroup>';
+					}
+				}
+				echo '</select><span id="templatepreview"></span>';
+				echo '<span id="termsbox" style="display:none;"><br/>';
+				echo 'This course has additional <a target="_blank" href="" id="termsurl">Terms of Use</a> you must agree to before copying the course.<br/>';
+				echo '<input type="checkbox" name="termsagree" /> I agree to the Terms of Use specified in the link above.</span>';
+				echo '</span><br class="form" />';
+				echo '<script type="text/javascript"> function templatepreviewupdate(el) {';
+				echo '  var outel = document.getElementById("templatepreview");';
+				echo '  if (el.value>0) {';
+				echo '    outel.innerHTML = "<a href=\"'.$imasroot.'/course/course.php?cid="+el.value+"\" target=\"preview\">Preview</a>";';
+				echo '    if ($(el).find(":selected").data("termsurl")) { $("#termsbox").show(); $("#termsurl").attr("href",$(el).find(":selected").data("termsurl")); }';
+				echo '      else { $("#termsbox").hide(); }';
+				echo '  } else {outel.innerHTML = "";}';
+				echo '}</script>';
 			}
-			echo '</select><span id="templatepreview"></span>';
-			echo '<span id="termsbox" style="display:none;"><br/>';
-			echo 'This course has additional <a target="_blank" href="" id="termsurl">Terms of Use</a> you must agree to before copying the course.<br/>';
-			echo '<input type="checkbox" name="termsagree" /> I agree to the Terms of Use specified in the link above.</span>';
-			echo '</span><br class="form" />';
-			echo '<script type="text/javascript"> function templatepreviewupdate(el) {';
-			echo '  var outel = document.getElementById("templatepreview");';
-			echo '  if (el.value>0) {';
-			echo '    outel.innerHTML = "<a href=\"'.$imasroot.'/course/course.php?cid="+el.value+"\" target=\"preview\">Preview</a>";';
-			echo '    if ($(el).find(":selected").data("termsurl")) { $("#termsbox").show(); $("#termsurl").attr("href",$(el).find(":selected").data("termsurl")); }';
-			echo '      else { $("#termsbox").hide(); }';
-			echo '  } else {outel.innerHTML = "";}';
-			echo '}</script>';
 		}
 
 
 		echo "<div class=submit><input type=submit value=Submit></div></form>\n";
 		break;
-	case "chgteachers":
-		//DB $query = "SELECT name FROM imas_courses WHERE id='{$_GET['id']}'";
-		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-		//DB $line = mysql_fetch_array($result, MYSQL_ASSOC);
-		$stm = $DBH->prepare("SELECT name FROM imas_courses WHERE id=:id");
-		$stm->execute(array(':id'=>$_GET['id']));
-		$line = $stm->fetch(PDO::FETCH_ASSOC);
-		echo '<div id="headerforms" class="pagetitle">';
-		echo "<h2>{$line['name']}</h2>\n";
-		echo '</div>';
-
-		echo "<h4>Current Teachers:</h4>\n";
-		//DB $query = "SELECT imas_users.FirstName,imas_users.LastName,imas_teachers.id,imas_teachers.userid ";
-		//DB $query .= "FROM imas_users,imas_teachers WHERE imas_teachers.courseid='{$_GET['id']}' AND " ;
-		//DB $query .= "imas_teachers.userid=imas_users.id ORDER BY imas_users.LastName;";
-		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-		//DB $num = mysql_num_rows($result);
-		$query = "SELECT imas_users.FirstName,imas_users.LastName,imas_teachers.id,imas_teachers.userid ";
-		$query .= "FROM imas_users,imas_teachers WHERE imas_teachers.courseid=:courseid AND " ;
-		$query .= "imas_teachers.userid=imas_users.id ORDER BY imas_users.LastName;";
-		$stm = $DBH->prepare($query);
-		$stm->execute(array(':courseid'=>$_GET['id']));
-		$num = $stm->rowCount();
-		echo '<form method="post" action="actions.php?from='.$from.'&action=remteacher&cid='.Sanitize::onlyInt($_GET['id']).'&tot='.$num.'">';
-		echo 'With Selected: <input type="submit" value="Remove as Teacher"/>';
-		echo "<table cellpadding=5>\n";
-		$onlyone = ($num==1);
-		//DB while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
-		while ($line = $stm->fetch(PDO::FETCH_ASSOC)) {
-
-			if ($onlyone) {
-				echo '<tr><td></td>';
-			} else {
-				echo '<tr><td><input type="checkbox" name="tid[]" value="'.$line['id'].'"/></td>';
-			}
-
-			printf("<td>%s, %s</td>", Sanitize::encodeStringForDisplay($line['LastName']),
-				Sanitize::encodeStringForDisplay($line['FirstName']));
-			if ($onlyone) {
-				echo "<td></td></tr>";
-			} else {
-				echo "<td><A href=\"actions.php?from=$from&action=remteacher&cid=".Sanitize::onlyInt($_GET['id'])."&tid={$line['id']}\">Remove as Teacher</a></td></tr>\n";
-			}
-			$used[$line['userid']] = true;
-		}
-		echo "</table></form>\n";
-
-		echo "<h4>Potential Teachers:</h4>\n";
-		if ($myrights<100) {
-			//DB $query = "SELECT id,FirstName,LastName,rights FROM imas_users WHERE rights>19 AND (rights<76 or rights>78) AND groupid='$groupid' ORDER BY LastName;";
-			$stm = $DBH->prepare("SELECT id,FirstName,LastName,rights FROM imas_users WHERE rights>19 AND (rights<76 or rights>78) AND groupid=:groupid ORDER BY LastName;");
-			$stm->execute(array(':groupid'=>$groupid));
-		} else if ($myrights==100) {
-			//DB $query = "SELECT id,FirstName,LastName,rights FROM imas_users WHERE rights>19 AND (rights<76 or rights>78) ORDER BY LastName;";
-			$stm = $DBH->query("SELECT id,FirstName,LastName,rights FROM imas_users WHERE rights>19 AND (rights<76 or rights>78) ORDER BY LastName;");
-		}
-		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-		echo '<form method="post" action="actions.php?from='.$from.'&action=addteacher&cid='.Sanitize::onlyInt($_GET['id']).'">';
-		echo 'With Selected: <input type="submit" value="Add as Teacher"/>';
-		echo "<table cellpadding=5>\n";
-		//DB while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
-		while ($line = $stm->fetch(PDO::FETCH_ASSOC)) {
-			if (trim($line['LastName'])=='' && trim($line['FirstName'])=='') {continue;}
-			if ($used[$line['id']]!=true) {
-				//if ($line['rights']<20) { $type = "Tutor/TA/Proctor";} else {$type = "Teacher";}
-				echo '<tr><td><input type="checkbox" name="atid[]" value="'.$line['id'].'"/></td>';
-				printf("<td>%s, %s </td> ", Sanitize::encodeStringForDisplay($line['LastName']),
-					Sanitize::encodeStringForDisplay($line['FirstName']));
-				echo "<td><a href=\"actions.php?from=$from&action=addteacher&cid=".Sanitize::onlyInt($_GET['id'])."&tid={$line['id']}\">Add as Teacher</a></td></tr>\n";
-			}
-		}
-		echo "</table></form>\n";
-		echo "<p><input type=button value=\"Done\" onclick=\"window.location='$backloc'\" /></p>\n";
-		break;
 	case "importmacros":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
+		
 		echo "<h3>Install Macro File</h3>\n";
 		echo "<p><b>Warning:</b> Macro Files have a large security risk.  <b>Only install macro files from a trusted source</b></p>\n";
 		echo "<p><b>Warning:</b> Install will overwrite any existing macro file of the same name</p>\n";
-		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=$from&action=importmacros\">\n";
+		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."\">\n";
+		echo '<input type=hidden name=action value="importmacros" />';
 		echo "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"300000\" />\n";
 		echo "<span class=form>Import file: </span><span class=formright><input name=\"userfile\" type=\"file\" /></span><br class=form>\n";
 		echo "<div class=submit><input type=submit value=\"Submit\"></div>\n";
@@ -608,52 +868,34 @@ switch($_GET['action']) {
 		break;
 
 	case "importqimages":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo "<h3>Install Question Images</h3>\n";
 		echo "<p><b>Warning:</b> This has a large security risk.  <b>Only install question images from a trusted source</b>, and where you've verified the archive only contains images.</p>\n";
 		echo "<p><b>Warning:</b> Install will ignore files with the same filename as existing files.</p>\n";
-		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=$from&action=importqimages\">\n";
+		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."\">\n";
+		echo '<input type=hidden name=action value="importqimages" />';
 		echo "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"5000000\" />\n";
 		echo "<span class=form>Import file: </span><span class=formright><input name=\"userfile\" type=\"file\" /></span><br class=form>\n";
 		echo "<div class=submit><input type=submit value=\"Submit\"></div>\n";
 		echo "</form>\n";
 		break;
 	case "importcoursefiles":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo "<h3>Install Course files</h3>\n";
 		echo "<p><b>Warning:</b> This has a large security risk.  <b>Only install course files from a trusted source</b>, and where you've verified the archive only contains regular files (no PHP files).</p>\n";
 		echo "<p><b>Warning:</b> Install will ignore files with the same filename as existing files.</p>\n";
-		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=$from&action=importcoursefiles\">\n";
+		echo "<form enctype=\"multipart/form-data\" method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."\">\n";
+		echo '<input type=hidden name=action value="importcoursefiles" />';
 		echo "<input type=\"hidden\" name=\"MAX_FILE_SIZE\" value=\"10000000\" />\n";
 		echo "<span class=form>Import file: </span><span class=formright><input name=\"userfile\" type=\"file\" /></span><br class=form>\n";
 		echo "<div class=submit><input type=submit value=\"Submit\"></div>\n";
 		echo "</form>\n";
 		break;
-	case "transfer":
-		echo '<div id="headerforms" class="pagetitle">';
-		echo "<h3>Transfer Course Ownership</h3>\n";
-		echo '</div>';
-		echo "<form method=post action=\"actions.php?from=$from&action=transfer&id=".Sanitize::encodeUrlParam($_GET['id'])."\">\n";
-		echo "Transfer course ownership to: <select name=newowner>\n";
-		if ($myrights < 100) {
-			//DB $query = "SELECT id,FirstName,LastName FROM imas_users WHERE rights>19 AND groupid='$groupid' ORDER BY LastName";
-			$stm = $DBH->prepare("SELECT id,FirstName,LastName FROM imas_users WHERE rights>19 AND groupid=:groupid ORDER BY LastName");
-			$stm->execute(array(':groupid'=>$groupid));
-		} else {
-			//DB $query = "SELECT id,FirstName,LastName FROM imas_users WHERE rights>19 ORDER BY LastName";
-			$stm = $DBH->query("SELECT id,FirstName,LastName FROM imas_users WHERE rights>19 ORDER BY LastName");
-		}
-		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-		//DB while ($row = mysql_fetch_row($result)) {
-		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-			echo "<option value=\"$row[0]\">$row[2], $row[1]</option>\n";
-		}
-		echo "</select>\n";
-		echo "<p><input type=submit value=\"Transfer\">\n";
-		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='$backloc'\"></p>\n";
-		echo "</form>\n";
-		break;
 	case "deloldusers":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo "<h3>Delete Old Users</h3>\n";
-		echo "<form method=post action=\"actions.php?from=$from&action=deloldusers\">\n";
+		echo "<form method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."\">\n";
+		echo '<input type=hidden name=action value="deloldusers" />';
 		echo "<span class=form>Delete Users older than:</span>";
 		echo "<span class=formright><input type=text name=months size=4 value=\"6\"/> Months</span><br class=form>\n";
 		echo "<span class=form>Delete Who:</span>";
@@ -663,7 +905,7 @@ switch($_GET['action']) {
 		echo "</form>\n";
 		break;
 	case "listltidomaincred":
-		if ($myrights<100) { echo "not allowed"; exit;}
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo '<div id="headerforms" class="pagetitle">';
 		echo "<h3>Modify LTI Domain Credentials</h3>\n";
 		echo '</div>';
@@ -673,22 +915,24 @@ switch($_GET['action']) {
 		//DB while ($row = mysql_fetch_row($result)) {
 		$stm = $DBH->query("SELECT id,email,SID,rights FROM imas_users WHERE rights=11 OR rights=76 OR rights=77");
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-			echo "<tr><td>{$row[1]}</td><td>{$row[2]}</td>";
+			printf("<tr><td>%s</td><td>%s</td>", Sanitize::encodeStringForDisplay($row[1]),
+				Sanitize::encodeStringForDisplay($row[2]));
 			if ($row[3]==76) {
 				echo '<td>Yes</td>';
 			} else {
 				echo '<td>No</td>';
 			}
-			echo "<td><a href=\"forms.php?action=modltidomaincred&id={$row[0]}\">Modify</a></td>\n";
+			echo "<td><a href=\"forms.php?action=modltidomaincred&id=".Sanitize::encodeUrlParam($row[0])."\">Modify</a></td>\n";
 			if ($row[0]==0) {
 				echo "<td></td>";
 			} else {
-				echo "<td><a href=\"actions.php?from=$from&action=delltidomaincred&id={$row[0]}\" onclick=\"return confirm('Are you sure?');\">Delete</a></td>\n";
+				echo "<td><a href=\"forms.php?from=".Sanitize::encodeUrlParam($from)."&action=delltidomaincred&id=".Sanitize::encodeUrlParam($row[0])."\">Delete</a></td>\n";
 			}
 			echo "</tr>\n";
 		}
 		echo "</table>\n";
-		echo "<form method=post action=\"actions.php?from=$from&action=modltidomaincred&id=new\">\n";
+		echo "<form method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."&id=new\">\n";
+		echo '<input type=hidden name=action value="modltidomaincred" />';
 		echo "<p>Add new LTI key/secret: <br/>";
 		echo "Domain: <input type=text name=\"ltidomain\" size=20><br/>\n";
 		echo "Key: <input type=text name=\"ltikey\" size=20><br/>\n";
@@ -702,12 +946,29 @@ switch($_GET['action']) {
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB while ($row = mysql_fetch_row($result)) {
 		$stm = $DBH->query("SELECT id,name FROM imas_groups ORDER BY name");
+
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-			echo '<option value="'.$row[0].'">'.$row[1].'</option>';
+			printf('<option value="%d">%s</option>', Sanitize::encodeStringForDisplay($row[0]), Sanitize::encodeStringForDisplay($row[1]));
 		}
 		echo '</select><br/>';
 		echo "<input type=submit value=\"Add LTI Credentials\"></p>\n";
 		echo "</form>\n";
+		break;
+	case "delltidomaincred":
+		if ($myrights<100) { echo "not allowed"; exit;}
+		echo '<div id="headerforms" class="pagetitle">';
+		echo "<h3>Delete LTI Domain Credentials</h3>\n";
+		echo '</div>';
+		$stm = $DBH->prepare("SELECT id,email,SID,password,rights,groupid FROM imas_users WHERE id=:id");
+		$stm->execute(array(':id'=>$_GET['id']));
+		$row = $stm->fetch(PDO::FETCH_NUM);
+		echo '<p>Are you SURE you want to delete the LTI Domain Credentials for <strong>';
+		echo Sanitize::encodeStringForDisplay($row[1] . ' ('.$row[2].')');
+		echo '</strong>?</p>';
+		echo '<form method="POST" action="actions.php?from='.Sanitize::encodeUrlParam($from).'&id='.Sanitize::encodeUrlParam($_GET['id']).'">';
+		echo '<p><button type=submit name="action" value="delltidomaincred">'._('Delete').'</button>';
+		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='".Sanitize::encodeStringForJavascript($backloc)."'\"></p>\n";
+		echo '</form>';
 		break;
 	case "modltidomaincred":
 		if ($myrights<100) { echo "not allowed"; exit;}
@@ -720,11 +981,12 @@ switch($_GET['action']) {
 		$stm = $DBH->prepare("SELECT id,email,SID,password,rights,groupid FROM imas_users WHERE id=:id");
 		$stm->execute(array(':id'=>$_GET['id']));
 		$row = $stm->fetch(PDO::FETCH_NUM);
-		echo "<form method=post action=\"actions.php?from=$from&action=modltidomaincred&id={$row[0]}\">\n";
+		echo "<form method=post action=\"actions.php?from=".Sanitize::encodeUrlParam($from)."&action=modltidomaincred&id=".Sanitize::onlyInt($row[0])."\">\n";
+		echo '<input type=hidden name=action value="modltidomaincred" />';
 		echo "Modify LTI key/secret: <br/>";
-		echo "Domain: <input type=text name=\"ltidomain\" value=\"{$row[1]}\" size=20><br/>\n";
-		echo "Key: <input type=text name=\"ltikey\" value=\"{$row[2]}\" size=20><br/>\n";
-		echo "Secret: <input type=text name=\"ltisecret\"  value=\"{$row[3]}\" size=20><br/>\n";
+		echo "Domain: <input type=text name=\"ltidomain\" value=\"".Sanitize::encodeStringForDisplay($row[1])."\" size=20><br/>\n";
+		echo "Key: <input type=text name=\"ltikey\" value=\"".Sanitize::encodeStringForDisplay($row[2])."\" size=20><br/>\n";
+		echo "Secret: <input type=text name=\"ltisecret\"  value=\"".Sanitize::encodeStringForDisplay($row[3])."\" size=20><br/>\n";
 		echo "Can create instructors: <select name=\"createinstr\"><option value=\"11\" ";
 		if ($row[4]==11) {echo 'selected="selected"';}
 		echo ">No</option><option value=\"76\" ";
@@ -736,41 +998,142 @@ switch($_GET['action']) {
 		//DB while ($r = mysql_fetch_row($result)) {
 		$stm = $DBH->query("SELECT id,name FROM imas_groups ORDER BY name");
 		while ($r = $stm->fetch(PDO::FETCH_NUM)) {
-			echo '<option value="'.$r[0].'"';
+			printf('<option value="%d"', Sanitize::onlyInt($r[0]));
 			if ($r[0]==$row[5]) { echo ' selected="selected"';}
-			echo '>'.$r[1].'</option>';
+			echo '>'.Sanitize::encodeStringForDisplay($r[1]).'</option>';
 		}
 		echo '</select><br/>';
 		echo "<input type=submit value=\"Update LTI Credentials\">\n";
 		echo "</form>\n";
 		break;
 
+	case "listfedpeers":
+		if ($myrights<100) { echo "not allowed"; exit;}
+		echo '<div id="headerforms" class="pagetitle">';
+		echo "<h3>View Federation Peers</h3>\n";
+		echo '</div>';
+		echo "<table><tr><th>Name</th><th>Description</th><th>Their Last Pull</th><th>Our Last Pull</th><th>Modify</th><th>Delete</th><th>Pull</th></tr>\n";
+
+		$query = "SELECT ifp.id,ifp.peername,ifp.peerdescription,ifp.lastpull,max(pulls.pulltime) as uspull FROM imas_federation_peers AS ifp ";
+		$query .= "LEFT JOIN imas_federation_pulls AS pulls ON ifp.id=pulls.peerid GROUP BY pulls.peerid";
+
+		$query = "SELECT ifp.*,pulls.pulltime AS uspull,pulls.step FROM imas_federation_peers AS ifp ";
+		$query .= "LEFT JOIN imas_federation_pulls as pulls ON ifp.id=pulls.peerid WHERE ";
+		$query .= "pulls.id=(SELECT id FROM imas_federation_pulls AS ifps WHERE ifps.peerid=ifp.id ORDER BY pulltime DESC LIMIT 1) ";
+		$query .= "OR pulls.id IS NULL";
+		$stm = $DBH->query($query);
+		while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+			$lastpull = $row['lastpull'] > 0 ? tzdate("n/j/y", $row['lastpull']) : _('Never');
+			$uspull = $row['uspull'] === null ? _('Never') : tzdate("n/j/y", $row['uspull']);
+
+			printf("<tr><td>%s</td><td>%s</td>", Sanitize::encodeStringForDisplay($row['peername']),
+				Sanitize::encodeStringForDisplay($row['peerdescription']));
+			echo '<td>'.Sanitize::encodeStringForDisplay($lastpull).'</td>';
+			echo '<td>'.Sanitize::encodeStringForDisplay($uspull);
+			if ($row['uspull']!==null && $row['step']<99) {
+				echo '<br/>'._('Incomplete').'. <a href="federationpull.php?peer='.Sanitize::onlyInt($row['id']).'">'._('Continue').'</a>.';
+			}
+			echo '</td>';
+			printf('<td><a href="forms.php?action=modfedpeers&id=%d&from=%s">', $row['id'], Sanitize::encodeUrlParam($from));
+			echo _('Modify'),'</a></td>';
+			printf("<td><a href=\"actions.php?action=delfedpeers&id=%d&from=%s\" onclick=\"return confirm('Are you sure?');\">", $row['id'],  Sanitize::encodeUrlParam($from));
+			echo _('Delete'),'</a></td>';
+			echo '<td><a href="federationpull.php?peer='.Sanitize::onlyInt($row['id']).'&stage=-1">'._('Start New Pull').'</a></td>';
+			echo "</tr>\n";
+		}
+		echo "</table>\n";
+		echo "<form method=post action=\"actions.php?id=new&from=".Sanitize::encodeUrlParam($from)."\">\n";
+		echo "<p>Add new federation peer: <br/>";
+		echo '<input type="hidden" name="action" value="modfedpeers" />';
+		echo "Install Name: <input type=text name=\"peername\" size=20><br/>\n";
+		echo "Description: <input type=text name=\"peerdescription\" size=50><br/>\n";
+		echo "Root URL: <input type=text name=\"url\" size=50><br/>\n";
+		echo "Secret: <input type=text name=\"secret\" size=20><br/>\n";
+		echo "<input type=submit value=\"Add Federation Peer\"></p>\n";
+		echo "</form>\n";
+		break;
+	case "modfedpeers":
+		if ($myrights<100) { echo "not allowed"; exit;}
+		echo '<div id="headerforms" class="pagetitle">';
+		echo "<h3>Modify Federation Peer</h3>\n";
+		echo '</div>';
+		//DB $query = "SELECT id,email,SID,password,rights,groupid FROM imas_users WHERE id='{$_GET['id']}'";
+		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		//DB $row = mysql_fetch_row($result);
+		$stm = $DBH->prepare("SELECT id,peername,peerdescription,url,secret,lastpull FROM imas_federation_peers WHERE id=:id");
+		$stm->execute(array(':id'=>$_GET['id']));
+		$row = $stm->fetch(PDO::FETCH_ASSOC);
+		printf("<form method=post action=\"actions.php?id=%d&from=%s\">\n", Sanitize::onlyInt($row['id']), Sanitize::encodeUrlParam($from));
+		echo "Modify federation peer: <br/>";
+		echo '<input type="hidden" name="action" value="modfedpeers" />';
+		printf("Install Name: <input type=text name=\"peername\" value=\"%s\" size=20><br/>\n",
+			Sanitize::encodeStringForDisplay($row['peername']));
+		printf("Description: <input type=text name=\"peerdescription\" value=\"%s\" size=50><br/>\n",
+			Sanitize::encodeStringForDisplay($row['peerdescription']));
+		printf("Root URL: <input type=text name=\"url\" value=\"%s\" size=50><br/>\n",
+			Sanitize::encodeStringForDisplay($row['url']));
+		printf("Secret: <input type=text name=\"secret\"  value=\"%s\" size=20><br/>\n",
+			Sanitize::encodeStringForDisplay($row['secret']));
+		echo "<input type=submit value=\"Update Federation Peer\">\n";
+		echo "</form>\n";
+		break;
+
 	case "listgroups":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo '<div id="headerforms" class="pagetitle">';
 		echo "<h3>Modify Groups</h3>\n";
 		echo '</div>';
-		echo "<table><tr><th>Group Name</th><th>Modify</th><th>Delete</th></tr>\n";
+		echo "<table class=gb><thead><tr><th>Group Name</th><th>Modify</th><th>Delete</th></tr></thead><tbody>\n";
+		if ($from=='admin2') {
+			echo '<tr class="even"><td><a href="admin2.php?groupdetails=0">'._('Default Group').'</a></td><td></td><td></td></tr>';
+		}
 		//DB $query = "SELECT id,name FROM imas_groups ORDER BY name";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB while ($row = mysql_fetch_row($result)) {
 		$stm = $DBH->query("SELECT id,name FROM imas_groups ORDER BY name");
+		$alt = 1;
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-			echo "<tr><td>{$row[1]}</td>";
-			echo "<td><a href=\"forms.php?action=modgroup&id={$row[0]}\">Modify</a></td>\n";
+			if ($alt==0) {echo "<tr class=\"even\">"; $alt=1;} else {echo "<tr class=\"odd\">"; $alt=0;}
+			if ($from=='admin2') {
+				echo '<td><a href="admin2.php?groupdetails='.Sanitize::onlyInt($row[0]).'">'.Sanitize::encodeStringForDisplay($row[1]).'</a></td>';
+			} else {
+				echo "<td>".Sanitize::encodeStringForDisplay($row[1])."</td>";
+			}
+			printf("<td><a href=\"forms.php?action=modgroup&id=%s\">Modify</a></td>\n",
+				Sanitize::encodeUrlParam($row[0]));
 			if ($row[0]==0) {
 				echo "<td></td>";
 			} else {
-				echo "<td><a href=\"actions.php?from=$from&action=delgroup&id={$row[0]}\" onclick=\"return confirm('Are you SURE you want to delete this group?');\">Delete</a></td>\n";
+				printf("<td><a href=\"forms.php?from=%s&action=delgroup&id=%d\">Delete</a></td>\n",
+					Sanitize::encodeUrlParam($from), Sanitize::onlyInt($row[0]));
 			}
 			echo "</tr>\n";
 		}
-		echo "</table>\n";
-		echo "<form method=post action=\"actions.php?from=$from&action=addgroup\">\n";
+		echo "</tbody></table>\n";
+		printf("<form method=post action=\"actions.php?from=%s\">\n", Sanitize::encodeUrlParam($from));
+		echo '<input type=hidden name=action value="addgroup" />';
 		echo "Add new group: <input type=text name=gpname id=gpname size=50><br/>\n";
 		echo "<input type=submit value=\"Add Group\">\n";
 		echo "</form>\n";
 		break;
+	case "delgroup":
+		if ($myrights<100) { echo "not allowed"; exit;}
+		echo '<div id="headerforms" class="pagetitle">';
+		echo "<h3>Delete Group</h3>\n";
+		echo '</div>';
+		$stm = $DBH->prepare("SELECT name,parent FROM imas_groups WHERE id=:id");
+		$stm->execute(array(':id'=>$_GET['id']));
+		list($gpname,$parent) = $stm->fetch(PDO::FETCH_NUM);
+		echo '<p>Are you SURE you want to delete the group <strong>';
+		echo Sanitize::encodeStringForDisplay($gpname);
+		echo '</strong>?</p>';
+		echo '<form method="POST" action="actions.php?from='.Sanitize::encodeUrlParam($from).'&id='.Sanitize::encodeUrlParam($_GET['id']).'">';
+		echo '<p><button type=submit name="action" value="delgroup">'._('Delete').'</button>';
+		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='".Sanitize::encodeStringForJavascript($backloc)."'\"></p>\n";
+		echo '</form>';
+		break;
 	case "modgroup":
+		if ($myrights < 100) { echo "You don't have the authority for this action"; break;}
 		echo '<div id="headerforms" class="pagetitle"><h2>Rename Instructor Group</h2></div>';
 		//DB $query = "SELECT name,parent FROM imas_groups WHERE id='{$_GET['id']}'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -779,8 +1142,10 @@ switch($_GET['action']) {
 		$stm->execute(array(':id'=>$_GET['id']));
 		list($gpname,$parent) = $stm->fetch(PDO::FETCH_NUM);
 
-		echo "<form method=post action=\"actions.php?from=$from&action=modgroup&id=".Sanitize::encodeUrlParam($_GET['id'])."\">\n";
-		echo "Group name: <input type=text size=50 name=gpname id=gpname value=\"$gpname\"><br/>\n";
+		printf("<form method=post action=\"actions.php?from=%s&id=%s\">\n",
+			Sanitize::encodeUrlParam($from), Sanitize::encodeUrlParam($_GET['id']));
+		echo '<input type=hidden name=action value="modgroup" />';
+		echo "Group name: <input type=text size=50 name=gpname id=gpname value=\"".Sanitize::encodeStringForDisplay($gpname)."\"><br/>\n";
 		echo 'Parent: <select name="parentid"><option value="0" ';
 		if ($parent==0) { echo ' selected="selected"';}
 		echo '>None</option>';
@@ -789,18 +1154,93 @@ switch($_GET['action']) {
 		//DB while ($r = mysql_fetch_row($result)) {
 		$stm = $DBH->query("SELECT id,name FROM imas_groups ORDER BY name");
 		while ($r = $stm->fetch(PDO::FETCH_NUM)) {
-			echo '<option value="'.$r[0].'"';
+			echo '<option value="'.Sanitize::encodeStringForDisplay($r[0]).'"';
 			if ($r[0]==$parent) { echo ' selected="selected"';}
-			echo '>'.$r[1].'</option>';
+			echo '>'.Sanitize::encodeStringForDisplay($r[1]).'</option>';
 		}
 		echo '</select><br/>';
 		echo "<input type=submit value=\"Update Group\">\n";
 		echo "</form>\n";
 		break;
 	case "removediag":
+		if ($myrights<100 && ($myspecialrights&4)!=4) { echo "You don't have the authority for this action"; break;}
 		echo "<p>Are you sure you want to delete this diagnostic?  This does not delete the connected course and does not remove students or their scores.</p>\n";
-		echo "<p><input type=button value=\"Delete\" onclick=\"window.location='actions.php?from=$from&action=removediag&id=".Sanitize::encodeUrlParam($_GET['id'])."'\">\n";
-		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='$backloc'\"></p>\n";
+		echo '<form method="POST" action="actions.php?from='.Sanitize::encodeUrlParam($from).'&id='.Sanitize::encodeUrlParam($_GET['id']).'">';
+		echo '<p><button type=submit name="action" value="removediag">'._('Delete').'</button>';
+		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onclick=\"window.location='".Sanitize::encodeStringForJavascript($backloc)."'\"></p>\n";
+		echo '</form>';
+
+		break;
+	case "findstudent":
+		if ($myrights < 20) { echo "You don't have the authority for this action"; break;}
+		echo '<div id="headerforms" class="pagetitle"><h2>Find Student</h2></div>';
+		echo '<form method="post" action="forms.php?from='.Sanitize::encodeUrlParam($from).'&action=findstudent">';
+		echo '<p>Enter all or part of the name, email, or username: ';
+		echo '<input type=text size=20 name=userinfo value="'.Sanitize::encodeStringForDisplay($_POST['userinfo']).'"/></p>';
+		echo '<input type="submit">';
+		echo '</form>';
+		if (!empty($_POST['userinfo'])) {
+			$words = preg_split('/\s+/', str_replace(',',' ',trim($_POST['userinfo'])));
+			$query = "SELECT iu.id,iu.LastName,iu.FirstName,iu.SID,ic.name,ic.id AS cid";
+			if ($from!='home' && $myrights>=75) {
+				$query .= ",iut.LastName AS teacherfirst,iut.FirstName AS teacherlast";
+			}
+			$query .= " FROM imas_users AS iu JOIN ";
+			$query .= "imas_students AS i_s ON iu.id=i_s.userid JOIN imas_courses AS ic ON ic.id=i_s.courseid ";
+			$myrights = 75;
+			if ($from=='home' || $myrights<75) {
+				$query .= "JOIN imas_teachers AS i_t ON ic.id=i_t.courseid ";
+				$query .= "WHERE i_t.userid=? AND ";
+				$qarr = array($userid);
+			} else { 
+				$query .= "JOIN imas_teachers AS i_t ON ic.id=i_t.courseid ";
+				$query .= "JOIN imas_users AS iut ON i_t.userid=iut.id ";
+				if ($myrights<100) {
+					$query .= "WHERE iut.groupid=? AND ";
+					$qarr = array($groupid);
+				} else {
+					$query .= "WHERE ";	
+					$qarr = array();
+				}
+			}
+			if (count($words)==1 && strpos($words[0],'@')!==false) {
+				$query .= "(iu.email=? OR iu.SID=?)";
+				array_push($qarr, $words[0], $words[0]);
+			} else if (count($words)==1) {
+				$query .= "(iu.LastName LIKE ? OR iu.FirstName Like ? OR iu.SID LIKE ?)";
+				array_push($qarr, $words[0].'%', $words[0].'%', '%'.$words[0].'%');
+			} else if (count($words)==2) {
+				$query .= "((iu.LastName LIKE ? AND iu.FirstName Like ?) OR (iu.LastName LIKE ? AND iu.FirstName Like ?))";
+				array_push($qarr, $words[0].'%', $words[1].'%', $words[1].'%', $words[0].'%');
+			}
+			$query .= " ORDER BY LastName, FirstName LIMIT 200";
+			$stm = $DBH->prepare($query);
+			$stm->execute($qarr);
+			if ($stm->rowCount()==0) {
+				echo '<p>No matches <a href="forms.php?from='.Sanitize::encodeUrlParam($from).'&action=findstudent">Try again</a></p>';
+			} else {
+				echo '<table class="gb"><thead><th>Student</th><th>Username</th><th>Course</th>';
+				if ($from!='home' && $myrights>=75) {
+					echo '<th>Instructor</th>';
+				}
+				echo '</thead><tbody>';
+				$i = 0;
+				while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+					echo ($i==0)?'<tr class=even>':'<tr class=odd>'; $i = 1-$i;
+					echo '<td>';
+					echo '<a href="../course/gradebook.php?cid='.Sanitize::onlyInt($row['cid']).'&stu='.Sanitize::onlyInt($row['id']).'">';
+					echo Sanitize::encodeStringForDisplay($row['LastName'].', '.$row['FirstName']).'</td>';
+					echo '</a><td>'.Sanitize::encodeStringForDisplay($row['SID']).'</td>'; 
+					echo '<td>'.Sanitize::encodeStringForDisplay($row['name']).'</td>';
+					if ($from!='home' && $myrights>=75) {
+						echo '<td>'.Sanitize::encodeStringForDisplay($row['teacherlast'].', '.$row['teacherfirst']).'</td>';
+					}
+					echo '</td></tr>';
+				}
+				echo '</tbody></table>';
+			}		
+		} 
+		
 		break;
 }
 

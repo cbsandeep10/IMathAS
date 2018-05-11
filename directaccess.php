@@ -3,13 +3,13 @@
 //login / new student page specific for course
 //(c) 2007 David Lippman
 
-require_once(__DIR__ . "/includes/sanitize.php");
-$cid = Sanitize::courseId($_GET['cid']);
 	$curdir = rtrim(dirname(__FILE__), '/\\');
 	 if (!file_exists("$curdir/config.php")) {
 		 header('Location: ' . $GLOBALS['basesiteurl'] . "/install.php");
 	 }
- 	require_once("$curdir/config.php");
+ 	require_once(__DIR__ . "/init_without_validate.php");
+	require_once(__DIR__ ."/includes/newusercommon.php");
+	$cid = Sanitize::courseId($_GET['cid']);
 
  	if (!isset($_GET['cid'])) {
 		echo "Invalid address.  Address must be directaccess.php?cid=###, where ### is your courseid";
@@ -21,7 +21,7 @@ $cid = Sanitize::courseId($_GET['cid']);
 		 $urlmode = 'http://';
 	 }
 	if (isset($_SERVER['QUERY_STRING'])) {
-		 $querys = '?'.$_SERVER['QUERY_STRING'];
+		 $querys = '?'.Sanitize::fullQueryString($_SERVER['QUERY_STRING']);
 	 } else {
 		 $querys = '';
 	 }
@@ -29,30 +29,7 @@ $cid = Sanitize::courseId($_GET['cid']);
 	 if (isset($_POST['submit']) && $_POST['submit']=="Sign Up") {
 		unset($_POST['username']);
 		unset($_POST['password']);
-		require_once("config.php");
-		if ($_POST['SID']=="" || $_POST['firstname']=="" || $_POST['lastname']=="" || $_POST['email']=="" || $_POST['pw1']=="") {
-			$page_newaccounterror .= "Please include all information. ";
-		}
-		if ($loginformat!='' && !preg_match($loginformat,$_POST['SID'])) {
-			$page_newaccounterror .= "$loginprompt is invalid. ";
-		} else {
-			//DB $query = "SELECT id FROM imas_users WHERE SID='{$_POST['SID']}'";
-			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB if (mysql_num_rows($result)>0) {
-			$stm = $DBH->prepare("SELECT id FROM imas_users WHERE SID=:SID");
-			$stm->execute(array(':SID'=>$_POST['SID']));
-			if ($stm->rowCount()>0) {
-				$page_newaccounterror .= "$loginprompt '{$_POST['SID']}' is already used. ";
-			}
-		}
-		if (!preg_match('/^[a-zA-Z][\w\.-]*[a-zA-Z0-9]@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$/',$_POST['email'])) {
-			$page_newaccounterror .= "Invalid email address. ";
-		}
-		if ($_POST['pw1'] != $_POST['pw2']) {
-			$page_newaccounterror .= "Passwords don't match. ";
-			unset($_POST['pw1']);
-			unset($_POST['pw2']);
-		}
+		$page_newaccounterror = checkNewUserValidation();
 
 		//DB $query = "SELECT enrollkey,deflatepass FROM imas_courses WHERE id = '$cid'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -126,7 +103,7 @@ $cid = Sanitize::courseId($_GET['cid']);
 				$message .= "and paste it into your webbrowser:</p>\r\n";
 				$message .= "<a href=\"" . $GLOBALS['basesiteurl'] . "/actions.php?action=confirm&id=$id\">";
 				$message .= $GLOBALS['basesiteurl'] . "/actions.php?action=confirm&id=$id</a>\r\n";
-				mail(Sanitize::emailAddress($_POST['email']),'IMathAS Confirmation',$message,$headers);
+				mail(Sanitize::emailAddress($_POST['email']), $installname.' Confirmation',$message,$headers);
 				echo "<html><body>\n";
 				echo "Registration recorded.  You should shortly receive an email with confirmation instructions.";
 				echo "<a href=\"$imasroot/directaccess.php?cid=$cid\">Back to login page</a>\n";
@@ -141,9 +118,9 @@ $cid = Sanitize::courseId($_GET['cid']);
 	//check for session
 	$origquerys = $querys;
 	if ($_POST['ekey']!='') {
-		$addtoquerystring = "ekey=".Sanitize::encodeStringForUrl($_POST['ekey']);
+		$addtoquerystring = "ekey=".Sanitize::encodeUrlParam($_POST['ekey']);
 	}
-	require("validate.php");
+	require("init.php");
 	$flexwidth = true;
 	if ($verified) { //already have session
 		if (!isset($studentid) && !isset($teacherid) && !isset($tutorid)) {  //have account, not a student
@@ -171,7 +148,7 @@ $cid = Sanitize::courseId($_GET['cid']);
 				exit;
 			} else {
 				require("header.php");
-				echo "<h2>".Sanitize::encodeStringForDisplay($coursename)."</h2>";
+				echo "<h2>" . Sanitize::encodeStringForDisplay($coursename) . "</h2>";
 				echo '<form method="post" action="directaccess.php?cid='.$cid.'">';
 				echo '<p>Incorrect enrollment key.  Try again.</p>';
 				echo "<p>Course Enrollment Key:  <input type=text name=\"ekey\"></p>";
@@ -186,18 +163,6 @@ $cid = Sanitize::courseId($_GET['cid']);
 		}
 	} else { //not verified
 		//$placeinhead = "<link rel=\"stylesheet\" href=\"$imasroot/infopages.css\" type=\"text/css\" />\n";
-		$pref = 0;
-		 if (isset($_COOKIE['mathgraphprefs'])) {
-			 $prefparts = explode('-',$_COOKIE['mathgraphprefs']);
-			 if ($prefparts[0]==2 && $prefparts[1]==2) { //img all
-				$pref = 3;
-			 } else if ($prefparts[0]==2) { //img math
-				 $pref = 4;
-			 } else if ($prefparts[1]==2) { //img graph
-				 $pref = 2;
-			 }
-
-		 }
 
 		//DB $query = "SELECT name FROM imas_courses WHERE id='$cid'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -220,13 +185,13 @@ $cid = Sanitize::courseId($_GET['cid']);
 			 $challenge = base64_encode(microtime() . rand(0,9999));
 			 $_SESSION['challenge'] = $challenge;
 		 }
-		$placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/jquery.validate.min.js"></script>';
+		$placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/jquery.validate.min.js?v=122917"></script>';
 		if (isset($CFG['locale'])) {
 			$placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/jqvalidatei18n/messages_'.$CFG['locale'].'.min.js"></script>';
 		}
 		require("header.php");
 		//echo "<div class=\"breadcrumb\">$breadcrumbbase $coursename Access</div>";
-		echo "<div id=\"header\"><div class=\"vcenter\">$coursename</div></div>";
+		echo "<div id=\"header\"><div class=\"vcenter\">" . Sanitize::encodeStringForDisplay($coursename) . "</div></div>";
 		//echo '<span style="float:right;margin-top:10px;">'.$smallheaderlogo.'</span>';
 
 		$cid = intval($_GET['cid']);
@@ -243,7 +208,7 @@ $cid = Sanitize::courseId($_GET['cid']);
 		$enrollkey = $stm->fetchColumn(0);
 
 ?>
-<form id="pageform" method="post" action="directaccess.php<?php echo Sanitize::encodeStringForDisplay($querys);?>">
+<form id="pageform" class=limitaftervalidate method="post" action="directaccess.php<?php echo $querys; ?>">
 
 <?php
 if ($enrollkey!='closed') {
@@ -267,66 +232,33 @@ if ($enrollkey!='closed') {
 <span class=form>Password:</span><input class="form" type="password" size="15" id="password" name="password"><br class="form">
 <?php
 if (strlen($enrollkey)>0) {
-	echo '<span class=form><label for="ekey">Course Enrollment Key:</label></span><input class=form type=text size=12 name="ekey" id="ekey" value="'.(isset($_REQUEST['ekey'])?$_REQUEST['ekey']:"").'"/><BR class=form>';
+	echo '<span class=form><label for="ekey">Course Enrollment Key:</label></span><input class=form type=text size=12 name="ekey" id="ekey" value="' . (isset($_REQUEST['ekey']) ? Sanitize::encodeStringForDisplay($_REQUEST['ekey']) : "") . '"/><BR class=form>';
 }
 ?>
+<div class=submit><input type="submit" value="Login and Enroll"></div>
 <span class=form> </span><span class=formright><a href="<?php echo $imasroot; ?>/forms.php?action=resetpw">Forgot Password</a></span><br class="form">
 </table>
-<div id="settings">JavaScript is not enabled.  JavaScript is required for <?php echo $installname; ?>.  Please enable JavaScript and reload this page</div>
+<div><noscript>JavaScript is not enabled.  JavaScript is required for <?php echo $installname; ?>.  Please enable JavaScript and reload this page</noscript></div>
 
 <input type="hidden" id="tzoffset" name="tzoffset" value="">
 <input type="hidden" id="tzname" name="tzname" value="">
 <input type="hidden" id="challenge" name="challenge" value="<?php echo $challenge; ?>" />
 <script type="text/javascript">
+$(function() {
         var thedate = new Date();
         document.getElementById("tzoffset").value = thedate.getTimezoneOffset();
         var tz = jstz.determine();
         document.getElementById("tzname").value = tz.name();
+				<?php
+					if ($page_newaccounterror!='') {
+						echo 'document.getElementById("SID").focus();';
+					} else {
+						echo 'document.getElementById("username").focus();';
+					}
+				?>
+});
 </script>
 
-
-<script type="text/javascript">
-	function updateloginarea() {
-		setnode = document.getElementById("settings");
-		var html = "";
-		html += '<span class=form>Accessibility:</span><span class=formright> ';
-		//html += "<a href='#' onClick=\"window.open('<?php echo $imasroot;?>/help.php?section=loggingin','help','top=0,width=400,height=500,scrollbars=1,left='+(screen.width-420))\">Help</a>";
-		html += '<input type="radio" name="access" value="0" <?php if ($pref==0) {echo "checked=1";} ?> />Use visual display<br/>';
-		html += '<input type="radio" name="access" value="2" <?php if ($pref==2) {echo "checked=1";} ?> />Force image-based graphs<br/>';
-		html += '<input type="radio" name="access" value="4" <?php if ($pref==4) {echo "checked=1";} ?> />Force image-based math<br/>';
-		html += '<input type="radio" name="access" value="3" <?php if ($pref==3) {echo "checked=1";} ?> />Force image based display<br/>';
-		html += '<input type="radio" name="access" value="1">Use text-based display</span><br class=form>';
-
-		if (!MathJaxCompatible) {
-			html += '<input type=hidden name="mathdisp" value="0">';
-		} else {
-			html += '<input type=hidden name="mathdisp" value="1">';
-		}
-		if (ASnoSVG) {
-			html += '<input type=hidden name="graphdisp" value="2">';
-		} else {
-			html += '<input type=hidden name="graphdisp" value="1">';
-		}
-		if (MathJaxCompatible && !ASnoSVG) {
-			html += '<input type=hidden name="isok" value=1>';
-		}
-		html += '<div class=submit><input name="submit" type="submit" value="Login"></div>';
-		setnode.innerHTML = html;
-<?php
-	if ($page_newaccounterror!='') {
-		echo 'document.getElementById("SID").focus();';
-	} else {
-		echo 'document.getElementById("username").focus();';
-	}
-?>
-	}
-	var existingonload = window.onload;
-	if (existingonload) {
-		window.onload = function() {existingonload(); updateloginarea();}
-	} else {
-		window.onload = updateloginarea;
-	}
-</script>
 <?php
 	if ($enrollkey!='closed') {
 ?>
@@ -350,7 +282,7 @@ function setlogintype(n) {
 <p><b>New Student Enrollment</b></p>
 <?php
 if ($page_newaccounterror!='') {
-	echo '<p class=noticetext>'.$page_newaccounterror.'</p>';
+	echo '<p class=noticetext>' . Sanitize::encodeStringForDisplay($page_newaccounterror) . '</p>';
 }
 ?>
 <span class=form><label for="SID"><?php echo $longloginprompt;?>:</label></span> <input class=form type=text size=12 id=SID name=SID <?php if (isset($_POST['SID'])) { printf('value="%s"', Sanitize::encodeStringForDisplay($_POST['SID'])); } ?>><BR class=form>
@@ -380,60 +312,20 @@ if (isset($_GET['getsid'])) {
 </form>
 
 <?php
-	echo '<script type="text/javascript">
-		$("#pageform").validate({
-			rules: {
-				username: {
-					required: {depends: function(element) {return logintype==0}}
-				},
-				password: {
-					required: {depends: function(element) {return logintype==0}}
-				},';
-	if (strlen($enrollkey)>0) {
-		echo '		ekey: {
-					required: {depends: function(element) {return logintype==0}}
-				},';
-	}
-	echo '
-				SID: {
-					required: {depends: function(element) {return logintype==1}},
-					pattern: '.$loginformat.',
-					remote: imasroot+"/actions.php?action=checkusername"
-				},
-				pw1: {
-					required: {depends: function(element) {return logintype==1}},
-					minlength: 6},
-				pw2: {
-					required: {depends: function(element) {return logintype==1}},
-					equalTo: "#pw1"
-				},
-				firstname: {
-					required: {depends: function(element) {return logintype==1}}
-				},
-				lastname: {
-					required: {depends: function(element) {return logintype==1}}
-				},';
-	if (strlen($enrollkey)>0) {
-		echo '		ekey2: {
-					required: {depends: function(element) {return logintype==1}}
-				},';
-	}
-	echo '
-				email: {
-					required: {depends: function(element) {return logintype==1}},
-					email: true
-				}
+	$requiredrules = array(
+		'username'=>'{depends: function(element) {return logintype==0}}',
+		'password'=>'{depends: function(element) {return logintype==0}}',
+		'ekey'=>'{depends: function(element) {return logintype==0}}',
+		'SID'=>'{depends: function(element) {return logintype==1}}',
+		'pw1'=>'{depends: function(element) {return logintype==1}}',
+		'pw2'=>'{depends: function(element) {return logintype==1}}',
+		'firstname'=>'{depends: function(element) {return logintype==1}}',
+		'lastname'=>'{depends: function(element) {return logintype==1}}',
+		'email'=>'{depends: function(element) {return logintype==1}}',
+		'ekey2'=>'{depends: function(element) {return logintype==1}}'
+	);
+	showNewUserValidation('pageform', (strlen($enrollkey)>0)?array('ekey','ekey2'):array(), $requiredrules);
 
-			},
-			messages: {
-				SID: {
-					remote: _("That username is already taken. Try another.")
-				}
-			},
-			invalidHandler: function() {
-				setTimeout(function(){$("#pageform").removeClass("submitted").removeClass("submitted2");}, 100)}
-		});
-		</script>';
 	require("footer.php");
 	}
 

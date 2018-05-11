@@ -6,7 +6,7 @@ var rubricbase, lastrubricpos;
 
 function imasrubric_getpttot(rubricid) {
 	var pttot = 0;
-	for (var i=0;i<imasrubrics[rubricid].data.length; i++) {	
+	for (var i=0;i<imasrubrics[rubricid].data.length; i++) {
 		if (imasrubrics[rubricid].type==0 || imasrubrics[rubricid].type==1 ) {  //score breakdown or score and feedback
 			pttot += imasrubrics[rubricid].data[i][2];
 		} else if (imasrubrics[rubricid].type==3 || imasrubrics[rubricid].type==4) {
@@ -27,7 +27,7 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 		gb_window.id = "GB_window";
 		gb_window.innerHTML = '<div id="GB_caption"></div><div id="GB_loading">Loading...</div><div id="GB_frameholder"></div>';
 		document.getElementsByTagName("body")[0].appendChild(gb_window);
-		GB_loaded  = true;	
+		GB_loaded  = true;
 	}
 	document.getElementById("GB_caption").innerHTML = '<span style="float:right;"><span class="pointer clickable" onclick="GB_hide()">[X]</span></span> Rubric';
 	//document.getElementById("GB_caption").onclick = GB_hide;
@@ -35,6 +35,7 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 	document.getElementById("GB_window").style.display = "block";
 	document.getElementById("GB_window").style.position = "absolute";
 	document.getElementById("GB_window").style.height = "auto";
+	document.getElementById("GB_window").style.margin = "0";
 	//document.getElementById("GB_overlay").style.display = "block";
 	document.getElementById("GB_loading").style.display = "block";
 	if (!hasTouch) {
@@ -60,16 +61,16 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 				lastrubricpos.top = p.top;
 				$("body").unbind('touchmove',rubricmousemove);
 				$(this).unbind(event);
-			});	
+			});
 		});
-		
+
 	}
 	var html = "<div style='margin: 10px;'><form id='imasrubricform'><table><tbody>";
 	if (imasrubrics[rubricid].type<2) {
 		html += '<tr><td></td><td colspan="3"><a href="#" onclick="imasrubric_fullcredit();return false;">'+_('Full Credit')+'</a></td></tr>';
 	}
 	var pttot = imasrubric_getpttot(rubricid);
-		
+
 	for (var i=0;i<imasrubrics[rubricid].data.length; i++) {
 		if (imasrubrics[rubricid].type==0 || imasrubrics[rubricid].type==1 ) {  //score breakdown or score and feedback
 			html += "<tr><td>"+imasrubrics[rubricid].data[i][0];
@@ -89,7 +90,7 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 				html += "<br/><i>"+imasrubrics[rubricid].data[i][1]+"</i>";
 			}
 			html += '</td><td><input type="checkbox" id="rubricchk'+i+'" value="1"/></td></tr>';
-		} else if (imasrubrics[rubricid].type==3 || imasrubrics[rubricid].type==4) { //score total 
+		} else if (imasrubrics[rubricid].type==3 || imasrubrics[rubricid].type==4) { //score total
 			html += "<tr><td>"+imasrubrics[rubricid].data[i][0];
 			if (imasrubrics[rubricid].data[i][1]!="") {
 				html += "<br/><i>"+imasrubrics[rubricid].data[i][1]+"</i>";
@@ -100,11 +101,11 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 	}
 	html += '</tbody></table><br/><input type="button" value="Record" onclick="imasrubric_record(\''+rubricid+'\',\''+scoreboxid+'\',\''+feedbackid+'\',\''+qn+'\','+pointsposs+',false)" />';
 	html += '<input type="button" value="Clear Existing and Record" onclick="imasrubric_record(\''+rubricid+'\',\''+scoreboxid+'\',\''+feedbackid+'\',\''+qn+'\','+pointsposs+',true)" /></form></div>';
-	
-	
+
+
 	document.getElementById("GB_frameholder").innerHTML = html;
 	document.getElementById("GB_loading").style.display = "none";
-	
+
 	var de = document.documentElement;
 	var w = self.innerWidth || (de&&de.clientWidth) || document.body.clientWidth;
 	var h = self.innerHeight || (de&&de.clientHeight) || document.body.clientHeight;
@@ -115,34 +116,41 @@ function imasrubric_show(rubricid,pointsposs,scoreboxid,feedbackid,qn,width) {
 	document.getElementById("GB_window").style.left = ((w - width)/2)+"px";
 	lastrubricpos = {
 		left: ($(window).width() - $("#GB_window").outerWidth())/2,
-		top: $(window).scrollTop() + ((window.innerHeight ? window.innerHeight : $(window).height()) - $("#GB_window").outerHeight())/2, 
+		top: $(window).scrollTop() + ((window.innerHeight ? window.innerHeight : $(window).height()) - $("#GB_window").outerHeight())/2,
 		scroll: $(window).scrollTop()
-	}; 
+	};
 	document.getElementById("GB_window").style.top = lastrubricpos.top+"px";
-	
+
 	//document.getElementById("GB_frame").style.height = (h - 30 -34)+"px";
 }
 
 function rubricmousemove(evt) {
 	$('#GB_window').css('left', (evt.pageX - rubricbase.left) + lastrubricpos.left)
 	.css('top', (evt.pageY - rubricbase.top) + lastrubricpos.top);
-	return false;	
+	return false;
 }
 function rubrictouchmove(evt) {
 	var touch = evt.originalEvent.changedTouches[0] || evt.originalEvent.touches[0];
-  		
+
 	$('#GB_window').css('left', (touch.pageX - rubricbase.left) + lastrubricpos.left)
 	.css('top', (touch.pageY - rubricbase.top) + lastrubricpos.top);
 	evt.preventDefault();
 
-	return false;	
+	return false;
 }
 
 function imasrubric_record(rubricid,scoreboxid,feedbackid,qn,pointsposs,clearexisting) {
 	var feedback = '';
-	if (qn != null && qn != 'null' && qn != '0') {
+	if (qn != null && qn != 'null' && qn != '0' && !feedbackid.match(/^fb-/)) {
 		feedback += '#'+qn+': ';
 	}
+	if (window.tinymce) {
+		tinymce.triggerSave();
+		var pastfb = $("input[name="+feedbackid+"]").val();
+	} else {
+		var pastfb = $("textarea[name="+feedbackid+"]").val();
+	}
+	
 	var pttot = imasrubric_getpttot(rubricid);
 	if (imasrubrics[rubricid].type==0 || imasrubrics[rubricid].type==1 ) {  //score breakdown and feedback
 		var score = 0;
@@ -155,27 +163,49 @@ function imasrubric_record(rubricid,scoreboxid,feedbackid,qn,pointsposs,clearexi
 			}
 			score += thisscore;
 			totpts = Math.round(pointsposs*imasrubrics[rubricid].data[i][2])/pttot;
-			
-			feedback += imasrubrics[rubricid].data[i][0]+': '+thisscore+'/'+totpts+'. ';
+
+			feedback += '<li>'+imasrubrics[rubricid].data[i][0]+': '+thisscore+'/'+totpts+'.</li>';
 		}
+		if (feedback != '') {
+			feedback = '<ul class=nomark>'+feedback+'</ul>';
+		} 
 		document.getElementById(scoreboxid).value = score;
 		if (imasrubrics[rubricid].type==1) {
 			if (clearexisting) {
-				document.getElementById(feedbackid).value = feedback;
+				if (window.tinymce) {
+					tinymce.get(feedbackid).setContent(feedback);
+				} else {
+					document.getElementById(feedbackid).value = feedback;
+				}
 			} else {
-				document.getElementById(feedbackid).value = document.getElementById(feedbackid).value + feedback;
+				if (window.tinymce) {
+					tinymce.get(feedbackid).setContent(pastfb + feedback);
+				} else {
+					document.getElementById(feedbackid).value = pastfb + feedback;
+				}
 			}
 		}
 	} else if (imasrubrics[rubricid].type==2) { //just feedback
 		for (var i=0;i<imasrubrics[rubricid].data.length; i++) {
 			if (document.getElementById('rubricchk'+i).checked) {
-				feedback += imasrubrics[rubricid].data[i][0]+'. ';
+				feedback += '<li>'+imasrubrics[rubricid].data[i][0]+'.</li>';
 			}
 		}
+		if (feedback != '') {
+			feedback = '<ul class=nomark>'+feedback+'</ul>';
+		} 
 		if (clearexisting) {
-			document.getElementById(feedbackid).value = feedback;
+			if (window.tinymce) {
+				tinymce.get(feedbackid).setContent(feedback);
+			} else {
+				document.getElementById(feedbackid).value = feedback;
+			}
 		} else {
-			document.getElementById(feedbackid).value = document.getElementById(feedbackid).value + feedback;
+			if (window.tinymce) {
+				tinymce.get(feedbackid).setContent(pastfb + feedback);
+			} else {
+				document.getElementById(feedbackid).value = pastfb + feedback;
+			}
 		}
 	} else if (imasrubrics[rubricid].type==3 || imasrubrics[rubricid].type==4 ) {  //score total and feedback
 		loc = getRadioValue('rubricgrp');
@@ -184,14 +214,26 @@ function imasrubric_record(rubricid,scoreboxid,feedbackid,qn,pointsposs,clearexi
 		document.getElementById(scoreboxid).value = totpts;
 		if (imasrubrics[rubricid].type==3) {
 			if (clearexisting) {
-				document.getElementById(feedbackid).value = feedback;
+				if (window.tinymce) {
+					tinymce.get(feedbackid).setContent(feedback);
+				} else {
+					document.getElementById(feedbackid).value = feedback;
+				}
 			} else {
-				document.getElementById(feedbackid).value = document.getElementById(feedbackid).value + feedback;
+				if (window.tinymce) {
+					tinymce.get(feedbackid).setContent(pastfb + feedback);
+				} else {
+					document.getElementById(feedbackid).value = pastfb + feedback;
+				}
 			}
 		}
 	}
-	GB_hide();
 	
+	if (p = feedbackid.match(/^fb-(\d+)/)) {
+		revealfb(p[1]);
+	}
+	GB_hide();
+
 }
 
 function imasrubric_chgtype() {
@@ -216,11 +258,11 @@ function imasrubric_chgtype() {
 				}
 			}
 		}
-	}	
+	}
 }
 
 function imasrubric_fullcredit() {
-	$("#imasrubricform tr").find("input:radio:first").attr('checked',true);	
+	$("#imasrubricform tr").find("input:radio:first").attr('checked',true);
 }
 function getRadioValue(theRadioGroup) {
 	var els = document.getElementsByName(theRadioGroup);
@@ -248,4 +290,10 @@ function quicksetscore(el,score) {
 
 function markallfullscore() {
 	$('.quickgrade').click();
+}
+
+function revealfb(qn) {
+	$("#fb-"+qn+"-wrap").show();
+	$("#fb-"+qn+"-add").hide();
+	return false;
 }

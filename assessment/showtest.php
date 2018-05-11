@@ -2,8 +2,8 @@
 //IMathAS:  Frontend of testing engine - manages administration of assessments
 //(c) 2006 David Lippman
 
-	require("../validate.php");
-	
+	require("../init.php");
+
 	if (!isset($CFG['TE']['navicons'])) {
 		 $CFG['TE']['navicons'] = array(
 			 'untried'=>'te_blue_arrow.png',
@@ -24,6 +24,7 @@
 		echo "</body></html>\n";
 		exit;
 	}
+
 	$actas = false;
 	$isreview = false;
 	if (isset($teacherid) && isset($_GET['actas'])) {
@@ -31,12 +32,25 @@
 		unset($teacherid);
 		$actas = true;
 	}
+	$isRealStudent = (isset($studentid) && !$actas && !isset($sessiondata['stuview']));
+	$latepasses = 0;
+	if (!isset($sessiondata['stuview'])) { //want to load for actas too
+		require_once("../includes/exceptionfuncs.php");
+		if ($isRealStudent) {
+			$exceptionfuncs = new ExceptionFuncs($userid, $cid, true, $studentinfo['latepasses'], $latepasshrs);
+			$latepasses = $studentinfo['latepasses'];
+		} else {
+			$exceptionfuncs = new ExceptionFuncs($userid, $cid, false);
+		}
+	}
+	$useexception = false;
+	$inexception = false;
+	$exceptionduedate = 0;
+
 	include("displayq2.php");
 	include("testutil.php");
 	include("asidutil.php");
 
-	$inexception = false;
-	$exceptionduedate = 0;
 	//error_reporting(0);  //prevents output of error messages
 
 	//check to see if test starting test or returning to test
@@ -48,36 +62,36 @@
 		//DB $query = "SELECT deffeedback,startdate,enddate,reviewdate,shuffle,itemorder,password,avail,isgroup,groupsetid,deffeedbacktext,timelimit,courseid,istutorial,name,allowlate,displaymethod FROM imas_assessments WHERE id='$aid'";
 		//DB $result = mysql_query($query) or die("Query failed : $query: " . mysql_error());
 		//DB $adata = mysql_fetch_array($result, MYSQL_ASSOC);
-		$stm = $DBH->prepare("SELECT deffeedback,startdate,enddate,reviewdate,shuffle,itemorder,password,avail,isgroup,groupsetid,deffeedbacktext,timelimit,courseid,istutorial,name,allowlate,displaymethod,id FROM imas_assessments WHERE id=:id");
+		$stm = $DBH->prepare("SELECT deffeedback,startdate,enddate,reviewdate,shuffle,itemorder,password,avail,isgroup,groupsetid,deffeedbacktext,timelimit,courseid,istutorial,name,allowlate,displaymethod,id,reqscoreaid,reqscore,reqscoretype FROM imas_assessments WHERE id=:id");
 		$stm->execute(array(':id'=>$aid));
 		$adata = $stm->fetch(PDO::FETCH_ASSOC);
 		$now = time();
 		$assessmentclosed = false;
-
+		if ($adata['enddate']==2000000000 && $courseenddate<2000000000) {
+			$adata['enddate'] = $courseenddate;
+		}
 		if ($adata['avail']==0 && !isset($teacherid) && !isset($tutorid)) {
 			$assessmentclosed = true;
 		}
 		$canuselatepass = false;
+		$waivereqscore = false;
+		$useexception = false;
 		if (!$actas) {
-			if (isset($studentid)) {
-				//DB $query = "INSERT INTO imas_content_track (userid,courseid,type,typeid,viewtime) VALUES ";
-				//DB $query .= "('$userid','$cid','assess','$aid',$now)";
-				//DB mysql_query($query) or die("Query failed : " . mysql_error());
-				$query = "INSERT INTO imas_content_track (userid,courseid,type,typeid,viewtime) VALUES ";
-				$query .= "(:userid, :courseid, :type, :typeid, :viewtime)";
-				$stm = $DBH->prepare($query);
-				$stm->execute(array(':userid'=>$userid, ':courseid'=>$cid, ':type'=>'assess', ':typeid'=>$aid, ':viewtime'=>$now));
-			}
-
-			//DB $query = "SELECT startdate,enddate FROM imas_exceptions WHERE userid='$userid' AND assessmentid='$aid' AND itemtype='A'";
-			//DB $result2 = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB $row = mysql_fetch_row($result2);
-			$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
-			$stm2->execute(array(':userid'=>$userid, ':assessmentid'=>$aid));
-			$row = $stm2->fetch(PDO::FETCH_NUM);
-			if ($row!=null) {
-				require_once("../includes/exceptionfuncs.php");
-				$useexception = getCanUseAssessException($row, $adata, true);
+			if ($isRealStudent) {
+				$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass,is_lti,waivereqscore FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
+				$stm2->execute(array(':userid'=>$userid, ':assessmentid'=>$aid));
+				$row = $stm2->fetch(PDO::FETCH_NUM);
+				if ($row!=null) {
+					$useexception = $exceptionfuncs->getCanUseAssessException($row, $adata, true);
+					$waivereqscore = ($row[4]>0);
+				}
+			} else if (isset($_SESSION['lti_duedate']) && (isset($teacherid) || isset($tutorid)) && $_SESSION['lti_duedate']!=$adata['enddate']) {
+				//teacher launch with lti duedate that's different than default
+				//do a pseudo-exception
+				$useexception = true;
+				$row = array(0, $_SESSION['lti_duedate'], 0, 1, 0);
+			} else {
+				$row = null;
 			}
 			if ($row!=null && $useexception) {
 				if ($now<$row[0] || $row[1]<$now) { //outside exception dates
@@ -89,8 +103,8 @@
 						}
 					}
 				} else { //inside exception dates exception
-					if ($adata['enddate']<$now) { //exception is for past-due-date
-						$inexception = true; //only trigger if past due date for penalty
+					if ($adata['enddate']<$now && ($row[3]==0 || $row[2]>0)) { //exception is for past-due-date
+						$inexception = true; //only trigger if past due date for penalty (and not a regular lti-set exception)
 					}
 				}
 				$exceptionduedate = $row[1];
@@ -105,49 +119,33 @@
 					}
 				}
 			}
+			if (($assessmentclosed || $isreview) && $adata['avail']>0 && $isRealStudent) {
+				if ($latepasses>0) {
+					list($useexception, $canundolatepass, $canuselatepass) = $exceptionfuncs->getCanUseAssessException($row, $adata);
+				}
+			}
+		}
+		if ($isreview && $canuselatepass && !isset($_GET['goreview'])) {
+			//ask them if they're sure they want review mode vs latepass
+			require("header.php");
+			showEnterAssessmentBreadcrumbs($adata['name']);
+			echo '<p>'._('This assessment is past the due date, and is now in un-graded review mode where no scores will be saved.').'</p>';
+			echo '<p>'.sprintf(_('You have %d LatePass(es) available which you could use to re-open the assignment for scored work.'), $latepasses).'</p>';
+			echo '<p><button type="button" onclick="window.location.href=\'../course/redeemlatepass.php?cid='.$cid.'&aid='.$aid.'\'">'._('Use LatePass').'</button> ';
+			echo _('This will re-open the assessment for graded work').'</p>';
+			echo '<p><button type="button" onclick="window.location.href=\'showtest.php?cid='.$cid.'&id='.$aid.'&goreview=true\'">'.('Continue in Review Mode').'</button> ';
+			echo '<span class="noticetext">'._('If you open the assessment in un-graded review mode now, you will not be able to use a LatePass later').'</span></p>';
+			require("../footer.php");
+			exit;
 		}
 		if ($assessmentclosed) {
 			require("header.php");
+			showEnterAssessmentBreadcrumbs($adata['name']);
 			echo '<p>', _('This assessment is closed'), '</p>';
 			if ($adata['avail']>0) {
-				$viewedassess = array();
-				if ($adata['enddate']<$now && $adata['allowlate']>10 && !$actas && !isset($sessiondata['stuview'])) {
-					//DB $query = "SELECT typeid FROM imas_content_track WHERE courseid='$cid' AND userid='$userid' AND type='gbviewasid'";
-					//DB $r2 = mysql_query($query) or die("Query failed : " . mysql_error());
-					//DB while ($r = mysql_fetch_row($r2)) {
-					$stm2 = $DBH->prepare("SELECT typeid FROM imas_content_track WHERE courseid=:courseid AND userid=:userid AND type='gbviewasid'");
-					$stm2->execute(array(':courseid'=>$cid, ':userid'=>$userid));
-					while ($r = $stm2->fetch(PDO::FETCH_NUM)) {
-						$viewedassess[] = $r[0];
-					}
-				}
 
-				if (!isset($teacherid) && !isset($tutorid) && !$actas && !isset($sessiondata['stuview'])) {
-					//DB $query = "SELECT latepasshrs FROM imas_courses WHERE id='".$cid."'";
-					//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-					//DB $latepasshrs = mysql_result($result,0,0);
-					$stm = $DBH->prepare("SELECT latepasshrs FROM imas_courses WHERE id=:cid");
-					$stm->execute(array(':cid'=>$cid));
-					$latepasshrs = $stm->fetchColumn(0);
-
-					//DB $query = "SELECT latepass FROM imas_students WHERE userid='$userid' AND courseid='$cid'";
-					//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
-					//DB $latepasses = mysql_result($result,0,0);
-					$stm = $DBH->prepare("SELECT latepass FROM imas_students WHERE userid=:userid AND courseid=:courseid");
-					$stm->execute(array(':userid'=>$userid, ':courseid'=>$cid));
-					$latepasses = $stm->fetchColumn(0);
-				} else {
-					$latepasses = 0;
-					$latepasshrs = 0;
-				}
-
-				if (!$actas && $latepasses>0) {
-					require_once("../includes/exceptionfuncs.php");
-					list($useexception, $canundolatepass, $canuselatepass) = getCanUseAssessException($row, $adata);
-
-					if ($canuselatepass) {
-						echo "<p><a href=\"$imasroot/course/redeemlatepass.php?cid=$cid&aid=$aid\">", _('Use LatePass'), "</a></p>";
-					}
+				if (!$actas && $canuselatepass) {
+					echo "<p><a href=\"$imasroot/course/redeemlatepass.php?cid=$cid&aid=$aid\">", _('Use LatePass'), "</a></p>";
 				}
 
 				if (isset($sessiondata['ltiitemtype']) && $sessiondata['ltiitemtype']==0 && $sessiondata['ltiitemid']==$aid) {
@@ -162,7 +160,7 @@
 						$stm->execute(array(':userid'=>$userid, ':assessmentid'=>$aid));
 						if ($stm->rowCount()>0) {
 							echo '<p><a href="../course/gb-viewasid.php?cid='.$cid.'&asid='.$stm->fetchColumn(0).'" ';
-							if ($adata['allowlate']>10 && ($now - $adata['enddate'])<$latepasshrs*3600 && !in_array($aid,$viewedassess) && $latepasses>0 && !isset($sessiondata['stuview']) && !$actas) {
+							if (!$actas && $canuselatepass) {
 								echo ' onclick="return confirm(\''._('If you view this scored assignment, you will not be able to use a LatePass on it').'\');"';
 							}
 							echo '>', _('View your scored assessment'), '</p>';
@@ -173,8 +171,95 @@
 			require("../footer.php");
 			exit;
 		}
+		//check reqscore
+		if ($isRealStudent && abs($adata['reqscore'])>0 && $adata['reqscoreaid']>0 && !$waivereqscore) {
+			$isBlocked = false;
+			
+			$query = "SELECT ias.bestscores,ia.ptsposs,ia.name FROM imas_assessments AS ia LEFT JOIN ";
+			$query .= "imas_assessment_sessions AS ias ON ias.assessmentid=ia.id AND ias.userid=:userid ";
+			$query .= "WHERE ia.id=:assessmentid";
+			$bestscores_stm = $DBH->prepare($query);
+			$bestscores_stm->execute(array(':assessmentid'=>$adata['reqscoreaid'], ':userid'=>$userid));
+			list($prereqscore,$reqscoreptsposs,$reqscorename) = $bestscores_stm->fetch(PDO::FETCH_NUM);
+			
+			if ($prereqscore === null) {
+				$isBlocked = true;
+			} else {
+				$prereqscore = explode(';', $prereqscore);
+				$prereqscore = explode(',', $prereqscore[0]);
+				$prereqscoretot = 0;
+				for ($i=0;$i<count($prereqscore);$i++) {
+					$prereqscoretot += getpts($prereqscore[$i]);
+				}
+				$isBlocked = false;
+				
+				if ($adata['reqscoretype']&2) { //using percent-based
+					if ($reqscoreptsposs==-1) {
+						require("../includes/updateptsposs.php");
+						$reqscoreptsposs = updatePointsPossible($adata['reqscoreaid']);
+					}
+					if (round(100*$prereqscoretot/$reqscoreptsposs,1)+.02<abs($adata['reqscore'])) {
+						$isBlocked = true;
+					}
+				} else if ($prereqscoretot+.02<abs($adata['reqscore'])) { //points based
+					$isBlocked = true;
+				}
+			}
+			if ($isBlocked) {
+				require("header.php");
+				echo '<h3>'._('You cannot start this assessment yet.').'</h3>';
+				echo '<p>';
+				printf(_('Access to this assessment requires a score of %d%s on %s'),
+					abs($adata['reqscore']),
+					($adata['reqscoretype']&2)?'%':_(' points'),
+					Sanitize::encodeStringForDisplay($reqscorename));
+				echo '</p>';
+				require("../footer.php");
+				exit;
+			}
+			
+		}
 
 		//check for password
+
+		if (trim($adata['password'])!='' && preg_match('/^\d{1,3}\.(\*|\d{1,3})\.(\*|\d{1,3})\.[\d\*\-]+/',$adata['password'])) {
+			//if PW is an IP address, compare against user's
+			$userip = explode('.', $_SERVER['REMOTE_ADDR']);
+			$pwips = explode(',', $adata['password']);
+			$isoneIPok = false;
+			foreach ($pwips as $pwip) {
+				$pwip = explode('.', $pwip);
+				$thisIPok = true;
+				for ($i=0;$i<3;$i++) {
+					if ($pwip[$i]!=$userip[$i] && $pwip[$i]!='*') {
+						$thisIPok = false;
+					}
+				}
+				$lastpts = explode('-',$pwip[3]);
+				if (count($lastpts)==1) {
+					if ($lastpts[0]=='*') {
+
+					} else if ($lastpts[0]!=$userip[3]) {
+						$thisIPok = false;
+					}
+				} else {
+					if ($userip[3]<$lastpts[0] || $useripd[3]>$lastpts[1]) {
+						$thisIPok = false;
+					}
+				}
+				if ($thisIPok) {
+					$isoneIPok = true;
+					break;
+				}
+			}
+			if ($isoneIPok) {
+				$adata['password'] = '';
+			} else {
+				echo "<p>Not authorized from this computer</p>";
+				require("../footer.php");
+				exit;
+			}
+		}
 		if (trim($adata['password'])!='' && !isset($teacherid) && !isset($tutorid)) { //has passwd
 			$pwfail = true;
 			if (isset($_POST['password'])) {
@@ -186,10 +271,7 @@
 			}
 			if ($pwfail) {
 				require("../header.php");
-				if (!$isdiag && strpos($_SERVER['HTTP_REFERER'],'treereader')===false && !(isset($sessiondata['ltiitemtype']) && $sessiondata['ltiitemtype']==0)) {
-					echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=".Sanitize::courseId($_GET['cid'])."\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-					echo '&gt; ', _('Assessment'), '</div>';
-				}
+				showEnterAssessmentBreadcrumbs($adata['name']);
 				echo $out;
 				echo '<h2>'.$adata['name'].'</h2>';
 				if (strpos($adata['name'],'RPNow') !== false && strpos($_SERVER['HTTP_USER_AGENT'],'RPNow') === false) {
@@ -206,17 +288,23 @@
 			}
 		}
 
+		//log assessment access
+		if ($isRealStudent) {
+			$query = "INSERT INTO imas_content_track (userid,courseid,type,typeid,viewtime) VALUES ";
+			$query .= "(:userid, :courseid, :type, :typeid, :viewtime)";
+			$stm = $DBH->prepare($query);
+			$stm->execute(array(':userid'=>$userid, ':courseid'=>$cid, ':type'=>$isreview?'assessreview':'assess', ':typeid'=>$aid, ':viewtime'=>$now));
+		}
+
 		//get latepass info
-		if (!isset($teacherid) && !isset($tutorid) && !$actas && !isset($sessiondata['stuview'])) {
-		   //DB $query = "SELECT latepass FROM imas_students WHERE userid='$userid' AND courseid='{$adata['courseid']}'";
-		   //DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
-		   //DB $sessiondata['latepasses'] = mysql_result($result,0,0);
+		if ($isRealStudent) {
 		   $stm = $DBH->prepare("SELECT latepass FROM imas_students WHERE userid=:userid AND courseid=:courseid");
 		   $stm->execute(array(':userid'=>$userid, ':courseid'=>$adata['courseid']));
 		   $sessiondata['latepasses'] = $stm->fetchColumn(0);
 		} else {
 			$sessiondata['latepasses'] = 0;
 		}
+		$sessiondata['latepasshrs'] = $latepasshrs;
 
 		$sessiondata['istutorial'] = $adata['istutorial'];
 		$_SESSION['choicemap'] = array();
@@ -640,24 +728,34 @@
 	$now = time();
 	//check for dates - kick out student if after due date
 	//if (!$isteacher) {
+	if ($testsettings['enddate']==2000000000 && $courseenddate<2000000000) {
+		$testsettings['enddate'] = $courseenddate;
+	}
 	if ($testsettings['avail']==0 && !$isteacher) {
 		echo _('Assessment is closed');
 		leavetestmsg();
 		exit;
 	}
-	if (!isset($sessiondata['actas'])) {
+	$ltiexception = false;
+	if (!$actas) {
 		//DB $query = "SELECT startdate,enddate,islatepass,exceptionpenalty FROM imas_exceptions WHERE userid='$userid' AND assessmentid='{$line['assessmentid']}' AND itemtype='A'";
 		//DB $result2 = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB $row = mysql_fetch_row($result2);
-		$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass,exceptionpenalty FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
+		$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass,is_lti,exceptionpenalty FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
 		$stm2->execute(array(':userid'=>$userid, ':assessmentid'=>$line['assessmentid']));
-		$row = $stm2->fetch(PDO::FETCH_NUM);
-		if ($row!=null) {
-			require_once("../includes/exceptionfuncs.php");
-			$useexception = getCanUseAssessException($row, $testsettings, true);
+		$exceptionrow = $stm2->fetch(PDO::FETCH_NUM);
+		if ($exceptionrow != null) {
+			$useexception = $exceptionfuncs->getCanUseAssessException($exceptionrow, $testsettings, true);
+			$ltiexception = ($row[3]>0 && $row[2]==0);
+		} else if (isset($_SESSION['lti_duedate']) && $isteacher && $_SESSION['lti_duedate']!=$testsettings['enddate']) {
+			//teacher launch with lti duedate that's different than default
+			//do a pseudo-exception
+			$useexception = true;
+			$ltiexception = true;
+			$exceptionrow = array(0, $_SESSION['lti_duedate'], 0, 1);
 		}
-		if ($row!=null && $useexception) {
-			if ($now<$row[0] || $row[1]<$now) { //outside exception dates
+		if ($exceptionrow!=null && $useexception) {
+			if ($now<$exceptionrow[0] || $exceptionrow[1]<$now) { //outside exception dates
 				if ($now > $testsettings['startdate'] && $now<$testsettings['reviewdate']) {
 					$isreview = true;
 				} else {
@@ -668,15 +766,15 @@
 					}
 				}
 			} else { //in exception
-				if ($testsettings['enddate']<$now) { //exception is for past-due-date
+				if ($testsettings['enddate']<$now && ($row[3]==0 || $row[2]>0)) { //exception is for past-due-date
 					$inexception = true;
-					$exceptiontype = $row[2];
-					if ($row[3]!==null) {
-						$testsettings['exceptionpenalty'] = $row[3];
+					$exceptiontype = $exceptionrow[2];
+					if ($exceptionrow[4]!==null) {
+						$testsettings['exceptionpenalty'] = $exceptionrow[4];
 					}
 				}
 			}
-			$exceptionduedate = $row[1];
+			$exceptionduedate = $exceptionrow[1];
 		} else { //has no exception
 			if ($now < $testsettings['startdate'] || $testsettings['enddate'] < $now) {//outside normal dates
 				if ($now > $testsettings['startdate'] && $now<$testsettings['reviewdate']) {
@@ -694,15 +792,15 @@
 		//DB $query = "SELECT startdate,enddate FROM imas_exceptions WHERE userid='{$sessiondata['actas']}' AND assessmentid='{$line['assessmentid']}' AND itemtype='A'";
 		//DB $result2 = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB $row = mysql_fetch_row($result2);
-		$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
+		$stm2 = $DBH->prepare("SELECT startdate,enddate,islatepass,is_lti FROM imas_exceptions WHERE userid=:userid AND assessmentid=:assessmentid AND itemtype='A'");
 		$stm2->execute(array(':userid'=>$sessiondata['actas'], ':assessmentid'=>$line['assessmentid']));
 		$row = $stm2->fetch(PDO::FETCH_NUM);
 		if ($row!=null) {
-			require_once("../includes/exceptionfuncs.php");
-			$useexception = getCanUseAssessException($row, $testsettings, true);
+			$useexception = $exceptionfuncs->getCanUseAssessException($row, $testsettings, true);
 			if ($useexception) {
 				$exceptionduedate = $row[1];
 			}
+			$ltiexception = ($row[3]>0 && $row[2]==0);
 		}
 	}
 
@@ -759,7 +857,9 @@
 
 
 	}
-	$qi = getquestioninfo($questions,$testsettings);
+	$preloadqsetdata = ((!isset($_GET['action']) || $_GET['action']=='seq' || $_GET['action']=='scoreall') && !isset($_REQUEST['embedpostback']) &&
+		($testsettings['displaymethod']=='Embed' || $testsettings['displaymethod']=='VideoCue' || $testsettings['displaymethod'] == "AllAtOnce" || $testsettings['displaymethod'] == "Seq"));
+	$qi = getquestioninfo($questions,$testsettings,$preloadqsetdata);
 	srand();
 
 	//check for withdrawn
@@ -772,8 +872,6 @@
 
 	$allowregen = (!$superdone && ($testsettings['testtype']=="Practice" || $testsettings['testtype']=="Homework"));
 	$showeachscore = ($testsettings['testtype']=="Practice" || $testsettings['testtype']=="AsGo" || $testsettings['testtype']=="Homework");
-	$showansduring = is_numeric($testsettings['showans']);
-	$showansafterlast = ($testsettings['showans']==='F' || $testsettings['showans']==='J');
 	$noindivscores = ($testsettings['testtype']=="EndScore" || $testsettings['testtype']=="EndReviewWholeTest" || $testsettings['testtype']=="NoScores");
 	$reviewatend = ($testsettings['testtype']=="EndReview" || $testsettings['testtype']=="EndReviewWholeTest");
 	$reattemptduring = !($testsettings['testtype']=="EndScore" || $testsettings['testtype']=="EndReviewWholeTest");
@@ -1080,12 +1178,21 @@
 	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 	header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); // Date in the past
 	$useeditor = 1;
-if (!isset($_REQUEST['embedpostback'])) {
+if (!isset($_REQUEST['embedpostback']) && empty($_POST['backgroundsaveforlater'])) {
 
 	$cid = $testsettings['courseid'];
 	if ($testsettings['displaymethod'] == "VideoCue") {
+		$viddata = unserialize($testsettings['viddata']);
+		$vidid = array_shift($viddata);
+		if (is_array($vidid)) {
+		  list($vidid,$vidar) = $vidid;
+		} else {
+		  $vidar = "16:9";
+		}
+
 		//$placeinhead .= '<script src="'.$urlmode.'www.youtube.com/player_api"></script>';
-		$placeinhead = '<script src="'.$imasroot.'/javascript/ytapi.js"></script>';
+		$placeinhead = "<script>var vidAspectRatio = '$vidar'</script>";
+		$placeinhead .= '<script src="'.$imasroot.'/javascript/ytapi.js?v=101817"></script>';
 	}
 	if ($testsettings['displaymethod'] == "LivePoll") {
 		$placeinhead = '<script src="https://'.$CFG['GEN']['livepollserver'].':3000/socket.io/socket.io.js"></script>';
@@ -1174,38 +1281,12 @@ if (!isset($_REQUEST['embedpostback'])) {
 			}
 			$out .= '</a> ';
 		}
-		$latepasscnt = 0;
-		if ($testsettings['allowlate']%10>1 && isset($exceptionduedate) && $exceptionduedate>0) {
-			//DB $query = "SELECT latepasshrs FROM imas_courses WHERE id='".$testsettings['courseid']."'";
-			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB $latepasshrs = mysql_result($result,0,0);
-			$stm = $DBH->prepare("SELECT latepasshrs FROM imas_courses WHERE id=:id");
-			$stm->execute(array(':id'=>$testsettings['courseid']));
-			$latepasshrs = $stm->fetchColumn(0);
-			$latepasscnt = round(($exceptionduedate - $testsettings['enddate'])/(3600*$latepasshrs));
+		$canuselatepass = false;
+		if ($isRealStudent) {
+			list($useexception, $canundolatepass, $canuselatepass) = $exceptionfuncs->getCanUseAssessException($exceptionrow, $testsettings);
 		}
-		if (($testsettings['allowlate']%10==1 || $testsettings['allowlate']%10-1>$latepasscnt) && $sessiondata['latepasses']>0 && !$isreview) {
+		if ($canuselatepass && !$isreview) {
 			$out .= "<a href=\"$imasroot/course/redeemlatepass.php?cid=$cid&aid={$testsettings['id']}\" onclick=\"return confirm('". _('This will discard any unsaved work.'). "');\">". _('Redeem LatePass'). "</a> ";
-		}
-		if ($isreview && !(isset($exceptionduedate) && $exceptionduedate>0) && $testsettings['allowlate']>10 && $sessiondata['latepasses']>0 && !isset($sessiondata['stuview']) && !$actas) {
-			//DB $query = "SELECT latepasshrs FROM imas_courses WHERE id='".$testsettings['courseid']."'";
-			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB $latepasshrs = mysql_result($result,0,0);
-			$stm = $DBH->prepare("SELECT latepasshrs FROM imas_courses WHERE id=:id");
-			$stm->execute(array(':id'=>$testsettings['courseid']));
-			$latepasshrs = $stm->fetchColumn(0);
-			$viewedassess = array();
-			//DB $query = "SELECT typeid FROM imas_content_track WHERE courseid='".$testsettings['courseid']."' AND userid='$userid' AND type='gbviewasid'";
-			//DB $r2 = mysql_query($query) or die("Query failed : " . mysql_error());
-			//DB while ($r = mysql_fetch_row($r2)) {
-			$stm2 = $DBH->prepare("SELECT typeid FROM imas_content_track WHERE courseid=:courseid AND userid=:userid AND type='gbviewasid'");
-			$stm2->execute(array(':userid'=>$userid, ':courseid'=>$testsettings['courseid']));
-			while ($r = $stm2->fetch(PDO::FETCH_NUM)) {
-				$viewedassess[] = $r[0];
-			}
-			if ((time() - $testsettings['enddate'])<$latepasshrs*3600 && !in_array($testsettings['id'],$viewedassess)) {
-				$out .= "<a href=\"$imasroot/course/redeemlatepass.php?cid=$cid&aid={$testsettings['id']}\" onclick=\"return confirm('". _('This will discard any unsaved work.'). "');\">". _('Redeem LatePass'). "</a> ";
-			}
 		}
 		if ($out != '') {
 			echo '<p>'.$out.'</p>';
@@ -1213,11 +1294,8 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 		if ($sessiondata['ltiitemid']==$testsettings['id'] && $isreview) {
 			if ($testsettings['origshowans']!='N') {
-				echo '<p><a href="../course/gb-viewasid.php?cid='.$cid.'&asid='.$testid.'" ';
-				if ($isreview && !(isset($exceptionduedate) && $exceptionduedate>0) && $testsettings['allowlate']>10 && $sessiondata['latepasses']>0 && !isset($sessiondata['stuview']) && !$actas && (time() - $testsettings['enddate'])<$latepasshrs*3600 && !in_array($testsettings['id'],$viewedassess)) {
-					echo ' onclick="return confirm(\''._('If you view this scored assignment, you will not be able to use a LatePass on it').'\');"';
-				}
-				echo '>', _('View your scored assessment'), '</a></p>';
+				echo '<p><a href="../course/gb-viewasid.php?cid='.$cid.'&asid='.$testid.'">';
+				echo _('View your scored assessment'), '</a></p>';
 			}
 		}
 		echo '</div>';
@@ -1460,8 +1538,8 @@ if (!isset($_REQUEST['embedpostback'])) {
 		$duetimenote = '';
 		if ($exceptionduedate > 0) {
 			$timebeforedue = $exceptionduedate - time();
-			if ($timebeforedue>0 && ($testsettings['enddate'] - time()) < 0) { //past original due date
-				$duetimenote .= sprintf(_('This assignment is past the original due date of %s.'), tzdate('D m/d/Y g:i a',$testsettings['enddate']));
+			if ($timebeforedue>0 && ($testsettings['enddate'] - time()) < 0 && !$ltiexception) { //past original due date
+				$duetimenote .= sprintf(_('This assignment is past the original due date of %s.'), tzdate('D m/d/Y g:i a',$testsettings['enddate'])).' ';
 				if ($exceptiontype>0) {
 					$duetimenote .= _('You have used a LatePass');
 				} else {
@@ -1495,10 +1573,12 @@ if (!isset($_REQUEST['embedpostback'])) {
 				$duetimenote .= _('Due') . " " . tzdate('D m/d/Y g:i a',$testsettings['enddate']);
 			}
 		} else {
-			if ($testsettings['enddate']==2000000000) {
+			if ($exceptionduedate > 0) {
+				if ($exceptionduedate < 2000000000) {
+					$duetimenote .= _('Due') . " " . tzdate('D m/d/Y g:i a',$exceptionduedate);
+				}
+			} else if ($testsettings['enddate']==2000000000) {
 				$duetimenote .= '';
-			} else if ($exceptionduedate > 0) {
-				$duetimenote .= _('Due') . " " . tzdate('D m/d/Y g:i a',$exceptionduedate);
 			} else {
 				$duetimenote .= _('Due') . " " . tzdate('D m/d/Y g:i a',$testsettings['enddate']);
 			}
@@ -1612,7 +1692,8 @@ if (!isset($_REQUEST['embedpostback'])) {
 				$intropieces[$textsegcnt] .= $introjson[$i]['text'];
 			} else {
 				$textsegcnt++;
-				$introdividers[$textsegcnt] = array(0,$introjson[$i]['displayBefore']+1, $introjson[$i]['displayUntil']+1);
+				if (!isset($introjson[$i]['forntype'])) {$introjson[$i]['forntype'] = 0;}
+				$introdividers[$textsegcnt] = array(0,$introjson[$i]['displayBefore']+1, $introjson[$i]['displayUntil']+1, $introjson[$i]['forntype']);
 				$intropieces[$textsegcnt] = $introjson[$i]['text'];
 			}
 
@@ -1621,9 +1702,14 @@ if (!isset($_REQUEST['embedpostback'])) {
 	} else {
 		$introhaspages = ($testsettings['displaymethod'] == "Embed" && strpos($testsettings['intro'],'[PAGE')!==false);
 	}
-
+	if (!empty($_POST['backgroundsaveforlater'])) {
+		scorequestion(Sanitize::onlyInt($_POST['tosaveqn']),false);
+		recordtestdata(true);
+		echo "Saved ".Sanitize::onlyInt($_POST['tosaveqn']);
+		exit;
+	}
 	if (isset($_GET['action'])) {
-		if ($_GET['action']=="skip" || $_GET['action']=="seq") {
+		if (($_GET['action']=="skip" || $_GET['action']=="seq") && trim($testsettings['intro'])!='') {
 			echo '<div class="right"><a href="#" aria-controls="intro" aria-expanded="false" onclick="togglemainintroshow(this);return false;">'._("Show Intro/Instructions").'</a></div>';
 			//echo "<div class=right><span onclick=\"document.getElementById('intro').className='intro';\"><a href=\"#\">", _('Show Instructions'), "</a></span></div>\n";
 		}
@@ -1632,7 +1718,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 			$GLOBALS['scoremessages'] = '';
 			for ($i=0; $i < count($questions); $i++) {
 				//if (isset($_POST["qn$i"]) || isset($_POST['qn'.(1000*($i+1))]) || isset($_POST["qn$i-0"]) || isset($_POST['qn'.(1000*($i+1)).'-0'])) {
-					if ($_POST['verattempts'][$i]!=$attempts[$i]) {
+					if (!isset($_POST['verattempts'][$i])) {
+						//question not redisplayed, or error - just skip with no warning
+					} else if ($_POST['verattempts'][$i]!=$attempts[$i]) {
 						echo sprintf(_('Question %d has been submitted since you viewed it.  Your answer just submitted was not scored or recorded.'), ($i+1)), "<br/>";
 					} else {
 						scorequestion($i,false);
@@ -1728,7 +1816,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 			if (!$done) { //can show next
 				echo '<div class="right"><a href="#" aria-controls="intro" aria-expanded="false" onclick="togglemainintroshow(this);return false;">'._("Show Intro/Instructions").'</a></div>';
-				echo filter("<div id=\"intro\" class=\"hidden\" aria-hidden=\"true\" aria-expanded=\"false\">{$testsettings['intro']}</div>\n");
+				echo filter("<div id=\"intro\" role=region aria-label=\""._('Intro or instructions')."\" class=\"hidden\" aria-hidden=\"true\" aria-expanded=\"false\">{$testsettings['intro']}</div>\n");
 
 				echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=shownext&amp;score=$toshow\" onsubmit=\"return doonsubmit(this)\">\n";
 				echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
@@ -1736,8 +1824,20 @@ if (!isset($_REQUEST['embedpostback'])) {
 				echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
 				if (isset($intropieces)) {
 					foreach ($introdividers as $k=>$v) {
-						if ($v[1]==$toshow+1) {//right divider
+						/*if ($v[1]==$toshow+1) {//right divider
 							echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							break;
+						}*/
+						if ($v[1]<=$toshow+1 && $toshow+1<=$v[2]) {//right divider
+							if ($toshow+1==$v[1] || !empty($v[3])) {
+								echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="true">';
+								echo _('Hide Question Information'), '</a></div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							} else {
+								echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="false">';
+								echo _('Show Question Information'), '</a></div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							}
 							break;
 						}
 					}
@@ -1745,6 +1845,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 				basicshowq($toshow);
 				showqinfobar($toshow,true,true,2);
 				echo '<input type="submit" class="btn" value="', _('Continue'), '" />';
+				echo '</form>';
 			} else { //are all done
 				$shown = showscores($questions,$attempts,$testsettings);
 				endtest($testsettings);
@@ -1779,11 +1880,11 @@ if (!isset($_REQUEST['embedpostback'])) {
 					recordtestdata();
 				}
 			   if (!$superdone) {
-				echo filter("<div id=intro class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
+				echo filter("<div id=intro role=region aria-label=\""._('Intro or instructions')."\" class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
 				$lefttodo = shownavbar($questions,$scores,$qn,$testsettings['showcat']);
 
 				echo "<div class=inset>\n";
-				echo "<a name=\"beginquestions\"></a>\n";
+				echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 				if ($GLOBALS['scoremessages'] != '') {
 					echo '<p>'.$GLOBALS['scoremessages'].'</p>';
 				}
@@ -1842,15 +1943,13 @@ if (!isset($_REQUEST['embedpostback'])) {
 					}
 				}
 
-				if ($reattemptsremain == false && $showeachscore && $testsettings['showans']!='N') {
+				if ((!$reattemptsremain || $regenonreattempt) && $showeachscore && $testsettings['showans']!='N') {
 					//TODO i18n
-
+					unset($GLOBALS['nocolormark']);
 					echo "<p>" . _("This question, with your last answer");
-					if (($showansafterlast && $qi[$questions[$qn]]['showans']=='0') || $qi[$questions[$qn]]['showans']=='F' || $qi[$questions[$qn]]['showans']=='J') {
-						echo _(" and correct answer");
-						$showcorrectnow = true;
-					} else if (($showansduring && $qi[$questions[$qn]]['showans']=='0' && $testsettings['showans']==$attempts[$qn]) ||
-						   ($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']==$attempts[$qn])) {
+					if (($qi[$questions[$qn]]['showansafterlast'] && !$reattemptsremain) ||
+							($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']<=$attempts[$qn]) ||
+							($qi[$questions[$qn]]['showans']=='R' && $regenonreattempt)) {
 						echo _(" and correct answer");
 						$showcorrectnow = true;
 					} else {
@@ -1883,14 +1982,14 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if (isset($intropieces)) {
 						foreach ($introdividers as $k=>$v) {
 							if ($v[1]<=$next+1 && $next+1<=$v[2]) {//right divider
-								if ($next+1==$v[1]) {
+								if ($next+1==$v[1] || !empty($v[3])) {
 									echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="true">';
 									echo _('Hide Question Information'), '</a></div>';
-									echo '<div class="intro" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+									echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								} else {
 									echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="false">';
 									echo _('Show Question Information'), '</a></div>';
-									echo '<div class="intro" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+									echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								}
 								break;
 							}
@@ -1900,11 +1999,11 @@ if (!isset($_REQUEST['embedpostback'])) {
 					echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
 					echo '<input type="hidden" name="disptime" value="'.time().'" />';
 					echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
-					echo "<a name=\"beginquestions\"></a>\n";
+					echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 					basicshowq($next);
 					showqinfobar($next,true,true);
 					echo '<input type="submit" class="btn" value="'. _('Submit'). '" />';
-					if (($testsettings['showans']=='J' && $qi[$questions[$next]]['showans']=='0') || $qi[$questions[$next]]['showans']=='J') {
+					if ((($testsettings['showans']=='J' && $qi[$questions[$next]]['showans']=='0') || $qi[$questions[$next]]['showans']=='J') && $qi[$questions[$next]]['attempts']>0) {
 						echo ' <input type="button" class="btn" value="', _('Jump to Answer'), '" onclick="if (confirm(\'', _('If you jump to the answer, you must generate a new version to earn credit'), '\')) {window.location = \'showtest.php?action=skip&amp;jumptoans='.$next.'&amp;to='.$next.'\'}"/>';
 					}
 					echo "</form>\n";
@@ -1918,7 +2017,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 			    }
 			} else if (isset($_GET['to'])) { //jump to a problem
 				$next = $_GET['to'];
-				echo filter("<div id=intro class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
+				echo filter("<div id=intro role=region aria-label=\""._('Intro or instructions')."\"  class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
 
 				$lefttodo = shownavbar($questions,$scores,$next,$testsettings['showcat']);
 				if (unans($scores[$next]) || amreattempting($next)) {
@@ -1926,14 +2025,14 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if (isset($intropieces)) {
 						foreach ($introdividers as $k=>$v) {
 							if ($v[1]<=$next+1 && $next+1<=$v[2]) {//right divider
-								if ($next+1==$v[1]) {
+								if ($next+1==$v[1] || !empty($v[3])) {
 									echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="true">';
 									echo _('Hide Question Information'), '</a></div>';
-									echo '<div class="intro" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+									echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								} else {
 									echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="false">';
 									echo _('Show Question Information'), '</a></div>';
-									echo '<div class="intro" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+									echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								}
 								break;
 							}
@@ -1943,19 +2042,21 @@ if (!isset($_REQUEST['embedpostback'])) {
 					echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
 					echo '<input type="hidden" name="disptime" value="'.time().'" />';
 					echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
-					echo "<a name=\"beginquestions\"></a>\n";
+					echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 					basicshowq($next);
 					showqinfobar($next,true,true);
 					echo '<input type="submit" class="btn" value="'. _('Submit'). '" />';
-					if (($testsettings['showans']=='J' && $qi[$questions[$next]]['showans']=='0') || $qi[$questions[$next]]['showans']=='J') {
+					if ((($testsettings['showans']=='J' && $qi[$questions[$next]]['showans']=='0') || $qi[$questions[$next]]['showans']=='J') && $qi[$questions[$next]]['attempts']>0) {
 						echo ' <input type="button" class="btn" value="', _('Jump to Answer'), '" onclick="if (confirm(\'', _('If you jump to the answer, you must generate a new version to earn credit'), '\')) {window.location = \'showtest.php?action=skip&amp;jumptoans='.$next.'&amp;to='.$next.'\'}"/>';
 					}
 					echo "</form>\n";
 					echo "</div>\n";
 				} else {
 					echo "<div class=inset>\n";
-					echo "<a name=\"beginquestions\"></a>\n";
-					echo _("You've already done this problem."), "\n";
+					echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
+					if (!isset($_GET['jumptoans'])) {
+						echo _("You've already done this problem."), "\n";
+					}
 					$reattemptsremain = false;
 					if ($showeachscore) {
 						$possible = $qi[$questions[$next]]['points'];
@@ -1978,7 +2079,8 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if ($lefttodo == 0 && $testsettings['testtype']!="NoScores") {
 						echo "<a href=\"showtest.php?action=skip&amp;done=true\">", _('When you are done, click here to see a summary of your score'), "</a>\n";
 					}
-					if (!$reattemptsremain && $testsettings['showans']!='N') {// && $showeachscore) {
+					if ($testsettings['showans']!='N') {// && $showeachscore) {  //(!$reattemptsremain || $regenonreattempt) &&
+						unset($GLOBALS['nocolormark']);
 						echo "<p>", _('Question with last attempt is displayed for your review only'), "</p>";
 
 						if (!$noraw && $showeachscore) {
@@ -1991,9 +2093,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 						} else {
 							$colors = array();
 						}
-						$qshowans = ((($showansafterlast && $qi[$questions[$next]]['showans']=='0') || $qi[$questions[$next]]['showans']=='F' || $qi[$questions[$next]]['showans']=='J') ||
-							($showansduring && $qi[$questions[$next]]['showans']=='0' && $attempts[$next]>=$testsettings['showans']) ||
-							($qi[$questions[$next]]['showansduring'] && $attempts[$next]>=$qi[$questions[$next]]['showans']));
+						$qshowans = (($qi[$questions[$next]]['showansafterlast'] && !$reattemptsremain) ||
+								($qi[$questions[$next]]['showansduring'] && $attempts[$next]>=$qi[$questions[$next]]['showans']) ||
+								($qi[$questions[$next]]['showans']=='R' && $regenonreattempt));
 						if ($qshowans) {
 							displayq($next,$qi[$questions[$next]]['questionsetid'],$seeds[$next],2,false,$attempts[$next],false,false,false,$colors);
 						} else {
@@ -2106,7 +2208,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 				endtest($testsettings);
 				if ($shown) {leavetestmsg();}
 			} else { //show more test
-				echo filter("<div id=intro class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
+				echo filter("<div id=intro role=region aria-label=\""._('Intro or instructions')."\"  class=hidden aria-hidden=true aria-expanded=false>{$testsettings['intro']}</div>\n");
 
 				echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=seq&amp;score=$toshow\" onsubmit=\"return doonsubmit(this,false,true)\">\n";
 				echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
@@ -2118,7 +2220,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if (isset($intropieces)) {
 						foreach ($introdividers as $k=>$v) {
 							if ($v[1]==$i+1) {//right divider
-								echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								break;
 							}
 						}
@@ -2145,7 +2247,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 				if (isset($intropieces)) {
 					foreach ($introdividers as $k=>$v) {
 						if ($v[1]==$i+1) {//right divider
-							echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							echo '<div class="intro" role=region aria-label="'._('Post-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 							break;
 						}
 					}
@@ -2178,7 +2280,6 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 				//is it video question?
 				if ($testsettings['displaymethod'] == "VideoCue") {
-
 					$viddata = unserialize($testsettings['viddata']);
 
 					foreach ($viddata as $i=>$v) {
@@ -2214,8 +2315,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 						}
 					}
 				}
-
-				embedshowicon($qn);
+				if ($testsettings['displaymethod'] != "VideoCue") {
+					embedshowicon($qn);
+				}
 				if (!$sessiondata['istutorial']) {
 					echo '<div class="prequestion">';
 					$divopen = true;
@@ -2261,7 +2363,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 			}
 			if ($allowregen && $qi[$questions[$qn]]['allowregen']==1) {
-				echo "<p><a href=\"showtest.php?regen=$qn&page=$page\">", _('Try another similar question'), "</a></p>\n";
+				echo "<p><a href=\"showtest.php?regen=$qn&page=$page#embedqwrapper$qn\">", _('Try another similar question'), "</a></p>\n";
 			}
 			if (hasreattempts($qn)) {
 				if ($divopen) { echo '</div>';}
@@ -2278,11 +2380,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if ($showeachscore) {
 						//TODO i18n
 						$msg =  "<p>" . _("This question, with your last answer");
-						if (($showansafterlast && $qi[$questions[$qn]]['showans']=='0') || $qi[$questions[$qn]]['showans']=='F' || $qi[$questions[$qn]]['showans']=='J') {
-							$msg .= _(" and correct answer");
-							$showcorrectnow = true;
-						} else if (($showansduring && $qi[$questions[$qn]]['showans']=='0' && $testsettings['showans']==$attempts[$qn]) ||
-							($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']==$attempts[$qn])) {
+						if (($qi[$questions[$qn]]['showansafterlast']) ||
+								($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']<=$attempts[$qn]) ||
+								($qi[$questions[$qn]]['showans']=='R' && $regenonreattempt)) {
 							$msg .= _(" and correct answer");
 							$showcorrectnow = true;
 						} else {
@@ -2293,7 +2393,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 							echo '</div>';
 							displayq($qn,$qi[$questions[$qn]]['questionsetid'],$seeds[$qn],2,false,$attempts[$qn],false,false,true,$colors);
 						} else {
-							echo $msg . -(', is displayed below') . '</p>';
+							echo $msg . _(', is displayed below') . '</p>';
 							echo '</div>';
 							displayq($qn,$qi[$questions[$qn]]['questionsetid'],$seeds[$qn],0,false,$attempts[$qn],false,false,true,$colors);
 						}
@@ -2503,11 +2603,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 			if ($showeachscore) {
 				//TODO i18n
 				$msg =  "<p>" . _("This question, with your last answer");
-				if (($showansafterlast && $qi[$questions[$qn]]['showans']=='0') || $qi[$questions[$qn]]['showans']=='F' || $qi[$questions[$qn]]['showans']=='J') {
-					$msg .= _(" and correct answer");
-					$showcorrectnow = true;
-				} else if (($showansduring && $qi[$questions[$qn]]['showans']=='0' && $testsettings['showans']==$attempts[$qn]) ||
-					($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']==$attempts[$qn])) {
+				if (($qi[$questions[$qn]]['showansafterlast'] && !hasreattempts($qn)) ||
+						($qi[$questions[$qn]]['showansduring'] && $qi[$questions[$qn]]['showans']<=$attempts[$qn]) ||
+						($qi[$questions[$qn]]['showans']=='R' && $regenonreattempt)) {
 					$msg .= _(" and correct answer");
 					$showcorrectnow = true;
 				} else {
@@ -2595,18 +2693,20 @@ if (!isset($_REQUEST['embedpostback'])) {
 			$perfectscore = true;
 		}
 		if ($testsettings['displaymethod'] == "AllAtOnce") {
-			echo filter("<div class=intro>{$testsettings['intro']}</div>\n");
+			echo '<script type="text/javascript">
+			  $(function() {$("input:not(:button),textarea,select").on("change", assessbackgsave);});</script>';
+			echo filter("<div class=intro role=region aria-label=\""._('Intro or instructions')."\">{$testsettings['intro']}</div>\n");
 			echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=scoreall\" onsubmit=\"return doonsubmit(this,true)\">\n";
-			echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
-			echo '<input type="hidden" name="disptime" value="'.time().'" />';
-			echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
+			echo "<input type=\"hidden\" name=\"asidverify\" id=\"asidverify\" value=\"$testid\" />";
+			echo '<input type="hidden" name="disptime" id="disptime" value="'.time().'" />';
+			echo "<input type=\"hidden\" name=\"isreview\" id=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
 			$numdisplayed = 0;
 
 			for ($i = 0; $i < count($questions); $i++) {
 				if (isset($intropieces)) {
 					foreach ($introdividers as $k=>$v) {
 						if ($v[1]==$i+1) {//right divider
-							echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 							break;
 						}
 					}
@@ -2620,7 +2720,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 			if (isset($intropieces)) {
 				foreach ($introdividers as $k=>$v) {
 					if ($v[1]==$i+1) {//right divider
-						echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+						echo '<div class="intro" role=region aria-label="'._('Post-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 						break;
 					}
 				}
@@ -2629,7 +2729,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 			recordtestdata();
 			if ($numdisplayed > 0) {
 				echo '<br/><input type="submit" class="btn" value="', _('Submit'), '" />';
-				echo '<input type="submit" class="btn" name="saveforlater" value="', _('Save answers'), '" onclick="return confirm(\'', _('This will save your answers so you can come back later and finish, but not submit them for grading. Be sure to come back and submit your answers before the due date.'), '\');" />';
+				echo '<input type="submit" class="btn" name="saveforlater" value="', _('Save answers'), '" onclick="var c=confirm(\'', _('This will save your answers so you can come back later and finish, but not submit them for grading. Be sure to come back and submit your answers before the due date.'), '\');if (c){$(this).attr(\'data-clicked\',1);};return c;" />';
 				echo "</form>\n";
 			} else {
 				startoftestmessage($perfectscore,$hasreattempts,$allowregen,$noindivscores,$testsettings['testtype']=="NoScores");
@@ -2649,15 +2749,27 @@ if (!isset($_REQUEST['embedpostback'])) {
 				leavetestmsg();
 
 			} else {
-				echo filter("<div class=intro>{$testsettings['intro']}</div>\n");
+				echo filter("<div class=intro role=region aria-label=\""._('Intro or instructions')."\">{$testsettings['intro']}</div>\n");
 				echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=shownext&amp;score=$i\" onsubmit=\"return doonsubmit(this)\">\n";
 				echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
 				echo '<input type="hidden" name="disptime" value="'.time().'" />';
 				echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
 				if (isset($intropieces)) {
 					foreach ($introdividers as $k=>$v) {
-						if ($v[1]==$i+1) {//right divider
+						/*if ($v[1]==$i+1) {//right divider
 							echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							break;
+						}*/
+						if ($v[1]<=$i+1 && $i+1<=$v[2]) {//right divider
+							if ($i+1==$v[1] || !empty($v[3])) {
+								echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="true">';
+								echo _('Hide Question Information'), '</a></div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							} else {
+								echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="false">';
+								echo _('Show Question Information'), '</a></div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="false" aria-hidden="true" style="display:none;" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							}
 							break;
 						}
 					}
@@ -2668,7 +2780,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 				echo "</form>\n";
 			}
 		} else if ($testsettings['displaymethod'] == "SkipAround") {
-			echo filter("<div class=intro>{$testsettings['intro']}</div>\n");
+			echo filter("<div class=intro role=region aria-label=\""._('Intro or instructions')."\">{$testsettings['intro']}</div>\n");
 
 			for ($i = 0; $i<count($questions);$i++) {
 				if (unans($scores[$i]) || amreattempting($i)) {
@@ -2678,7 +2790,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 			shownavbar($questions,$scores,$i,$testsettings['showcat']);
 			if ($i == count($questions)) {
 				echo "<div class=inset><br/>\n";
-				echo "<a name=\"beginquestions\"></a>\n";
+				echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 
 				startoftestmessage($perfectscore,$hasreattempts,$allowregen,$noindivscores,$testsettings['testtype']=="NoScores");
 
@@ -2691,7 +2803,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 						if ($v[1]<=$i+1 && $i+1<=$v[2]) {//right divider
 							echo '<div><a href="#" id="introtoggle'.$k.'" onclick="toggleintroshow('.$k.'); return false;" aria-controls="intropiece'.$k.'" aria-expanded="true">';
 							echo _('Hide Question Information'), '</a></div>';
-							echo '<div class="intro" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" aria-expanded="true" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 							break;
 						}
 					}
@@ -2700,13 +2812,13 @@ if (!isset($_REQUEST['embedpostback'])) {
 				echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
 				echo '<input type="hidden" name="disptime" value="'.time().'" />';
 				echo "<input type=\"hidden\" name=\"isreview\" value=\"". ($isreview?1:0) ."\" />";
-				echo "<a name=\"beginquestions\"></a>\n";
+				echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 				basicshowq($i);
 				showqinfobar($i,true,true);
 				echo '<input type="submit" class="btn" value="', _('Submit'), '" />';
-				if (($testsettings['showans']=='J' && $qi[$questions[$i]]['showans']=='0') || $qi[$questions[$i]]['showans']=='J') {
-						echo ' <input type="button" class="btn" value="', _('Jump to Answer'), '" onclick="if (confirm(\'', _('If you jump to the answer, you must generate a new version to earn credit'), '\')) {window.location = \'showtest.php?action=skip&amp;jumptoans='.$i.'&amp;to='.$i.'\'}"/>';
-					}
+				if ((($testsettings['showans']=='J' && $qi[$questions[$i]]['showans']=='0') || $qi[$questions[$i]]['showans']=='J') && $qi[$questions[$i]]['attempts']>0) {
+					echo ' <input type="button" class="btn" value="', _('Jump to Answer'), '" onclick="if (confirm(\'', _('If you jump to the answer, you must generate a new version to earn credit'), '\')) {window.location = \'showtest.php?action=skip&amp;jumptoans='.$i.'&amp;to='.$i.'\'}"/>';
+				}
 				echo "</form>\n";
 				echo "</div>\n";
 
@@ -2724,7 +2836,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 			} else {
 				$curq = $i;
-				echo filter("<div class=intro>{$testsettings['intro']}</div>\n");
+				echo filter("<div class=intro role=region aria-label=\""._('Intro or instructions')."\">{$testsettings['intro']}</div>\n");
 				echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=seq&amp;score=$i\" onsubmit=\"return doonsubmit(this,false,true)\">\n";
 				echo "<input type=\"hidden\" name=\"asidverify\" value=\"$testid\" />";
 				echo '<input type="hidden" name="disptime" value="'.time().'" />';
@@ -2734,7 +2846,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 					if (isset($intropieces)) {
 						foreach ($introdividers as $k=>$v) {
 							if ($v[1]==$i+1) {//right divider
-								echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+								echo '<div class="intro" role=region aria-label="'._('Pre-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 								break;
 							}
 						}
@@ -2761,7 +2873,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 				if (isset($intropieces)) {
 					foreach ($introdividers as $k=>$v) {
 						if ($v[1]==$i+1) {//right divider
-							echo '<div class="intro" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
+							echo '<div class="intro" role=region aria-label="'._('Post-question text').'" id="intropiece'.$k.'">'.filter($intropieces[$k]).'</div>';
 							break;
 						}
 					}
@@ -2770,16 +2882,18 @@ if (!isset($_REQUEST['embedpostback'])) {
 			}
 		} else if ($testsettings['displaymethod'] == "Embed" || $testsettings['displaymethod'] == "VideoCue") {
 			if (!isset($_GET['page'])) { $_GET['page'] = 0;}
-			$intro = filter("<div class=\"intro\">{$testsettings['intro']}</div>\n");
+			$intro = filter("<div class=\"intro\" role=region aria-label=\""._('Intro or instructions')."\">{$testsettings['intro']}</div>\n");
 			if ($testsettings['displaymethod'] == "VideoCue") {
 				echo substr(trim($intro),0,-6);
 				if (!$sessiondata['istutorial'] && $testsettings['testtype']!="NoScores") {
 					echo "<p><a href=\"showtest.php?action=embeddone\">", _('When you are done, click here to see a summary of your score'), "</a></p>\n";
 				}
 				echo '</div>';
+				echo '<div><button class="hamburger" id="videocuedmenubtn" aria-label="Video Navigation Menu" aria-hidden="true" aria-expanded="false" aria-controls="videonav"><span class="hamburger-box"><span class="hamburger-inner"></span></span></button></div>';
 				$intro = '';
 			}
 			echo '<script type="text/javascript">var assesspostbackurl="' . $GLOBALS['basesiteurl'] . '/assessment/showtest.php?embedpostback=true&action=scoreembed&page='.Sanitize::encodeUrlParam($_GET['page']).'";</script>';
+			echo '<script type="text/javascript">$(function() { embedEnterHandler("qform");});</script>';
 			//using the full test scoreall action for timelimit auto-submits
 			echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"showtest.php?action=scoreall\" onsubmit=\"return doonsubmit(this,false,true)\">\n";
 			if (!$introhaspages && $testsettings['displaymethod'] != "VideoCue") {
@@ -2800,7 +2914,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 								$last = $j;
 							}
 						}
-						$intro .= '<div class="intro" id="intropiece'.$k.'">'.$intropieces[$k].'</div>';
+						$intro .= '<div class="intro" role=region aria-label="'._('Pre-question text').'" id="intropiece'.$k.'">'.$intropieces[$k].'</div>';
 						for ($j=$v[1];$j<=$v[2] && $j<count($questions);$j++) {
 							$intro .= '[QUESTION '.$j.']';
 							$last = $j;
@@ -2844,9 +2958,8 @@ if (!isset($_REQUEST['embedpostback'])) {
 				$dovidcontrol = false;
 				showembednavbar($intropages,$_GET['page']);
 				echo "<div class=inset>\n";
-				echo "<a name=\"beginquestions\"></a>\n";
+				echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 			} else if ($testsettings['displaymethod'] == "VideoCue") {
-				$viddata = unserialize($testsettings['viddata']);
 
 				//asychronously load YouTube API
 				//echo '<script type="text/javascript">var tag = document.createElement(\'script\');tag.src = "//www.youtube.com/player_api";var firstScriptTag = document.getElementsByTagName(\'script\')[0];firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);</script>';
@@ -2856,16 +2969,16 @@ if (!isset($_REQUEST['embedpostback'])) {
 				  //tag.src = "//www.youtube.com/iframe_api";
 				showvideoembednavbar($viddata);
 				$dovidcontrol = true;
-				echo '<div class="inset" style="position: relative; margin-left: 225px; overflow: visible;">';
-				echo "<a name=\"beginquestions\"></a>\n";
+				echo '<div class="inset videocued">';
+				echo "<div class=\"screenreader\" id=\"beginquestions\">"._('Start of Questions')."</div>\n";
 				echo '<div id="playerwrapper"><div id="player"></div></div>';
 				$outarr = array();
-				for ($i=1;$i<count($viddata);$i++) {
+				for ($i=0;$i<count($viddata);$i++) {
 					if (isset($viddata[$i][2])) {
 						$outarr[] = $viddata[$i][1].':{qn:'.$viddata[$i][2].'}';
 					}
 				}
-				echo '<script type="text/javascript">var thumbSet = initVideoObject("'.$viddata[0].'",{'.implode(',',$outarr).'}); </script>';
+				echo '<script type="text/javascript">var thumbSet = initVideoObject("'.$vidid.'",{'.implode(',',$outarr).'}); </script>';
 
 				$qmin = 0;
 				$qmax = count($questions);
@@ -2887,7 +3000,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 				if ($dovidcontrol) { $quesout .= ' style="position: absolute; width:100%; visibility:hidden; top:0px;left:-1000px;" ';}
 				$quesout .= '>';
 				ob_start();
-				embedshowicon($i);
+				if ($testsettings['displaymethod'] != "VideoCue") {
+					embedshowicon($i);
+				}
 				if (hasreattempts($i)) {
 
 					basicshowq($i,false);
@@ -2895,10 +3010,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 					$quesout = substr($quesout,0,-7).'<br/><input type="button" class="btn" value="'. _('Submit'). '" onclick="assessbackgsubmit('.$i.',\'submitnotice'.$i.'\')" /><span id="submitnotice'.$i.'"></span></div>';
 
 				} else {
-					if (($showansafterlast && $qi[$questions[$i]]['showans']=='0') || $qi[$questions[$i]]['showans']=='F' || $qi[$questions[$i]]['showans']=='J') {
-						$showcorrectnow = true;
-					} else if (($showansduring && $qi[$questions[$i]]['showans']=='0' && $testsettings['showans']==$attempts[$i]) ||
-						  ($qi[$questions[$i]]['showansduring'] && $qi[$questions[$i]]['showans']==$attempts[$qn])){
+					if (($qi[$questions[$i]]['showansafterlast']) ||
+							($qi[$questions[$i]]['showansduring'] && $qi[$questions[$i]]['showans']<=$attempts[$i]) ||
+							($qi[$questions[$i]]['showans']=='R' && $regenonreattempt)) {
 						$showcorrectnow = true;
 					} else {
 						$showcorrectnow = false;
@@ -2907,7 +3021,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 						echo '<div class="prequestion">';
 						echo "<p>", _('No attempts remain on this problem.'), "</p>";
 						if ($allowregen && $qi[$questions[$i]]['allowregen']==1) {
-							echo "<p><a href=\"showtest.php?regen=$i\">", _('Try another similar question'), "</a></p>\n";
+							echo "<p><a href=\"showtest.php?regen=$i#embedqwrapper$i\">", _('Try another similar question'), "</a></p>\n";
 						}
 						if ($showeachscore) {
 							//TODO i18n
@@ -3147,12 +3261,12 @@ if (!isset($_REQUEST['embedpostback'])) {
 		4: provide a link to watch directly after Q (T/F),
 		5: title for the part immediately following the Q]
 		*/
-		echo "<a href=\"#beginquestions\"><img class=skipnav src=\"$imasroot/img/blank.gif\" alt=\"", _('Skip Navigation'), "\" /></a>\n";
-		echo '<div class="navbar" style="width:175px" role="navigation" aria-label="'._("Video and question navigation").'">';
-		echo '<ul class="qlist" style="margin-left:-10px">';
+		echo '<div id="videonav" class="navbar videocued" role="navigation" aria-label="'._("Video and question navigation").'">';
+		echo "<a href=\"#beginquestions\" class=\"screenreader\">", _('Skip Navigation'), "</a>\n";
+		echo '<ul class="navlist">';
 		$timetoshow = 0;
-		for ($i=1; $i<count($viddata); $i++) {
-			echo '<li style="margin-bottom:7px;">';
+		for ($i=0; $i<count($viddata); $i++) {
+			echo '<li>';
 			echo '<a href="#" onclick="thumbSet.jumpToTime('.$timetoshow.',true);return false;">'.$viddata[$i][0].'</a>';
 			if (isset($viddata[$i][2])) {
 				echo '<br/>&nbsp;&nbsp;<a style="font-size:75%;" href="#" onclick="thumbSet.jumpToQ('.$viddata[$i][1].',false);return false;">', _('Jump to Question'), '</a>';
@@ -3174,16 +3288,16 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 	function showembednavbar($pginfo,$curpg) {
 		global $imasroot,$scores,$bestscores,$showeachscore,$qi,$questions,$testsettings;
-		echo "<a href=\"#beginquestions\"><img class=skipnav src=\"$imasroot/img/blank.gif\" alt=\"", _('Skip Navigation'), "\" /></a>\n";
-
+		
 		echo '<div class="navbar fixedonscroll" role="navigation" aria-label="'._("Page and question navigation").'">';
+		echo "<a href=\"#beginquestions\" class=\"screenreader\">", _('Skip Navigation'), "</a>\n";		
 		echo "<h4>", _('Pages'), "</h4>\n";
-		echo '<ul class="qlist" style="margin-left:-10px">';
+		echo '<ul class="navlist">';
 		$jsonbits = array();
 		$max = (count($pginfo)-1)/2;
 		$totposs = 0;
 		for ($i = 0; $i < $max; $i++) {
-			echo '<li style="margin-bottom:7px;">';
+			echo '<li>';
 			if ($curpg == $i) { echo "<span class=current>";}
 			if (trim($pginfo[2*$i+1])=='') {
 				$pginfo[2*$i+1] =  $i+1;
@@ -3310,8 +3424,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 		$todo = 0;
 		$earned = 0;
 		$poss = 0;
-		echo "<a href=\"#beginquestions\"><img class=skipnav src=\"$imasroot/img/blank.gif\" alt=\"", _('Skip Navigation'), "\" /></a>\n";
+		
 		echo '<div class="navbar" role="navigation" aria-label="'._("Question navigation").'">';
+		echo "<a href=\"#beginquestions\" class=\"screenreader\">", _('Skip Navigation'), "</a>\n";
 		echo "<h4>", _('Questions'), "</h4>\n";
 		echo "<ul class=qlist>\n";
 		for ($i = 0; $i < count($questions); $i++) {
@@ -3444,7 +3559,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 	}
 
 	function showscores($questions,$attempts,$testsettings) {
-		global $DBH,$isdiag,$allowregen,$isreview,$noindivscores,$scores,$bestscores,$qi,$superdone,$timelimitkickout, $reviewatend;
+		global $DBH,$regenonreattempt,$isdiag,$allowregen,$isreview,$noindivscores,$scores,$bestscores,$qi,$superdone,$timelimitkickout, $reviewatend;
 
 		$total = 0;
 		$lastattempttotal = 0;
@@ -3488,8 +3603,9 @@ if (!isset($_REQUEST['embedpostback'])) {
 			$stm = $DBH->prepare("SELECT * from imas_users WHERE id=:id");
 			$stm->execute(array(':id'=>$userid));
 			$userinfo = $stm->fetch(PDO::FETCH_ASSOC);
-			echo "<h3>{$userinfo['LastName']}, {$userinfo['FirstName']}: ";
-			echo substr($userinfo['SID'],0,strpos($userinfo['SID'],'~'));
+			printf("<h3>%s, %s: ", Sanitize::encodeStringForDisplay($userinfo['LastName']),
+				Sanitize::encodeStringForDisplay($userinfo['FirstName']));
+			echo Sanitize::encodeStringForDisplay(substr($userinfo['SID'],0,strpos($userinfo['SID'],'~')));
 			echo "</h3>\n";
 		}
 
@@ -3582,7 +3698,7 @@ if (!isset($_REQUEST['embedpostback'])) {
 
 
 		if (!$superdone) { // $total < $totpossible &&
-			if ($noindivscores) {
+			if ($noindivscores && hasreattemptsany()) {
 				echo "<p>", _('<a href="showtest.php?reattempt=all">Reattempt assessment</a> on questions allowed (note: where reattempts are allowed, all scores, correct and incorrect, will be cleared)'), "</p>";
 			} else {
 				if (canimproveany()) {
@@ -3614,9 +3730,13 @@ if (!isset($_REQUEST['embedpostback'])) {
 		if ($reviewatend) {
 			global $qi, $questions, $testtype, $scores, $saenddate, $isteacher, $istutor, $seeds, $attempts, $rawscores, $noraw;
 
-			$showa=false;
-
 			for ($i=0; $i<count($questions); $i++) {
+				$showa = false;
+				if (($qi[$questions[$i]]['showansafterlast'] && !hasreattempts($i)) ||
+						($qi[$questions[$i]]['showansduring'] && $qi[$questions[$i]]['showans']<=$attempts[$i]) ||
+						($qi[$questions[$i]]['showans']=='R' && $regenonreattempt)) {
+					$showa = true;
+				}
 				echo '<div>';
 				if (!$noraw) {
 					if (strpos($rawscores[$i],'~')!==false) {

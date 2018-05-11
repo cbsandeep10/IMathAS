@@ -2,7 +2,7 @@
 //IMathAS:  Drill Assess creator (rough version)
 //(c) 2011 David Lippman
 
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 require("../includes/parsedatetime.php");
 
@@ -35,7 +35,6 @@ if ($stm->rowCount()==0) {
 	$showtype = '4';
 	$n = 30;
 	$showtostu = 7;
-	$itemdescr = array();
 	$daid = 0;
 	$drillname = "Enter title here";
 	$drillsummary = "<p>Enter summary here (displays on course page)</p>";
@@ -82,12 +81,12 @@ if (isset($_GET['record'])) {
 		if ($_POST['sdatetype']=='0') {
 			$startdate = 0;
 		} else {
-			$startdate = parsedatetime($_POST['sdate'],$_POST['stime']);
+			$startdate = parsedatetime($_POST['sdate'], $_POST['stime']);
 		}
 		if ($_POST['edatetype']=='2000000000') {
 			$enddate = 2000000000;
 		} else {
-			$enddate = parsedatetime($_POST['edate'],$_POST['etime']);
+			$enddate = parsedatetime($_POST['edate'], $_POST['etime']);
 		}
 	} else {
 		$startdate = 0;
@@ -152,7 +151,7 @@ if (isset($_GET['record'])) {
 			$descr[$row[0]] = str_replace(',','',$row[1]);
 		}
 		foreach ($toadd as $k=>$v) {
-			$itemids[] = $v;
+			$itemids[] = Sanitize::onlyInt($v);
 			$itemdescr[] = $descr[$v];
 		}
 		$classbests = array_fill(0,count($itemids),-1);
@@ -287,7 +286,7 @@ if (isset($_GET['record'])) {
 		if ($_POST['libs']=='') {
 			$_POST['libs'] = $userdeflib;
 		}
-		$searchlibs = $_POST['libs'];
+		$searchlibs = Sanitize::encodeStringForDisplay($_POST['libs']);
 		//$sessiondata['lastsearchlibs'] = implode(",",$searchlibs);
 		$sessiondata['lastsearchlibs'.$aid] = $searchlibs;
 		writesessiondata();
@@ -330,6 +329,7 @@ $placeinhead = "<script type=\"text/javascript\">
 		</script>";
 $placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/addquestions.js\"></script>";
 $placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/tablesorter.js"></script>';
+$placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/DatePicker.js\"></script>";
 
 require("../header.php");
 
@@ -385,7 +385,7 @@ if (isset($sessiondata['lastsearchlibs'.$aid])) {
 $llist = implode(',',array_map('intval', explode(',',$searchlibs)));
 
 echo '<script type="text/javascript">';
-echo "var curlibs = '$searchlibs';";
+echo "var curlibs = '".Sanitize::encodeStringForJavascript($searchlibs)."';";
 echo '</script>';
 
 if (!$beentaken) {
@@ -415,7 +415,7 @@ if (!$beentaken) {
 		//DB $query .= "JOIN imas_users ON imas_questionset.ownerid=imas_users.id WHERE imas_questionset.deleted=0 AND $searchlikes ";
 		//DB $query .= " (imas_questionset.ownerid='$userid' OR imas_questionset.userights>0)";
 		$query = "SELECT DISTINCT imas_questionset.id,imas_questionset.description,imas_questionset.userights,imas_questionset.qtype,imas_questionset.extref,imas_library_items.libid,imas_questionset.ownerid,imas_questionset.avgtime,imas_library_items.junkflag, imas_library_items.id AS libitemid,imas_users.groupid ";
-		$query .= "FROM imas_questionset JOIN imas_library_items ON imas_library_items.qsetid=imas_questionset.id ";
+		$query .= "FROM imas_questionset JOIN imas_library_items ON imas_library_items.qsetid=imas_questionset.id AND imas_library_items.deleted=0 ";
 		$query .= "JOIN imas_users ON imas_questionset.ownerid=imas_users.id WHERE imas_questionset.deleted=0 AND $searchlikes ";
 		$query .= " (imas_questionset.ownerid=? OR imas_questionset.userights>0)";
 		$qarr[] = $userid;
@@ -485,11 +485,11 @@ if (!$beentaken) {
 				$i = $line['id'];
 				$page_questionTable[$i]['checkbox'] = "<input type=checkbox name='nchecked[]' value='" . Sanitize::encodeStringForDisplay($line['id']) . "' id='qo$ln'>";
 				if (in_array($i,$itemids)) {
-					$page_questionTable[$i]['desc'] = '<span style="color: #999">'.filter($line['description']).'</span>';
+					$page_questionTable[$i]['desc'] = '<span style="color: #999">'.Sanitize::encodeStringForDisplay(filter($line['description'])).'</span>';
 				} else {
-					$page_questionTable[$i]['desc'] = filter($line['description']);
+					$page_questionTable[$i]['desc'] = Sanitize::encodeStringForDisplay(filter($line['description']));
 				}
-				$page_questionTable[$i]['preview'] = "<input type=button value=\"Preview\" onClick=\"previewq('selform','qo$ln',{$line['id']},true,false)\"/>";
+				$page_questionTable[$i]['preview'] = "<input type=button value=\"Preview\" onClick=\"previewq('selform','qo$ln',". Sanitize::onlyInt($line['id']).",true,false)\"/>";
 				$page_questionTable[$i]['type'] = $line['qtype'];
 				if ($line['avgtime']>0) {
 					$page_useavgtimes = true;
@@ -693,7 +693,7 @@ printf("<form id=\"selform\" method=\"post\" action=\"adddrillassess.php?cid=%s&
 
 		<span class=form>Calendar Tag:</span>
 		<span class=formright>
-			<input name="caltag" type=text size=8 value="<?php echo $caltag;?>"/>
+			<input name="caltag" type=text size=8 value="<?php echo Sanitize::encodeStringForDisplay($caltag); ?>"/>
 		</span><BR class=form>
 		</div>
 		<span class=form></span>
@@ -714,7 +714,7 @@ echo '<p>Scoring type:';
 $vals = array('nat','nct','ncc','nst','nsc','t');
 $lbls = array('Do N questions then stop.  Record time.','Do N questions correct.  Record time.','Do N questions correct.  Record total attempts.','Do N questions correct in a row.  Record time','Do N questions correct in a row.  Record total attempts','Do as many correct as possible in N seconds');
 writeHtmlSelect('scoretype',$vals,$lbls,$scoretype,null,null,$beentaken?'disabled="disabled"':'');
-echo ' where N = <input type="text" size="4" name="n" value="'.Sanitize::encodeStringForDisplay($n).'" '. ($beentaken?'disabled="disabled"':''). '/></p>';
+echo ' where N = <input type="text" size="4" name="n" value="' . Sanitize::encodeStringForDisplay($n) . '" ' . ($beentaken ? 'disabled="disabled"' : '') . '/></p>';
 echo '<p>Feedback on individual questions:';
 $vals = array(0,1,4,2,3);
 $lbls = array('Show score, and display answer if wrong', 'Show score, don\'t show answers, give new question if wrong','Show score, don\'t show answers, give same question if wrong','Don\'t show score','Don\'t show score, but provide show answer buttons');
@@ -751,8 +751,8 @@ foreach ($itemids as $k=>$id) {
 		generateselect(count($itemids),$k);
 		echo '</td>';
 	}
-	echo '<td><input type="text" size="60" name="descr['.$k.']" value="'.Sanitize::encodeStringForDisplay($itemdescr[$k]).'"/></td>';
-	echo "<td><input type=button value=\"Preview\" onClick=\"previewq(null,$k,{$itemids[$k]})\"/></td>";
+	echo '<td><input type="text" size="60" name="descr['.$k.']" value="' . Sanitize::encodeStringForDisplay($itemdescr[$k]) . '"/></td>';
+	echo "<td><input type=button value=\"Preview\" onClick=\"previewq(null,$k," . Sanitize::encodeStringForJavascript($itemids[$k]) . ")\"/></td>";
 	if (!$beentaken) {
 		echo '<td><input type="checkbox" name="delitem['.$k.']" value="1"/></td>';
 	}
@@ -817,7 +817,7 @@ if (!$beentaken) {
 						if ($alt==0) {echo "<tr class=even>"; $alt=1;} else {echo "<tr class=odd>"; $alt=0;}
 						echo '<td></td>';
 						echo '<td>';
-						echo '<b>'.Sanitize::encodeStringForDisplay($lnamesarr[$page_libstouse[$j]]).'</b>';
+						echo '<b>' . Sanitize::encodeStringForDisplay($lnamesarr[$page_libstouse[$j]]) . '</b>';
 						echo '</td>';
 						for ($k=0;$k<9;$k++) {echo '<td></td>';}
 						echo '</tr>';
@@ -826,14 +826,14 @@ if (!$beentaken) {
 					for ($i=0;$i<count($page_libqids[$page_libstouse[$j]]); $i++) {
 						$qid =$page_libqids[$page_libstouse[$j]][$i];
 						if ($alt==0) {echo "<tr class=even>"; $alt=1;} else {echo "<tr class=odd>"; $alt=0;}
-?>
 
+?>
 					<td><?php echo $page_questionTable[$qid]['checkbox'] ?></td>
 					<td><?php echo $page_questionTable[$qid]['desc'] ?></td>
 					<td class="nowrap"><?php echo $page_questionTable[$qid]['extref'] ?></td>
-					<td><?php echo $qid ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($qid) ?></td>
 					<td><?php echo $page_questionTable[$qid]['preview'] ?></td>
-					<td><?php echo $page_questionTable[$qid]['type'] ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_questionTable[$qid]['type']) ?></td>
 <?php
 						if ($searchall==1) {
 ?>
@@ -841,9 +841,9 @@ if (!$beentaken) {
 <?php
 						}
 ?>
-					<td class=c><?php echo $page_questionTable[$qid]['times'] ?></td>
-					<?php if ($page_useavgtimes) {?><td class="c"><?php echo $page_questionTable[$qid]['avgtime'] ?></td> <?php }?>
-					<td><?php echo $page_questionTable[$qid]['mine'] ?></td>
+					<td class=c><?php echo Sanitize::encodeStringForDisplay($page_questionTable[$qid]['times']) ?></td>
+					<?php if ($page_useavgtimes) {?><td class="c"><?php echo Sanitize::encodeStringForDisplay($page_questionTable[$qid]['avgtime']) ?></td> <?php }?>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_questionTable[$qid]['mine']) ?></td>
 					<td><?php echo $page_questionTable[$qid]['src'] ?></td>
 					<td class=c><?php echo $page_questionTable[$qid]['templ'] ?></td>
 					<?php if ($searchall==0) {

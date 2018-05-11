@@ -2,7 +2,7 @@
 //IMathAS:  Embed a Question via iFrame
 //(c) 2010 David Lippman
 
-require("./config.php");
+require("./init_without_validate.php");
 require("i18n/i18n.php");
 require("includes/DEutil.php");
 header('P3P: CP="ALL CUR ADM OUR"');
@@ -148,7 +148,7 @@ if (isset($_GET['showscored'])) {
 		$seed = rand(1,9999);
 	}
 	$doshowans = 0;
-	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"$page_formAction\" onsubmit=\"doonsubmit()\">\n";
+	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"$page_formAction\" onsubmit=\"doonsubmit(this)\">\n";
 	echo "<input type=\"hidden\" name=\"seed\" value=\"$seed\" />";
 	if (isset($_GET['auth'])) {
 	}

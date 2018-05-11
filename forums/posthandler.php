@@ -27,6 +27,11 @@ if ($caller=="posts") {
 	$returnurl = "thread.php?page=$page&cid=$cid&forum=$forumid";
 	$returnname = "Forum Topics";
 }
+if (!empty($_GET['embed'])) {
+	$returnurl = "embeddone.php?embed=true";
+}
+
+$now = time();
 
 if (isset($_GET['modify'])) { //adding or modifying post
 	if ($caller=='thread') {
@@ -73,7 +78,13 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		if (trim($_POST['subject'])=='') {
 			$_POST['subject']= '(none)';
 		}
-		$now = time();
+		$thisposttime = $now-1;
+		if ($isteacher) {
+			if ($_POST['releaseon']=='Date') {
+				require_once("../includes/parsedatetime.php");
+				$thisposttime = parsedatetime($_POST['releasedate'],$_POST['releasetime']);
+			}
+		}
 		if ($_GET['modify']=="new") { //new thread
 			if ($groupsetid>0) {
 				if ($isteacher) {
@@ -90,6 +101,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 					exit;
 				}
 			}
+
 			//DB $query = "INSERT INTO imas_forum_posts (forumid,subject,message,userid,postdate,parent,posttype,isanon,replyby,tag) VALUES ";
 			//DB $query .= "('$forumid','{$_POST['subject']}','{$_POST['message']}','$userid',$now,0,'$type','$isanon',$replyby,'$tag')";
 			//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
@@ -97,7 +109,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			$query = "INSERT INTO imas_forum_posts (forumid,subject,message,userid,postdate,parent,posttype,isanon,replyby,tag) VALUES ";
 			$query .= "(:forumid, :subject, :message, :userid, :postdate, :parent, :posttype, :isanon, :replyby, :tag)";
 			$stm = $DBH->prepare($query);
-			$stm->execute(array(':forumid'=>$forumid, ':subject'=>$_POST['subject'], ':message'=>$_POST['message'], ':userid'=>$userid, ':postdate'=>$now, ':parent'=>0, ':posttype'=>$type, ':isanon'=>$isanon, ':replyby'=>$replyby, ':tag'=>$tag));
+			$stm->execute(array(':forumid'=>$forumid, ':subject'=>$_POST['subject'], ':message'=>$_POST['message'], ':userid'=>$userid, ':postdate'=>$thisposttime, ':parent'=>0, ':posttype'=>$type, ':isanon'=>$isanon, ':replyby'=>$replyby, ':tag'=>$tag));
 			$threadid = $DBH->lastInsertId();
 
 			//DB $query = "UPDATE imas_forum_posts SET threadid='$threadid' WHERE id='$threadid'";
@@ -108,7 +120,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			//DB $query = "INSERT INTO imas_forum_threads (id,forumid,lastposttime,lastpostuser,stugroupid) VALUES ('$threadid','$forumid',$now,'$userid','$groupid')";
 			//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
 	 		$stm = $DBH->prepare("INSERT INTO imas_forum_threads (id,forumid,lastposttime,lastpostuser,stugroupid) VALUES (:id, :forumid, :lastposttime, :lastpostuser, :stugroupid)");
-	 		$stm->execute(array(':id'=>$threadid, ':forumid'=>$forumid, ':lastposttime'=>$now, ':lastpostuser'=>$userid, ':stugroupid'=>$groupid));
+	 		$stm->execute(array(':id'=>$threadid, ':forumid'=>$forumid, ':lastposttime'=>$thisposttime, ':lastpostuser'=>$userid, ':stugroupid'=>$groupid));
 
 			//DB $query = "INSERT INTO imas_forum_views (userid,threadid,lastview) VALUES ('$userid','$threadid',$now)";
 			//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
@@ -140,13 +152,14 @@ if (isset($_GET['modify'])) { //adding or modifying post
 				$sendemail = false;
 				require("../header.php");
 				echo '<h2>Error:</h2><p>It looks like the post you were replying to was deleted.  Your post is below in case you ';
-				echo 'want to copy-and-paste it somewhere. <a href="'.Sanitize::fullUrl($returnurl).'">Continue</a></p>';
+				echo 'want to copy-and-paste it somewhere. <a href="'.Sanitize::url($returnurl).'">Continue</a></p>';
 				echo '<hr>';
 				//DB echo '<p>Message:</p><div class="editor">'.filter(stripslashes($_POST['message'])).'</div>';
-				echo '<p>Message:</p><div class="editor">'.filter($_POST['message']).'</div>';
+				// $_POST['message'] contains HTML.
+				echo '<p>Message:</p><div class="editor">'.Sanitize::outgoingHtml(filter($_POST['message'])).'</div>';
 				echo '<p>HTML format:</p>';
 				//DB echo '<div class="editor">'.htmlentities(stripslashes($_POST['message'])).'</div>';
-				echo '<div class="editor">'.htmlentities($_POST['message']).'</div>';
+				echo '<div class="editor">'.Sanitize::encodeStringForDisplay($_POST['message']).'</div>';
 				require("../footer.php");
 				exit;
 			} else {
@@ -216,15 +229,21 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		} else {
 			//DB $query = "UPDATE imas_forum_posts SET subject='{$_POST['subject']}',message='{$_POST['message']}',isanon='$isanon',tag='$tag',posttype='$type',replyby=$replyby ";
 			//DB $query .= "WHERE id='{$_GET['modify']}'";
-			$query = "UPDATE imas_forum_posts SET subject=:subject,message=:message,isanon=:isanon,tag=:tag,posttype=:posttype,replyby=:replyby ";
-			$query .= "WHERE id=:id";
+			$query = "UPDATE imas_forum_posts SET subject=:subject,message=:message,isanon=:isanon,tag=:tag,posttype=:posttype,replyby=:replyby";
+			$arr = array(':subject'=>$_POST['subject'], ':message'=>$_POST['message'], ':isanon'=>$isanon, ':tag'=>$tag, ':posttype'=>$type, ':replyby'=>$replyby, ':id'=>$_GET['modify']);
+			if ($isteacher && isset($_POST['releaseon']) && $_POST['releaseon'] != 'nochange') {
+					$query .= ",postdate=:postdate";
+					$arr[':postdate'] = $thisposttime;
+			}
+			$query .= " WHERE id=:id";
 			if (!$isteacher) {
 				$query .= " AND userid=:userid";
 				$stm = $DBH->prepare($query);
-				$stm->execute(array(':subject'=>$_POST['subject'], ':message'=>$_POST['message'], ':isanon'=>$isanon, ':tag'=>$tag, ':posttype'=>$type, ':replyby'=>$replyby, ':id'=>$_GET['modify'], ':userid'=>$userid));
+				$arr[':userid'] = $userid;
+				$stm->execute($arr);
 			} else {
 				$stm = $DBH->prepare($query);
-				$stm->execute(array(':subject'=>$_POST['subject'], ':message'=>$_POST['message'], ':isanon'=>$isanon, ':tag'=>$tag, ':posttype'=>$type, ':replyby'=>$replyby, ':id'=>$_GET['modify']));
+				$stm->execute($arr);
 			}
 			// mysql_query($query) or die("Query failed : $query " . mysql_error());
 			if ($caller=='thread' || $_GET['thread']==$_GET['modify']) {
@@ -235,6 +254,10 @@ if (isset($_GET['modify'])) { //adding or modifying post
 					$stm = $DBH->prepare("UPDATE imas_forum_threads SET stugroupid=:stugroupid WHERE id=:id");
 					$stm->execute(array(':stugroupid'=>$groupid, ':id'=>$_GET['modify']));
 
+				}
+				if ($isteacher && isset($_POST['releaseon']) && $_POST['releaseon'] != 'nochange') {
+					$stm = $DBH->prepare("UPDATE imas_forum_threads SET lastposttime=:newtime WHERE id=:id");
+					$stm->execute(array(':newtime'=>$thisposttime, ':id'=>$_GET['modify']));
 				}
 			}
 
@@ -301,7 +324,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			}
 			for ($i=count($files)/2-1;$i>=0;$i--) {
 				if (isset($_POST['filedel'][$i])) {
-					if (deleteforumfile($_GET['modify'],Sanitize::sanitizeFilenameAndCheckBlacklist($files[2*$i+1]))) {
+					if (deleteforumfile($_GET['modify'],$files[2*$i+1])) {
 						array_splice($files,2*$i,2);
 					}
 				}
@@ -312,7 +335,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			$i = 0;
 			$badextensions = array(".php",".php3",".php4",".php5",".bat",".com",".pl",".p");
 			while (isset($_FILES['newfile-'.$i]) && is_uploaded_file($_FILES['newfile-'.$i]['tmp_name'])) {
-				$userfilename = preg_replace('/[^\w\.]/','',Sanitize::sanitizeFilenameAndCheckBlacklist($_FILES['newfile-'.$i]['name']));
+				$userfilename = Sanitize::sanitizeFilenameAndCheckBlacklist(basename(str_replace('\\','/',$_FILES['newfile-'.$i]['name'])));
 				if (trim($_POST['newfiledesc-'.$i])=='') {
 					$_POST['newfiledesc-'.$i] = $userfilename;
 				}
@@ -347,14 +370,23 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		$placeinhead = "<script type=\"text/javascript\" src=\"$imasroot/javascript/DatePicker.js\"></script>";
 
 		require("../header.php");
-		echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-		if ($caller != 'thread') {
-			echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";
+		if (empty($_GET['embed'])) {
+			echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+			if ($caller != 'thread') {
+				echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";
+			}
+			echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; ";
+			if ($_GET['modify']!="reply" && $_GET['modify']!='new') {
+				echo "Modify Posting";
+			} else if ($_GET['modify']=='reply') {
+				echo "Post Reply";
+			} else if ($_GET['modify']=='new') {
+				echo "Add Thread";
+			}
+			echo '</div>';
 		}
-		echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; ";
 		$notice = '';
 		if ($_GET['modify']!="reply" && $_GET['modify']!='new') {
-			echo "Modify Posting</div>\n";
 			//DB $query = "SELECT * from imas_forum_posts WHERE id='{$_GET['modify']}'";
 			//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 			//DB $line = mysql_fetch_array($result, MYSQL_ASSOC);
@@ -370,7 +402,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			echo '<div id="headerposthandler" class="pagetitle"><h2>Modify Post</h2></div>';
 		} else {
 			if ($_GET['modify']=='reply') {
-				echo "Post Reply</div>\n";
+				
 					//$query = "SELECT subject,points FROM imas_forum_posts WHERE id='{$_GET['replyto']}'";
 				//DB $query = "SELECT ifp.subject,ig.score FROM imas_forum_posts AS ifp LEFT JOIN imas_grades AS ig ON ";
 				//DB $query .= "ig.gradetype='forum' AND ifp.id=ig.refid WHERE ifp.id='{$_GET['replyto']}'";
@@ -397,7 +429,6 @@ if (isset($_GET['modify'])) { //adding or modifying post
 				}
 				echo '<div id="headerposthandler" class="pagetitle"><h2>Post Reply</h2></div>';
 			} else if ($_GET['modify']=='new') {
-				echo "Add Thread</div>\n";
 				if (isset($studentid)) {
 					if (time()>$postby) {
 						echo 'It is after the New Threads due date.';
@@ -523,7 +554,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 								$notice .= 'Please read and participate in the existing discussion.';
 								//DB while ($row = mysql_fetch_row($result)) {
 								while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-									$notice .=  "<br/><a href=\"posts.php?cid=$cid&forum=$forumid&thread={$row[0]}\">{$line['subject']}</a>";
+									$notice .=  "<br/><a href=\"posts.php?cid=$cid&forum=$forumid&thread=" . Sanitize::encodeUrlParam($row[0]) . "\">".Sanitize::encodeStringForDisplay($line['subject'])."</a>";
 								}
 							}
 						}
@@ -539,7 +570,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		$forumsettings = $stm->fetch(PDO::FETCH_ASSOC);
 		$allowanon = $forumsettings['settings']%2;
 		if ($_GET['modify']=='new') {
-			echo $forumsettings['name'].'</h2>';
+			echo Sanitize::encodeStringForDisplay($forumsettings['name']).'</h2>';
 		}
 		$forumtype = $forumsettings['forumtype'];
 		$taglist = $forumsettings['taglist'];
@@ -552,18 +583,20 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		}
 		if ($forumsettings['postinstr'] != '' && $_GET['modify']=="new") {
 			echo '<h4>'._('Posting Instructions').'</h4>';
+			// $forumsettings['postinstr'] contains HTML.
 			echo '<div class="intro">'.$forumsettings['postinstr'].'</div><br/>';
 		} else if ($forumsettings['replyinstr'] != '' && $_GET['modify']=="reply") {
 			echo '<h4>'._('Reply Instructions').'</h4>';
+			// $forumsettings['replyinstr'] contains HTML.
 			echo '<div class="intro">'.$forumsettings['replyinstr'].'</div><br/>';
 		}
-		echo "<form enctype=\"multipart/form-data\" method=\"post\" action=\"$returnurl&modify={$_GET['modify']}&replyto={$_GET['replyto']}\">\n";
+		echo "<form enctype=\"multipart/form-data\" method=\"post\" action=\"$returnurl&modify=".Sanitize::encodeUrlParam($_GET['modify'])."&replyto=".Sanitize::encodeUrlParam($_GET['replyto'])."\">\n";
 		echo '<input type="hidden" name="MAX_FILE_SIZE" value="10485760" />';
 		if (isset($notice) && $notice!='') {
 			echo '<span class="form">&nbsp;</span><span class="formright">'.$notice.'</span><br class="form"/>';
 		} else {
 			echo "<span class=form><label for=\"subject\">Subject:</label></span>";
-			echo "<span class=formright><input type=text size=50 name=subject id=subject value=\"{$line['subject']}\"></span><br class=form>\n";
+			echo "<span class=formright><input type=text size=50 name=subject id=subject value=\"".Sanitize::encodeStringForDisplay($line['subject'])."\"></span><br class=form>\n";
 			if ($forumtype==1) { //file forum
 				echo '<script type="text/javascript">
 					var filecnt = 1;
@@ -579,7 +612,8 @@ if (isset($_GET['modify'])) { //adding or modifying post
 					require_once('../includes/filehandler.php');
 					$files = explode('@@',$line['files']);
 					for ($i=0;$i<count($files)/2;$i++) {
-						echo '<input type="text" name="filedesc['.$i.']" value="'.$files[2*$i].'" aria-label="'._('Description').'"/>';
+						echo '<input type="text" name="filedesc['.$i.']" value="'.Sanitize::encodeStringForDisplay($files[2*$i]).'" aria-label="'._('Description').'"/>';
+						// $_GET['modify'] will be sanitized by getuserfileurl().
 						echo '<a href="'.getuserfileurl('ffiles/'.$_GET['modify'].'/'.$files[2*$i+1]).'" target="_blank">View</a> ';
 						echo '<label for="filedel['.$i.']">Delete?</label> <input type="checkbox" name="filedel['.$i.']" id="filedel['.$i.']" value="1"/><br/>';
 					}
@@ -591,7 +625,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			}
 			if ($taglist!='' && ($_GET['modify']=='new' || $_GET['modify']==$threadid)) {
 				$p = strpos($taglist,':');
-				echo '<span class="form"><label for="tag">'.substr($taglist,0,$p).'</label></span>';
+				echo '<span class="form"><label for="tag">'.Sanitize::encodeStringForDisplay(substr($taglist,0,$p)).'</label></span>';
 				echo '<span class="formright"><select name="tag" id="tag">';
 				echo '<option value="">Select...</option>';
 				$tags = explode(',',substr($taglist,$p+1));
@@ -641,39 +675,70 @@ if (isset($_GET['modify'])) { //adding or modifying post
 				echo "<input type=radio name=replyby id=replyby3 value=\"Date\" ";
 				if ($line['replyby']!==null && $line['replyby']<2000000000 && $line['replyby']>0) { echo "checked=1 ";}
 				echo "/> <label for=replyby3>Before:</label> ";
-				echo "<input type=text size=10 name=replybydate value=\"$replybydate\" aria-label=\"reply by date\"/>";
+				echo "<input type=text size=10 name=replybydate value=\"".Sanitize::encodeStringForDisplay($replybydate)."\" aria-label=\"reply by date\"/>";
 				echo '<a href="#" onClick="displayDatePicker(\'replybydate\', this); return false">';
 				//echo "<A HREF=\"#\" onClick=\"cal1.select(document.forms[0].replybydate,'anchor3','MM/dd/yyyy',(document.forms[0].replybydate.value==$replybydate')?(document.forms[0].replyby.value):(document.forms[0].replyby.value)); return false;\" NAME=\"anchor3\" ID=\"anchor3\">
 				echo "<img src=\"../img/cal.gif\" alt=\"Calendar\"/></A>";
-				echo "at <input type=text size=10 name=replybytime value=\"$replybytime\" aria-label=\"reply by time\"></span><br class=\"form\" />";
-				if ($groupsetid >0) {
-					echo '<span class="form"><label for="stugroup">Set thread to group</label>:</span><span class="formright">';
-					echo '<select name="stugroup" id="stugroup">';
-					echo '<option value="0" ';
-					if ($curstugroupid==0) { echo 'selected="selected"';}
-					echo '>Non group-specific</option>';
-					//DB $query = "SELECT id,name FROM imas_stugroups WHERE groupsetid='$groupsetid' ORDER BY name";
-					//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
-					//DB while ($row = mysql_fetch_row($result)) {
-					$grpnums = 1;
-					$stm = $DBH->prepare("SELECT id,name FROM imas_stugroups WHERE groupsetid=:groupsetid ORDER BY name,id");
-					$stm->execute(array(':groupsetid'=>$groupsetid));
-					while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-						if ($row[1] == 'Unnamed group') {
-							$row[1] .= " $grpnums";
-							$grpnums++;
-						}
-						echo '<option value="'.$row[0].'" ';
-						if ($curstugroupid==$row[0]) { echo 'selected="selected"';}
-						echo '>'.$row[1].'</option>';
-					}
-					echo '</select></span><br class="form" />';
-				}
+				echo "at <input type=text size=10 name=replybytime value=\"".Sanitize::encodeStringForDisplay($replybytime)."\" aria-label=\"reply by time\"></span><br class=\"form\" />";
+				
+				$thread_lastposttime = 0;
 
+				if ($_GET['modify']!='new' && $line['parent']==0) {
+					$stm = $DBH->prepare("SELECT lastposttime FROM imas_forum_threads WHERE id=:id");
+					$stm->execute(array(':id'=>$line['id']));
+					$thread_lastposttime = $stm->fetchColumn(0);
+					$releasebydate = tzdate("m/d/Y",$thread_lastposttime);
+					$releasebytime = tzdate("g:i a",$thread_lastposttime);
+				} else {
+					$releasebydate = tzdate("m/d/Y",$now);
+					$releasebytime = tzdate("g:i a",$now);
+				}
+				echo "<span class=form>Release Post:</span><span class=formright>\n";
+				if ($_GET['modify']=='new') {
+					echo "<input type=radio name=releaseon id=releaseon1 value=\"Immediately\" ";
+					if ($thread_lastposttime<=$now) { echo "checked=1 ";}
+					echo "/> <label for=releaseon1>Immediately</label><br/>";
+				} else {
+					echo "<input type=radio name=releaseon id=releaseon1 value=\"nochange\" ";
+					if ($thread_lastposttime<=$now) { echo "checked=1 ";}
+					echo "/> <label for=releaseon1>Keep original post date</label><br/>";
+					echo "<input type=radio name=releaseon id=releaseon2 value=\"Immediately\"/> ";
+					echo "<label for=releaseon2>Change post date to now</label><br/>";
+				}
+				echo "<input type=radio name=releaseon id=releaseon3 value=\"Date\" ";
+				if ($thread_lastposttime>$now) { echo "checked=1 ";}
+				echo "/> <label for=releaseon3>Later:</label> ";
+				echo "<input type=text size=10 name=releasedate value=\"$releasebydate\" aria-label=\"post release date\"/>";
+				echo '<a href="#" onClick="displayDatePicker(\'releasedate\', this); return false">';
+				echo "<img src=\"../img/cal.gif\" alt=\"Calendar\"/></A>";
+				echo "at <input type=text size=10 name=releasetime value=\"$releasebytime\" aria-label=\"post release time\"></span><br class=\"form\" />";
+			}
+			if ($groupsetid >0 && $isteacher && ($_GET['modify']=='new' || ($_GET['modify']!='reply' && $line['parent']==0))) {
+				echo '<span class="form"><label for="stugroup">Set thread to group</label>:</span><span class="formright">';
+				echo '<select name="stugroup" id="stugroup">';
+				echo '<option value="0" ';
+				if ($curstugroupid==0) { echo 'selected="selected"';}
+				echo '>Non group-specific</option>';
+				//DB $query = "SELECT id,name FROM imas_stugroups WHERE groupsetid='$groupsetid' ORDER BY name";
+				//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
+				//DB while ($row = mysql_fetch_row($result)) {
+				$grpnums = 1;
+				$stm = $DBH->prepare("SELECT id,name FROM imas_stugroups WHERE groupsetid=:groupsetid ORDER BY name,id");
+				$stm->execute(array(':groupsetid'=>$groupsetid));
+				while ($row = $stm->fetch(PDO::FETCH_NUM)) {
+					if ($row[1] == 'Unnamed group') {
+						$row[1] .= " $grpnums";
+						$grpnums++;
+					}
+					echo '<option value="'.Sanitize::encodeStringForDisplay($row[0]).'" ';
+					if ($curstugroupid==$row[0]) { echo 'selected="selected"';}
+					echo '>'.Sanitize::encodeStringForDisplay($row[1]).'</option>';
+				}
+				echo '</select></span><br class="form" />';
 			}
 			if ($isteacher && $haspoints && $_GET['modify']=='reply') {
 				echo '<span class="form"><label for="points">Points for message you\'re replying to</label>:</span><span class="formright">';
-				echo '<input type="text" size="4" name="points" id="points" value="'.$points.'" /></span><br class="form" />';
+				echo '<input type="text" size="4" name="points" id="points" value="'.Sanitize::onlyFloat($points).'" /></span><br class="form" />';
 			}
 			if ($_GET['modify']=='reply') {
 				echo "<div class=submit><input type=submit value='Post Reply'></div>\n";
@@ -733,7 +798,7 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		exit;
 	}
 } else if (isset($_GET['remove']) && $allowdel) {// $isteacher) { //removing post
-	if (isset($_GET['confirm'])) {
+	if (isset($_POST['confirm'])) {
 		$go = true;
 		if (!$isteacher) {
 			//DB $query = "SELECT id FROM imas_forum_posts WHERE parent='{$_GET['remove']}'";
@@ -753,18 +818,27 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			//DB $files = mysql_result($result,0,1);
 			$stm = $DBH->prepare("SELECT parent,files FROM imas_forum_posts WHERE id=:id");
 			$stm->execute(array(':id'=>$_GET['remove']));
-			$parent = $stm->fetchColumn(0);
-			$files = $stm->fetchColumn(1);
+			list($parent,$files) = $stm->fetch(PDO::FETCH_NUM);
 
 			if ($parent==0) {
 				//DB $query = "SELECT id FROM imas_forum_posts WHERE threadid='{$_GET['remove']}' AND files<>''";
 				//DB $r = mysql_query($query) or die("Query failed : $query " . mysql_error());
 				//DB while ($row = mysql_fetch_row($r)) {
-				$stm = $DBH->prepare("SELECT id FROM imas_forum_posts WHERE threadid=:threadid AND files<>''");
+				$stm = $DBH->prepare("SELECT id,files FROM imas_forum_posts WHERE threadid=:threadid");
 				$stm->execute(array(':threadid'=>$_GET['remove']));
+				$children = array();
 				while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-					deleteallpostfiles($row[0]); //delete files for each post
+					$children[] = $row[0];
+					if ($row[1]!='') {
+						deleteallpostfiles($row[0]); //delete files for each post
+					}
 				}
+				if (count($children)>0) {
+					$ph = Sanitize::generateQueryPlaceholders($children);
+					$stm = $DBH->prepare("DELETE FROM imas_grades WHERE gradetype='forum' AND refid IN ($ph)");
+					$stm->execute($children);
+				}
+				
 
 				//DB $query = "DELETE FROM imas_forum_posts WHERE threadid='{$_GET['remove']}'";
 				//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
@@ -832,9 +906,11 @@ if (isset($_GET['modify'])) { //adding or modifying post
 				exit;
 			}
 		}
-		echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-		if ($caller!='thread') {echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";}
-		echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; Remove Post</div>";
+		if (empty($_GET['embed'])) {
+			echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+			if ($caller!='thread') {echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";}
+			echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; Remove Post</div>";
+		}
 
 		echo "<h3>Remove Post</h3>\n";
 		if ($parent==0) {
@@ -842,9 +918,10 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		} else {
 			echo "<p>Are you SURE you want to remove this post?</p>\n";
 		}
-
-		echo "<p><input type=button value=\"Yes, Remove\" onClick=\"window.location='$returnurl&remove={$_GET['remove']}&confirm=true'\">\n";
+		echo '<form method="post" action="'.$returnurl.'&remove='.Sanitize::onlyInt($_GET['remove']).'">';
+		echo '<p><button type=submit name=confirm value=true>'._('Yes, Remove').'</button> ';
 		echo "<input type=button value=\"Nevermind\" class=\"secondarybtn\" onClick=\"window.location='$returnurl'\"></p>\n";
+		echo '</form>';
 		require("../footer.php");
 		exit;
 	}
@@ -961,9 +1038,11 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		$pagetitle = "Move Thread";
 
 		require("../header.php");
-		echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-		if ($caller != 'thread') {echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";}
-		echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; Move Thread</div>";
+		if (empty($_GET['embed'])) {
+			echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+			if ($caller != 'thread') {echo "&gt; <a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> ";}
+			echo "&gt; <a href=\"$returnurl\">$returnname</a> &gt; Move Thread</div>";
+		}
 		//DB $query = "SELECT parent FROM imas_forum_posts WHERE id='{$_GET['move']}'";
 		//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 		//DB if (mysql_result($result,0,0)==0) {
@@ -978,8 +1057,8 @@ if (isset($_GET['modify'])) { //adding or modifying post
 			echo "<h3>Move Post</h3>\n";
 		}
 
-		echo "<form method=post action=\"$returnurl&move={$_GET['move']}\">";
-		echo '<input type="hidden" name="thread" value="'.$threadid.'"/>';
+		echo "<form method=post action=\"$returnurl&move=".Sanitize::encodeUrlParam($_GET['move'])."\">";
+		echo '<input type="hidden" name="thread" value="'.Sanitize::encodeStringForDisplay($threadid).'"/>';
 		echo "<p>What do you want to do?<br/>";
 		if ($ishead) {
 			echo '<input type="radio" name="movetype" value="0" id=movetype0 checked="checked" onclick="toggleforumselect(0)"/> <label for="movetype0">Move thread to different forum</label><br/>';
@@ -998,9 +1077,9 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		$stm = $DBH->prepare("SELECT id,name FROM imas_forums WHERE courseid=:courseid");
 		$stm->execute(array(':courseid'=>$cid));
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-		echo "<input type=\"radio\" name=\"movetof\" value=\"{$row[0]}\" id=\"moveto{$row[0]}\" ";
+		echo "<input type=\"radio\" name=\"movetof\" value=\"".Sanitize::onlyInt($row[0])."\" id=\"moveto".Sanitize::onlyInt($row[0])."\" ";
 			if ($row[0]==$forumid) {echo 'checked="checked"';}
-			echo "/> <label for=\"moveto{$row[0]}\">{$row[1]}</label><br/>";
+			echo "/> <label for=\"moveto".Sanitize::onlyInt($row[0])."\">".Sanitize::encodeStringForDisplay($row[1])."</label><br/>";
 		}
 		echo '</div>';
 
@@ -1014,9 +1093,9 @@ if (isset($_GET['modify'])) { //adding or modifying post
 		$stm->execute(array(':forumid'=>$forumid));
 		while ($row = $stm->fetch(PDO::FETCH_NUM)) {
 		if ($ishead && $row[0]==$threadid) {continue;}
-			echo "<input type=\"radio\" name=\"movetot\" value=\"{$row[0]}\" id=\"movetot{$row[0]}\" ";
+			echo "<input type=\"radio\" name=\"movetot\" value=\"".Sanitize::encodeStringForDisplay($row[0])."\" id=\"movetot".Sanitize::encodeStringForDisplay($row[0])."\" ";
 			if ($row[0]==$threadid) {echo 'checked="checked"';}
-			echo "/> <label for=\"movetot{$row[0]}\">{$row[1]}</label><br/>";
+			echo "/> <label for=\"movetot".Sanitize::encodeStringForDisplay($row[0])."\">".Sanitize::encodeStringForDisplay($row[1])."</label><br/>";
 		}
 		echo '</div>';
 

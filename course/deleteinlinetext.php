@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
 
 /*** pre-html data manipulation, including function code *******/
@@ -26,7 +26,7 @@ if (!(isset($teacherid))) {
 	$cid = Sanitize::courseId($_GET['cid']);
 	$block = Sanitize::stripHtmlTags($_GET['block']);
 	if ($_POST['remove']=="really") {
-		require("../includes/filehandler.php");
+		require_once("../includes/filehandler.php");
 		$textid = $_GET['id'];
 		$DBH->beginTransaction();
 		//DB $query = "SELECT id FROM imas_items WHERE typeid='$textid' AND itemtype='InlineText' AND courseid='$cid'";
@@ -58,11 +58,13 @@ if (!(isset($teacherid))) {
 				//DB $query = "SELECT id FROM imas_instr_files WHERE filename='$safefn'";
 				//DB $r2 = mysql_query($query) or die("Query failed : " . mysql_error());
 				//DB if (mysql_num_rows($r2)==1) {
-				$stm2 = $DBH->prepare("SELECT id FROM imas_instr_files WHERE filename=:filename");
-				$stm2->execute(array(':filename'=>$row[0]));
-				if ($stm2->rowCount()==1) {
-					//unlink($uploaddir . $row[0]);
-					deletecoursefile($row[0]);
+				if (substr($row[0],0,4)!='http') {
+					$stm2 = $DBH->prepare("SELECT id FROM imas_instr_files WHERE filename=:filename");
+					$stm2->execute(array(':filename'=>$row[0]));
+					if ($stm2->rowCount()==1) {
+						//unlink($uploaddir . $row[0]);
+						deletecoursefile($row[0]);
+					}
 				}
 			}
 			//DB $query = "DELETE FROM imas_instr_files WHERE itemid='$textid'";
@@ -120,9 +122,9 @@ if ($overwriteBody==1) {
 ?>
 
 <div class=breadcrumb><?php echo $curBreadcrumb; ?></div>
-<h3><?php echo $itemname; ?></h3>
+<h3><?php echo Sanitize::encodeStringForDisplay($itemname); ?></h3>
 Are you SURE you want to delete this text item?
-	<form method="POST" action="deleteinlinetext.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>&block=<?php echo Sanitize::encodeStringForDisplay($block) ?>&id=<?php echo Sanitize::onlyInt($_GET['id']) ?>">
+	<form method="POST" action="deleteinlinetext.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>&block=<?php echo Sanitize::encodeUrlParam($block) ?>&id=<?php echo Sanitize::onlyInt($_GET['id']) ?>">
 	<p>
 	<button type=submit name="remove" value="really">Yes, Delete</button>		
 	<input type=button value="Nevermind" class="secondarybtn" onClick="window.location='course.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>'">

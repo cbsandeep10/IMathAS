@@ -1,9 +1,10 @@
 <?php
 //IMathAS:  New threads list for a course
 //(c) 2006 David Lippman
-require("../validate.php");
+require("../init.php");
 $cid = Sanitize::courseId($_GET['cid']);
 $from = $_GET['from'];
+
 /*
 $query = "SELECT imas_forums.name,imas_forums.id,imas_forum_posts.threadid,max(imas_forum_posts.postdate) as lastpost,mfv.lastview,count(imas_forum_posts.id) as pcount FROM imas_forum_posts ";
 $query .= "JOIN imas_forums ON imas_forum_posts.forumid=imas_forums.id LEFT JOIN (SELECT * FROM imas_forum_views WHERE userid='$userid') AS mfv ";
@@ -14,8 +15,8 @@ $now = time();
 //DB $query = "SELECT imas_forums.name,imas_forums.id,imas_forum_threads.id as threadid,imas_forum_threads.lastposttime FROM imas_forum_threads ";
 //DB $query .= "JOIN imas_forums ON imas_forum_threads.forumid=imas_forums.id ";
 $query = "SELECT imas_forums.name,imas_forums.id,imas_forum_threads.id as threadid,imas_forum_threads.lastposttime,mfv.tagged FROM imas_forum_threads ";
-$query .= "JOIN imas_forums ON imas_forum_threads.forumid=imas_forums.id ";
-$array = array();
+$query .= "JOIN imas_forums ON imas_forum_threads.forumid=imas_forums.id AND imas_forum_threads.lastposttime<:now ";
+$array = array(':now'=>$now);
 if (!isset($teacherid)) {
   $query .= "AND (imas_forums.avail=2 OR (imas_forums.avail=1 AND imas_forums.startdate<$now && imas_forums.enddate>$now)) ";
 }
@@ -115,40 +116,42 @@ if (isset($_GET['markallread'])) {
   exit;
 }
 
-
 $placeinhead = "<style type=\"text/css\">\n@import url(\"$imasroot/forums/forums.css\");\n</style>\n";
 $placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/tablesorter.js?v=011517"></script>';
 $pagetitle = _('New Forum Posts');
 require("../header.php");
+
 echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; <a href=\"forums.php?cid=$cid\">Forums</a> &gt; New Forum Posts</div>\n";
 echo '<div id="headernewthreads" class="pagetitle"><h2>New Forum Posts</h2></div>';
-echo "<p><button type=\"button\" onclick=\"window.location.href='newthreads.php?from=$from&cid=$cid&markallread=true'\">"._('Mark all Read')."</button></p>";
+echo "<p><button type=\"button\" onclick=\"window.location.href='newthreads.php?from=".Sanitize::encodeUrlParam($from)."&cid=$cid&markallread=true'\">"._('Mark all Read')."</button></p>";
 
 if (count($lastpost)>0) {
   echo '<table class="gb forum" id="newthreads"><thead><th>Topic</th><th>Started By</th><th>Forum</th><th>Last Post Date</th></thead><tbody>';
-  $threadids = implode(',', array_map('intval', array_keys($lastpost)));
+  $threadids = array_map('intval', array_keys($lastpost));
   //DB $query = "SELECT imas_forum_posts.*,imas_users.LastName,imas_users.FirstName,imas_forum_threads.lastposttime FROM imas_forum_posts,imas_users,imas_forum_threads ";
   //DB $query .= "WHERE imas_forum_posts.userid=imas_users.id AND imas_forum_posts.threadid=imas_forum_threads.id AND ";
   //DB $query .= "imas_forum_posts.threadid IN ($threadids) AND imas_forum_posts.parent=0 ORDER BY imas_forum_posts.forumid, imas_forum_threads.lastposttime DESC";
   //DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
   //DB while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	$ph = Sanitize::generateQueryPlaceholders($threadids);
   $query = "SELECT imas_forum_posts.*,imas_users.LastName,imas_users.FirstName,imas_forum_threads.lastposttime FROM imas_forum_posts,imas_users,imas_forum_threads ";
   $query .= "WHERE imas_forum_posts.userid=imas_users.id AND imas_forum_posts.threadid=imas_forum_threads.id AND ";
-  $query .= "imas_forum_posts.threadid IN ($threadids) AND imas_forum_posts.parent=0 ORDER BY imas_forum_threads.lastposttime DESC";
-  $stm = $DBH->query($query);
+  $query .= "imas_forum_posts.threadid IN ($ph) AND imas_forum_threads.lastposttime<? AND imas_forum_posts.parent=0 ORDER BY imas_forum_threads.lastposttime DESC";
+  $stm = $DBH->prepare($query);
+	$stm->execute(array_merge($threadids, array($now)));
   $alt = 0;
   while ($line = $stm->fetch(PDO::FETCH_ASSOC)) {
     if ($line['isanon']==1) {
       $name = "Anonymous";
     } else {
-      $name = "{$line['LastName']}, {$line['FirstName']}";
+      $name = Sanitize::encodeStringForDisplay($line['LastName']).", ". Sanitize::encodeStringForDisplay($line['FirstName']);
     }
     if ($alt==0) {$stripe = "even"; $alt=1;} else {$stripe = "odd"; $alt=0;}
     echo '<tr>';
-    echo "<td><a href=\"posts.php?cid=$cid&forum={$forumids[$line['threadid']]}&thread={$line['threadid']}&page=-3\">".Sanitize::encodeStringForDisplay($line['subject'])."</a></td>";
+    echo "<td><a href=\"posts.php?cid=$cid&forum=".Sanitize::onlyInt($forumids[$line['threadid']])."&thread=".Sanitize::onlyInt($line['threadid'])."&page=-3\">".Sanitize::encodeStringForDisplay($line['subject'])."</a></td>";
     printf("<td>%s</td>", Sanitize::encodeStringForDisplay($name));
-    echo "<td><a href=\"thread.php?cid=$cid&forum={$forumids[$line['threadid']]}\">".$forumname[$line['threadid']].'</a></td>';
-    echo "<td>{$lastpost[$line['threadid']]}</td></tr>";
+    echo "<td><a href=\"thread.php?cid=$cid&forum=".Sanitize::onlyInt($forumids[$line['threadid']])."\">".Sanitize::encodeStringForDisplay($forumname[$line['threadid']]).'</a></td>';
+    echo "<td>".Sanitize::encodeStringForDisplay($lastpost[$line['threadid']])."</td></tr>";
   }
   echo '</tbody></table>';
   echo '<script type="text/javascript">	initSortTable("newthreads",Array("S","S","S","D"),true);</script>';

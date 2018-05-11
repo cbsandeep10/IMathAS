@@ -9,14 +9,15 @@
 	}
 
 	if ($_GET['process']== true) {
+		require_once("../includes/updateptsposs.php");
 		if (isset($_POST['add'])) { //adding new questions
 			//DB $query = "SELECT itemorder,viddata FROM imas_assessments WHERE id='$aid'";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB $itemorder = mysql_result($result,0,0);
 			//DB $viddata = mysql_result($result,0,1);
-			$stm = $DBH->prepare("SELECT itemorder,viddata FROM imas_assessments WHERE id=:id");
+			$stm = $DBH->prepare("SELECT itemorder,viddata,defpoints FROM imas_assessments WHERE id=:id");
 			$stm->execute(array(':id'=>$aid));
-			list($itemorder, $viddata) = $stm->fetch(PDO::FETCH_NUM);
+			list($itemorder, $viddata, $defpoints) = $stm->fetch(PDO::FETCH_NUM);
 
 			$newitemorder = '';
 			if (isset($_POST['addasgroup'])) {
@@ -86,14 +87,17 @@
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			$stm = $DBH->prepare("UPDATE imas_assessments SET itemorder=:itemorder,viddata=:viddata WHERE id=:id");
 			$stm->execute(array(':itemorder'=>$itemorder, ':viddata'=>$viddata, ':id'=>$aid));
+			
+			updatePointsPossible($aid, $itemorder, $defpoints);
+			
 		} else if (isset($_POST['mod'])) { //modifying existing
 
 			//DB $query = "SELECT itemorder FROM imas_assessments WHERE id='$aid'";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB $itemorder = mysql_result($result,0,0);
-			$stm = $DBH->prepare("SELECT itemorder FROM imas_assessments WHERE id=:id");
+			$stm = $DBH->prepare("SELECT itemorder,defpoints FROM imas_assessments WHERE id=:id");
 			$stm->execute(array(':id'=>$aid));
-			$itemorder = $stm->fetchColumn(0);
+			list($itemorder, $defpoints) = $stm->fetch(PDO::FETCH_NUM);
 
 			//what qsetids do we need for adding copies?
 			$lookupid = array();
@@ -152,6 +156,8 @@
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			$stm = $DBH->prepare("UPDATE imas_assessments SET itemorder=:itemorder WHERE id=:id");
 			$stm->execute(array(':itemorder'=>$itemorder, ':id'=>$aid));
+			
+			updatePointsPossible($aid, $itemorder, $defpoints);
 		}
 
 	} else {
@@ -196,7 +202,7 @@ if (isset($_POST['checked'])) { //modifying existing
 			$qns = array();
 			foreach ($_POST['checked'] as $k=>$v) {
 				$v = explode(':',$v);
-				$qids[] = $v[1];
+				$qids[] = Sanitize::onlyInt($v[1]);
 				$qnpts = explode('-',$v[2]);
 				if (count($qnpts)==1) {
 					$qns[$v[1]] = $qnpts[0]+1;
@@ -211,22 +217,22 @@ if (isset($_POST['checked'])) { //modifying existing
 			//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 			//DB while ($row = mysql_fetch_row($result)) {
 			$qidlist = implode(',', array_map('intval', $qids));
-			$query = "SELECT imas_questions.id,imas_questionset.description,imas_questions.points,imas_questions.attempts,imas_questions.showhints,imas_questionset.extref,imas_questionset.id ";
+			$query = "SELECT imas_questions.id,imas_questionset.description,imas_questions.points,imas_questions.attempts,imas_questions.showhints,imas_questionset.extref,imas_questionset.id AS qsid ";
 			$query .= "FROM imas_questions,imas_questionset WHERE imas_questionset.id=imas_questions.questionsetid AND ";
 			$query .= "imas_questions.id IN ($qidlist)";
 			$stm = $DBH->query($query);
-			while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-				if ($row[2]==9999) {
-					$row[2] = '';
+			while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+				if ($row['points']==9999) {
+					$row['points'] = '';
 				}
-				if ($row[3]==9999) {
-					$row[3] = '';
+				if ($row['attempts']==9999) {
+					$row['attempts'] = '';
 				}
 
-				$qrows[$row[0]] = '<tr><td>'.$qns[$row[0]].'</td><td>'.$row[1].'</td>';
-				$qrows[$row[0]] .= '<td>';
-				if ($row[5]!='') {
-					$extref = explode('~~',$row[5]);
+				$qrows[$row['id']] = '<tr><td>'.$qns[$row['id']].'</td><td>'.Sanitize::encodeStringForDisplay($row['description']).'</td>';
+				$qrows[$row['id']] .= '<td>';
+				if ($row['extref']!='') {
+					$extref = explode('~~',$row['extref']);
 					$hasvid = false;  $hasother = false;
 					foreach ($extref as $v) {
 						if (substr($v,0,5)=="Video" || strpos($v,'youtube.com')!==false) {
@@ -237,27 +243,27 @@ if (isset($_POST['checked'])) { //modifying existing
 					}
 					$page_questionTable[$i]['extref'] = '';
 					if ($hasvid) {
-						$qrows[$row[0]] .= "<img src=\"$imasroot/img/video_tiny.png\" alt=\"Video\"/>";
+						$qrows[$row['id']] .= "<img src=\"$imasroot/img/video_tiny.png\" alt=\"Video\"/>";
 					}
 					if ($hasother) {
-						$qrows[$row[0]] .= "<img src=\"$imasroot/img/html_tiny.png\" alt=\"Help Resource\"/>";
+						$qrows[$row['id']] .= "<img src=\"$imasroot/img/html_tiny.png\" alt=\"Help Resource\"/>";
 					}
 				}
-				$qrows[$row[0]] .= '</td>';
-				$qrows[$row[0]] .= '<td><button type="button" onclick="previewq('.$row[6].')">'._('Preview').'</button></td>';
-				$qrows[$row[0]] .= "<td><input type=text size=4 name=\"points{$row[0]}\" value=\"{$row[2]}\" /></td>";
-				$qrows[$row[0]] .= "<td><input type=text size=4 name=\"attempts{$row[0]}\" value=\"{$row[3]}\" /></td>";
-				$qrows[$row[0]] .= "<td><select name=\"showhints{$row[0]}\">";
-				$qrows[$row[0]] .= '<option value="0" '.(($row[4]==0)?'selected="selected"':'').'>Use Default</option>';
-				$qrows[$row[0]] .= '<option value="1" '.(($row[4]==1)?'selected="selected"':'').'>No</option>';
-				$qrows[$row[0]] .= '<option value="2" '.(($row[4]==2)?'selected="selected"':'').'>Yes</option></select></td>';
-				$qrows[$row[0]] .= "<td><input type=text size=4 name=\"copies{$row[0]}\" value=\"0\" /></td>";
-				$qrows[$row[0]] .= '</tr>';
+				$qrows[$row['id']] .= '</td>';
+				$qrows[$row['id']] .= '<td><button type="button" onclick="previewq('.$row['qsid'].')">'._('Preview').'</button></td>';
+				$qrows[$row['id']] .= "<td><input type=text size=4 name=\"points{$row['id']}\" value=\"{$row['points']}\" /></td>";
+				$qrows[$row['id']] .= "<td><input type=text size=4 name=\"attempts{$row['id']}\" value=\"{$row['attempts']}\" /></td>";
+				$qrows[$row['id']] .= "<td><select name=\"showhints{$row['id']}\">";
+				$qrows[$row['id']] .= '<option value="0" '.(($row['showhints']==0)?'selected="selected"':'').'>Use Default</option>';
+				$qrows[$row['id']] .= '<option value="1" '.(($row['showhints']==1)?'selected="selected"':'').'>No</option>';
+				$qrows[$row['id']] .= '<option value="2" '.(($row['showhints']==2)?'selected="selected"':'').'>Yes</option></select></td>';
+				$qrows[$row['id']] .= "<td><input type=text size=4 name=\"copies{$row['id']}\" value=\"0\" /></td>";
+				$qrows[$row['id']] .= '</tr>';
 			}
 			echo "<th>Q#<br/>&nbsp;</th><th>Description<br/>&nbsp;</th><th></th><th></th>";
-			echo '<th>Points<br/><i class="grey">Default: '.$defaults['defpoints'].'</i></th>';
-			echo '<th>Attempts (0 for unlimited)<br/><i class="grey">Default: '.$defaults['defattempts'].'</i></th>';
-			echo '<th>Show hints &amp; video buttons?<br/><i class="grey">Default: '.$defaults['showhints'].'</i></th>';
+			echo '<th>Points<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['defpoints']).'</i></th>';
+			echo '<th>Attempts (0 for unlimited)<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['defattempts']).'</i></th>';
+			echo '<th>Show hints &amp; video buttons?<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['showhints']).'</i></th>';
 			echo "<th>Additional Copies to Add<br/>&nbsp;</th></tr></thead>";
 			echo "<tbody>";
 
@@ -284,16 +290,16 @@ if (isset($_POST['checked'])) { //modifying existing
 			}
 
 			echo '</tbody></table>';
-			echo '<input type=hidden name="qids" value="'.implode(',',$qids).'" />';
+			echo '<input type=hidden name="qids" value="'.Sanitize::encodeStringForDisplay(implode(',',$qids)).'" />';
 			echo '<input type=hidden name="mod" value="true" />';
 
 			echo '<div class="submit"><input type="submit" value="'._('Save Settings').'"></div>';
 
 		} else { //adding new questions
 			echo "<th>Description</th><th></th><th></th>";
-			echo '<th>Points<br/><i class="grey">Default: '.$defaults['defpoints'].'</i></th>';
-			echo '<th>Attempts (0 for unlimited)<br/><i class="grey">Default: '.$defaults['defattempts'].'</i></th>';
-			echo '<th>Show hints &amp; video buttons?<br/><i class="grey">Default: '.$defaults['showhints'].'</i></th>';
+			echo '<th>Points<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['defpoints']).'</i></th>';
+			echo '<th>Attempts (0 for unlimited)<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['defattempts']).'</i></th>';
+			echo '<th>Show hints &amp; video buttons?<br/><i class="grey">Default: '.Sanitize::encodeStringForDisplay($defaults['showhints']).'</i></th>';
 			echo "<th>Number of Copies to Add</th></tr></thead>";
 			echo "<tbody>";
 
@@ -309,7 +315,7 @@ if (isset($_POST['checked'])) { //modifying existing
 				} else {
 					$n = 1;
 				}
-				echo '<tr><td>'.$row[1].'</td>';
+				echo '<tr><td>'.Sanitize::encodeStringForDisplay($row[1]).'</td>';
 				if ($row[2]!='') {
 					$extref = explode('~~',$row[2]);
 					$hasvid = false;  $hasother = false;
@@ -330,19 +336,19 @@ if (isset($_POST['checked'])) { //modifying existing
 				} else {
 					echo '<td></td>';
 				}
-				echo '<td><button type="button" onclick="previewq('.$row[0].')">'._('Preview').'</button></td>';
-				echo "<td><input type=text size=4 name=\"points{$row[0]}\" value=\"\" />";
-				echo '<input type="hidden" name="qparts'.$row[0].'" value="'.$n.'"/></td>';
-				echo "<td><input type=text size=4 name=\"attempts{$row[0]}\" value=\"\" /></td>";
-				echo "<td><select name=\"showhints{$row[0]}\">";
+				echo '<td><button type="button" onclick="previewq('.Sanitize::encodeStringForJavascript($row[0]).')">'._('Preview').'</button></td>';
+				echo "<td><input type=text size=4 name=\"points" . Sanitize::encodeStringForDisplay($row[0]) . "\" value=\"\" />";
+				echo '<input type="hidden" name="qparts'.Sanitize::encodeStringForDisplay($row[0]).'" value="'.$n.'"/></td>';
+				echo "<td><input type=text size=4 name=\"attempts" . Sanitize::encodeStringForDisplay($row[0]) ."\" value=\"\" /></td>";
+				echo "<td><select name=\"showhints" . Sanitize::encodeStringForDisplay($row[0]) . "\">";
 				echo '<option value="0" selected="selected">Use Default</option>';
 				echo '<option value="1">No</option>';
 				echo '<option value="2">Yes</option></select></td>';
-				echo "<td><input type=text size=4 name=\"copies{$row[0]}\" value=\"1\" /></td>";
+				echo "<td><input type=text size=4 name=\"copies" . Sanitize::encodeStringForDisplay($row[0]) . "\" value=\"1\" /></td>";
 				echo '</tr>';
 			}
 			echo '</tbody></table>';
-			echo '<input type=hidden name="qsetids" value="'.implode(',',$_POST['nchecked']).'" />';
+			echo '<input type=hidden name="qsetids" value="'.Sanitize::encodeStringForDisplay(implode(',',$_POST['nchecked'])).'" />';
 			echo '<input type=hidden name="add" value="true" />';
 
 			echo '<p><input type=checkbox name="addasgroup" value="1" /> Add as a question group?</p>';

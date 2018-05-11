@@ -7,17 +7,17 @@
 		echo "Need course id";
 		exit;
 	}
-	$cid = intval($_GET['cid']);
+	$cid = Sanitize::courseId($_GET['cid']);
 	if (isset($_GET['from'])) {
 		$pubcid = $cid;  //swap out cid's before calling validate
 	  $cid = Sanitize::courseId($_GET['from']);
 		$_GET['cid'] = Sanitize::courseId($_GET['from']);
-		require("../validate.php");
+		require("../init.php");
 		$fcid = $cid;
 		$cid = $pubcid;
 	} else {
 		$fcid = 0;
-		require("../config.php");
+		require("../init_without_validate.php");
 	}
 	if (!isset($_GET['id'])) {
 		echo "<html><body>No item specified.</body></html>\n";
@@ -99,8 +99,8 @@
 	}
 
 	require("../header.php");
-	echo "<div class=breadcrumb>$breadcrumbbase View Wiki</div>";
-	echo '<div id="headerviewwiki" class="pagetitle"><h2>'.$wikiname.'</h2></div>';
+	echo "<div class=breadcrumb> $breadcrumbbase View Wiki</div>";
+	echo '<div id="headerviewwiki" class="pagetitle"><h2>'.Sanitize::encodeStringForDisplay($wikiname).'</h2></div>';
 
 	//DB $query = "SELECT i_w_r.id,i_w_r.revision,i_w_r.time,i_u.LastName,i_u.FirstName,i_u.id FROM ";
 	//DB $query .= "imas_wiki_revisions as i_w_r JOIN imas_users as i_u ON i_u.id=i_w_r.userid ";
@@ -115,14 +115,14 @@
 	$row = $stm->fetch(PDO::FETCH_NUM);
 	$text = $row[1];
 	if (strlen($text)>6 && substr($text,0,6)=='**wver') {
-		$wikiver = substr($text,6,strpos($text,'**',6)-6);
+		$wikiver = Sanitize::onlyInt(substr($text,6,strpos($text,'**',6)-6));
 		$text = substr($text,strpos($text,'**',6)+2);
 	} else {
 		$wikiver = 1;
 	}
 
 	echo '<div style="padding-left:10px; padding-right: 10px; border: 1px solid #000;">';
-	echo filter($text);
+	echo Sanitize::outgoingHtml(filter($text));
 	echo '</div>';
 
 	echo "<div class=right><a href=\"../course/public.php?cid=$cid\">Return to Public Course Page</a></div>\n";

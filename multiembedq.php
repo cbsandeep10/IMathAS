@@ -19,10 +19,11 @@
     - On submit, show scored, but no show answer
     */
 
-require("./config.php");
+$init_skip_csrfp = true;
+require("./init_without_validate.php");
+unset($init_skip_csrfp);
 require("i18n/i18n.php");
 require("includes/JWT.php");
-require_once(__DIR__ . "/includes/sanitize.php");
 header('P3P: CP="ALL CUR ADM OUR"');
 $sessiondata = array();
 /*
@@ -56,7 +57,7 @@ if (isset($_GET['graphdisp'])) { //currently same is used for graphdisp and draw
 	$sessiondata['userprefs']['graphdisp'] = filter_var($_GET['graphdisp'], FILTER_SANITIZE_NUMBER_INT);
 	$sessiondata['userprefs']['drawentry'] = filter_var($_GET['graphdisp'], FILTER_SANITIZE_NUMBER_INT);
 	setcookie("embedquserprefs", json_encode(array(
-		'graphdisp'=>$sessiondata['userprefs']['graphdisp'], 
+		'graphdisp'=>$sessiondata['userprefs']['graphdisp'],
 		'drawentry'=>$sessiondata['userprefs']['drawentry']
 		)));
 }
@@ -82,6 +83,15 @@ if((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') || (isset($_SERVER['HTT
  	 $urlmode = 'https://';
 } else {
  	 $urlmode = 'http://';
+}
+//settings option:
+//  0: never show answer
+//  1: show answer button after an attempt
+//  2: always show answer button
+if (isset($CFG['multiembed-showans'])) {
+	$showanstype = $CFG['multiembed-showans'];
+} else {
+	$showanstype = 1;
 }
 
 
@@ -143,12 +153,10 @@ if (isset($JWTsess->qids) && (!isset($_GET['id']) || $_GET['id']==implode('-',$J
 	}
 	$jwtstring = saveAssessData();
 }
-foreach ($qids as $i=>$v) {
-	$qids[$i] = intval($v);
-}
-foreach ($seeds as $i=>$v) {
-	$seeds[$i] = intval($v);
-}
+
+$qids = array_map('Sanitize::onlyInt',$qids);
+$seeds = array_map('Sanitize::onlyInt',$seeds);
+
 require("./assessment/displayq2.php");
 $GLOBALS['assessver'] = 2;
 
@@ -174,7 +182,7 @@ if (isset($_GET['action']) && $_GET['action']=='scoreembed') {
 	}
 	$quesout = '';
 	ob_start();
-	displayq($qn,$qids[$qn],$seeds[$qn],false,$showhints,$attempts[$qn],false,false,false,$colors);
+	displayq($qn,$qids[$qn],$seeds[$qn],($showanstype>0),$showhints,$attempts[$qn],false,false,false,$colors);
 	$quesout .= ob_get_clean();
 	$quesout = substr($quesout,0,-7).'<br/><input type="button" class="btn" value="'. _('Submit'). '" onclick="assessbackgsubmit('.$qn.',\'submitnotice'.$qn.'\')" /><span id="submitnotice'.$qn.'"></span></div>';
 	echo '<input type="hidden" id="verattempts'.$qn.'" value="'.$attempts[$qn].'"/>';
@@ -189,40 +197,8 @@ if (isset($_GET['action']) && $_GET['action']=='scoreembed') {
 
 $flexwidth = true; //tells header to use non _fw stylesheet
 $placeinhead = '<style type="text/css">html,body {margin:0px;} div.question {width: auto;} div.review {width: auto; margin-top: 5px;} body {height:auto;}</style>';
-
-if ($theme != '') {
-	$sessiondata['coursetheme'] = $theme.'.css';
-}
-require("./assessment/header.php");
-if ($sessiondata['graphdisp'] == 1) {
-	echo '<div style="position:absolute;width:1px;height:1px;left:0px:top:-1px;overflow:hidden;"><a href="multiembedq.php?'.Sanitize::encodeStringForDisplay($_SERVER['QUERY_STRING']).'&graphdisp=0">' . _('Enable text based alternatives for graph display and drawing entry') . '</a></div>';
-}
-echo '<script type="text/javascript">var assesspostbackurl="' .$urlmode. Sanitize::domainNameWithPort($_SERVER['HTTP_HOST']) . $imasroot . '/multiembedq.php?embedpostback=true&action=scoreembed";</script>';
-
-echo '<input type="hidden" id="asidverify" value="'.$jwtstring.'"/>';
-echo '<input type="hidden" id="disptime" value="'.time().'"/>';
-echo '<input type="hidden" id="isreview" value="0"/>';
-echo '<p><a href="multiembedq.php?id='.$_GET['id'].'&amp;regen=1&amp;sameseed='.$sameseed.'&amp;theme='.$theme.'&amp;iframe_resize_id='.$targetid.'">';
-if (count($qids)>1) {
-	echo _('Try Another Version of These Questions').'</a></p>';
-} else {
-	echo _('Try Another Version of This Question').'</a></p>';
-}
-$showhints = true;
-
-foreach ($qids as $i=>$qid) {
-	echo '<div id="embedqwrapper'.$i.'" class="embedqwrapper">';
-	$quesout = '';
-	ob_start();
-	displayq($i,$qid,$seeds[$i],false,$showhints,$attempts[$i]);
-	$quesout .= ob_get_clean();
-	$quesout = substr($quesout,0,-7).'<br/><input type="button" class="btn" value="'. _('Submit'). '" onclick="assessbackgsubmit('.$i.',\'submitnotice'.$i.'\')" /><span id="submitnotice'.$i.'"></span></div>';
-	echo $quesout;
-	echo '<input type="hidden" id="verattempts'.$i.'" value="'.$attempts[$i].'"/>';
-	echo '</div>';
-}
 if ($targetid != '') {
-echo '<script type="text/javascript">
+	$placeinhead .= '<script type="text/javascript">
 	function sendresizemsg() {
 	 if(self != top){
 	  var default_height = Math.max(
@@ -238,7 +214,9 @@ echo '<script type="text/javascript">
 	  }), "*");
 	 }
 	}
-	if (MathJax) {
+	if (mathRenderer == "Katex") {
+		window.katexDoneCallback = sendresizemsg;
+	} else if (typeof MathJax != "undefined") {
 		MathJax.Hub.Queue(function () {
 			sendresizemsg();
 		});
@@ -250,8 +228,58 @@ echo '<script type="text/javascript">
 	$(function() {
 		$(window).on("ImathasEmbedReload", sendresizemsg);
 	});
-</script>';
+	</script>';
+	if ($sessiondata['mathdisp']==1 || $sessiondata['mathdisp']==3) {
+		//in case MathJax isn't loaded yet
+		$placeinhead .= '<script type="text/x-mathjax-config">
+			MathJax.Hub.Queue(function () {
+				sendresizemsg();
+			});
+			</script>';
+	}
 }
+if ($theme != '') {
+	$sessiondata['coursetheme'] = $theme.'.css';
+}
+require("./assessment/header.php");
+if ($sessiondata['graphdisp'] == 1) {
+	echo '<div style="position:absolute;width:1px;height:1px;left:0px:top:-1px;overflow:hidden;"><a href="multiembedq.php?'.Sanitize::encodeStringForDisplay($_SERVER['QUERY_STRING']).'&graphdisp=0">' . _('Enable text based alternatives for graph display and drawing entry') . '</a></div>';
+}
+echo '<script type="text/javascript">var assesspostbackurl="' .$urlmode. Sanitize::domainNameWithPort($_SERVER['HTTP_HOST']) . $imasroot . '/multiembedq.php?embedpostback=true&action=scoreembed";</script>';
+
+echo '<input type="hidden" id="asidverify" value="'.$jwtstring.'"/>';
+echo '<input type="hidden" id="disptime" value="'.time().'"/>';
+echo '<input type="hidden" id="isreview" value="0"/>';
+echo '<p><a href="multiembedq.php?id='.Sanitize::encodeUrlParam($_GET['id']).'&amp;regen=1&amp;sameseed='.$sameseed.'&amp;theme='.$theme.'&amp;iframe_resize_id='.$targetid.'">';
+if (count($qids)>1) {
+	echo _('Try Another Version of These Questions').'</a></p>';
+} else {
+	echo _('Try Another Version of This Question').'</a></p>';
+}
+$showhints = true;
+
+//preload qsdata
+$placeholders = Sanitize::generateQueryPlaceholders($qids);
+$stm = $DBH->prepare("SELECT id,qtype,control,qcontrol,qtext,answer,hasimg,extref,solution,solutionopts FROM imas_questionset WHERE id IN ($placeholders)");
+$stm->execute($qids);
+$qsdata = array();
+while ($row = $stm->fetch(PDO::FETCH_ASSOC)) {
+	$qsdata[$row['id']] = $row;
+}
+
+foreach ($qids as $i=>$qid) {
+	echo '<div id="embedqwrapper'.$i.'" class="embedqwrapper">';
+	$quesout = '';
+	ob_start();
+	$qdatafordisplayq = $qsdata[$qid];
+	displayq($i,$qid,$seeds[$i],($showanstype==2),$showhints,$attempts[$i]);
+	$quesout .= ob_get_clean();
+	$quesout = substr($quesout,0,-7).'<br/><input type="button" class="btn" value="'. _('Submit'). '" onclick="assessbackgsubmit('.$i.',\'submitnotice'.$i.'\')" /><span id="submitnotice'.$i.'"></span></div>';
+	echo $quesout;
+	echo '<input type="hidden" id="verattempts'.$i.'" value="'.$attempts[$i].'"/>';
+	echo '</div>';
+}
+
 
 require("./footer.php");
 

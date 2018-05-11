@@ -1,9 +1,9 @@
 <?php
 //A collection of functions for working with radicals
-//Version 2 July 27, 2011
+//Version 3 Nov 27 2017
 
 global $allowedmacros;
-array_push($allowedmacros,"reduceradical","reduceradicalfrac","reducequadraticform");
+array_push($allowedmacros,"reduceradical","reduceradicalfrac","reduceradicalfrac2","reducequadraticform");
 
 //reduceradical(inside,[root,format])
 //given the inside of a radical, reduces it to Aroot(B)
@@ -16,6 +16,14 @@ function reduceradical($in,$root=2,$format="string") {
 	if ($in<0 && ($root%2==0)) {
 		echo "even roots of negatives can't be handled";
 		return;
+	} if ($root==0) {
+		if (is_string($root)) {
+			echo "can't provide a string as the root value - check your parameters";
+			return;
+		} else {
+			echo "can't take the zero'th root";
+			return;
+		}
 	} else if ($in<0) {
 		$sign = '-';
 	} else {
@@ -68,7 +76,7 @@ function reduceradicalfrac($n,$rootnum,$d,$root=2,$format="string") {
 	$n *= $rootA;
 	$g = gcd($n,$d);
 	$n = $n/$g;
-	$d = $d/$g;	
+	$d = $d/$g;
 	if ($d<0) {
 		$n = $n*-1;
 		$d = $d*-1;
@@ -77,6 +85,10 @@ function reduceradicalfrac($n,$rootnum,$d,$root=2,$format="string") {
 		$outstr = '';
 		if ($format=='disp') {
 			$outstr .= '`';
+		}
+		if ($n<0) {
+			$outstr .= '-';
+			$n *= -1;
 		}
 		if ($d>1) {
 			$outstr .= '(';
@@ -105,7 +117,63 @@ function reduceradicalfrac($n,$rootnum,$d,$root=2,$format="string") {
 	}
 }
 
-	
+//reduceradicalfrac2(num,wholedenom,rootnum,[rationalize,root,format])
+//given num/(wholedenom*root(rootnum)), reduces the root then the fraction
+//rationalize: rationalize the denominator. Default is false.
+//root: root of radical.  Default is 2 (sqrt)
+//format: default is "string", which returns "2/(3sqrt(5))"
+//                   "disp", returns the string wrapped in backticks for display
+//                   "parts", returns an array of the parts:  array(2,3,5)
+function reduceradicalfrac2($n,$d,$rootnum,$rat=false,$root=2,$format="string") {
+	if ($rat==true) {
+		return reduceradicalfrac($n, $rootnum, $d*$rootnum, $root, $format);
+	}
+	list($rootA,$in) = reduceradical($rootnum,$root,"parts");
+	$d *= $rootA;
+	$g = gcd($n,$d);
+	$n = $n/$g;
+	$d = $d/$g;
+	if ($d<0) {
+		$n = $n*-1;
+		$d = $d*-1;
+	}
+	if ($format=='string' || $format=='disp') {
+		$outstr = '';
+		if ($format=='disp') {
+			$outstr .= '`';
+		}
+		
+		$outstr .= $n;
+		if ($d>1 || $in>1) {
+			$outstr .= '/';
+			if ($d>1 && $in>1) {
+				$outstr .= '(';
+			}
+			if ($d>1) {
+				$outstr .= $d;
+			}
+			if ($in>1) {
+				if ($root==2) {
+					$outstr .= "sqrt($in)";
+				} else {
+					$outstr .= "root($root)($in)";
+				}
+			}
+			if ($d>1 && $in>1) {
+				$outstr .= ')';
+			}
+		}
+		
+		if ($format=='disp') {
+			$outstr .= '`';
+		}
+		return $outstr;
+	} else {
+		return array($n,$d,$in);
+	}
+}
+
+
 //reducequadraticform(a,b,c,d,[format])
 //given (a+bsqrt(c))/d, reduces the root then the fraction
 //format: default is "string", which returns "(1+4sqrt(5))/2"
@@ -131,7 +199,7 @@ function reducequadraticform($a,$n,$rootnum,$d,$format="string") {
 	$g = gcd($gr,$gw); //gcd of a,n, and d
 	$a = $a/$g;
 	$n = $n/$g;
-	$d = $d/$g;	
+	$d = $d/$g;
 	if ($d<0) {
 		$a = $a*-1;
 		$n = $n*-1;

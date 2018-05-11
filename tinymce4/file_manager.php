@@ -1,6 +1,6 @@
 <?php
-require("../validate.php");
-require("../includes/filehandler.php");
+require("../init.php");
+require_once("../includes/filehandler.php");
 
 @set_time_limit(0);
 ini_set("max_input_time", "600");
@@ -34,9 +34,9 @@ if (isset($_REQUEST["action"]))
 	if ($_REQUEST["action"] == "upload_file")
 	{
 		//$filename = basename(stripslashes($_POST["uploaded_file_name"]));
-		$filename = Sanitize::sanitizeFilenameAndCheckBlacklist($_FILES['uploaded_file']['name']);
-		$filename = str_replace(' ','_',$filename);
-		$filename = preg_replace('/[^\w\.\-_]/','',$filename);
+		$filename = str_replace(' ','_',$_FILES['uploaded_file']['name']);
+		$filename = Sanitize::sanitizeFilenameAndCheckBlacklist(basename(str_replace('\\','/',$filename)));
+
 		//$filename = Sanitize::encodeStringForUrl($filename);
 		//echo $filename;
 		//exit;
@@ -56,7 +56,7 @@ if (isset($_REQUEST["action"]))
 				}
 			}
 			if (storeuploadedfile("uploaded_file","ufiles/$userid/".$filename,"public")) {
-			
+
 			} else {
 				unset($_REQUEST["action"]);
 			}
@@ -64,7 +64,7 @@ if (isset($_REQUEST["action"]))
 	}
 	else if ($_REQUEST["action"] == "delete_file")
 	{
-		if (deleteuserfile($userid,Sanitize::sanitizeFilenameAndCheckBlacklist($_REQUEST["item_name"]))) {
+		if (deleteuserfile($userid,$_REQUEST["item_name"])) {
 			echo 'OK';
 		} else {
 			echo 'FAIL';
@@ -101,7 +101,7 @@ if (isset($_REQUEST["action"]) && $_REQUEST["action"] == "upload_file") {
 
         // insert information now
         parent.tinymce.activeEditor.windowManager.getParams().oninsert(filename);
-    
+
         // close popup window
         parent.tinymce.activeEditor.windowManager.close();
     }
@@ -185,7 +185,7 @@ if (isset($_REQUEST['showfiles'])) {
 	}
 } else {
 	echo '<div class="upload">';
-	echo '<p><a href="file_manager.php?showfiles=true&amp;type='.$type.'">Show previously uploaded files</a></p>';
+	echo '<p><a href="file_manager.php?showfiles=true&amp;type=' . Sanitize::encodeUrlParam($type) . '">Show previously uploaded files</a></p>';
 }
 ?>
 </div>

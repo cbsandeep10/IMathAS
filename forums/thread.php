@@ -2,7 +2,7 @@
 //Displays forum threads
 //(c) 2006 David Lippman
 
-require("../validate.php");
+require("../init.php");
 if (!isset($teacherid) && !isset($tutorid) && !isset($studentid)) {
 	require("../header.php");
 	echo "You are not enrolled in this course.  Please return to the <a href=\"../index.php\">Home Page</a> and enroll\n";
@@ -18,11 +18,11 @@ if (isset($teacherid)) {
 $threadsperpage = $listperpage;
 
 $cid = Sanitize::courseId($_GET['cid']);
-$forumid = $_GET['forum'];
+$forumid = Sanitize::onlyInt($_GET['forum']);
 if (!isset($_GET['page']) || $_GET['page']=='') {
 	$page = 1;
 } else {
-	$page = $_GET['page'];
+	$page = Sanitize::onlyInt($_GET['page']);
 }
 
 if (($isteacher || isset($tutorid)) && isset($_POST['score'])) {
@@ -59,8 +59,8 @@ if (($isteacher || isset($tutorid)) && isset($_POST['score'])) {
 		$postuserids[$row[0]] = $row[1];
 	}
 	foreach($_POST['score'] as $k=>$v) {
-		if (isset($_POST['feedback'][$k])) {
-			$feedback = $_POST['feedback'][$k];
+		if (isset($_POST['feedback'.$k]) && $_POST['feedback'.$k]!='<p></p>') {
+			$feedback = Sanitize::incomingHtml($_POST['feedback'.$k]);
 		} else {
 			$feedback = '';
 		}
@@ -90,16 +90,48 @@ if (($isteacher || isset($tutorid)) && isset($_POST['score'])) {
 	if (isset($_POST['actionrequest'])) {
 		list($action,$actionid) = explode(':',$_POST['actionrequest']);
 		if ($action=='reply') {
-			header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?page=$page&cid=$cid&forum=$forumid&thread={$_GET['thread']}&modify=reply&replyto=$actionid");
+			header('Location: ' . $GLOBALS['basesiteurl'] . '/forums/posts.php?'
+				. Sanitize::generateQueryStringFromMap(array(
+					'page' => Sanitize::onlyInt($page),
+					'cid' => Sanitize::courseId($cid),
+					'forum' => Sanitize::onlyInt($forumid),
+					'thread' => Sanitize::encodeUrlParam($_GET['thread']),
+					'modify' => 'reply',
+					'replyto' => Sanitize::onlyInt($actionid)
+				)));
 		} else if ($action=='modify') {
-			header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?page=$page&cid=$cid&forum=$forumid&thread={$_GET['thread']}&modify=$actionid");
+			header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?"
+				. Sanitize::generateQueryStringFromMap(array(
+					'page' => Sanitize::onlyInt($page),
+					'cid' => Sanitize::courseId($cid),
+					'forum' => Sanitize::onlyInt($forumid),
+					'thread' => Sanitize::encodeUrlParam($_GET['thread']),
+					'modify' => Sanitize::onlyInt($actionid),
+				)));
 		}
 	} else if (isset($_POST['save']) && $_POST['save']=='Save Grades and View Previous') {
-		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?page=$page&cid=$cid&forum=$forumid&thread={$_POST['prevth']}");
+		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?"
+			. Sanitize::generateQueryStringFromMap(array(
+				'page' => Sanitize::onlyInt($page),
+				'cid' => Sanitize::courseId($cid),
+				'forum' => Sanitize::onlyInt($forumid),
+				'thread' => Sanitize::encodeUrlParam($_POST['prevth']),
+			)));
 	} else if (isset($_POST['save']) && $_POST['save']=='Save Grades and View Next') {
-		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?page=$page&cid=$cid&forum=$forumid&thread={$_POST['nextth']}");
+		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/posts.php?"
+			. Sanitize::generateQueryStringFromMap(array(
+				'page' => Sanitize::onlyInt($page),
+				'cid' => Sanitize::courseId($cid),
+				'forum' => Sanitize::onlyInt($forumid),
+				'thread' => Sanitize::encodeUrlParam($_POST['nextth']),
+			)));
 	} else {
-		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/thread.php?page=$page&cid=$cid&forum=$forumid");
+		header('Location: ' . $GLOBALS['basesiteurl'] . "/forums/thread.php?"
+			. Sanitize::generateQueryStringFromMap(array(
+				'page' => Sanitize::onlyInt($page),
+				'cid' => Sanitize::courseId($cid),
+				'forum' => Sanitize::onlyInt($forumid),
+			)));
 	}
 	exit;
 }
@@ -109,6 +141,55 @@ if (($isteacher || isset($tutorid)) && isset($_POST['score'])) {
 $stm = $DBH->prepare("SELECT name,postby,replyby,settings,groupsetid,sortby,taglist,enddate,avail,postinstr,replyinstr,allowlate FROM imas_forums WHERE id=:id");
 $stm->execute(array(':id'=>$forumid));
 list($forumname, $postby, $replyby, $forumsettings, $groupsetid, $sortby, $taglist, $enddate, $avail, $postinstr,$replyinstr, $allowlate) = $stm->fetch(PDO::FETCH_NUM);
+
+$duedates = '';
+if (($postby>0 && $postby<2000000000) || ($replyby>0 && $replyby<2000000000)) {
+	$exception = null; $latepasses = 0;
+	require_once("../includes/exceptionfuncs.php");
+	if (isset($studentid) && !isset($sessiondata['stuview'])) {
+		//DB $query = "SELECT startdate,enddate,islatepass,waivereqscore,itemtype FROM imas_exceptions WHERE assessmentid='$forumid' AND userid='$userid' AND (itemtype='F' OR itemtype='P' OR itemtype='R')";
+		//DB $result = mysql_query($query) or die("Query failed : $query" . mysql_error());
+		//DB if (mysql_num_rows($result)>0) {
+			//DB $exception = mysql_fetch_row($result);
+		$stm = $DBH->prepare("SELECT startdate,enddate,islatepass,waivereqscore,itemtype FROM imas_exceptions WHERE assessmentid=:assessmentid AND userid=:userid AND (itemtype='F' OR itemtype='P' OR itemtype='R')");
+		$stm->execute(array(':assessmentid'=>$forumid, ':userid'=>$userid));
+		if ($stm->rowCount()>0) {
+			$exception = $stm->fetch(PDO::FETCH_NUM);
+		}
+		$latepasses = $studentinfo['latepasses'];
+		$exceptionfuncs = new ExceptionFuncs($userid, $cid, true, $studentinfo['latepasses'], $latepasshrs);
+	} else {
+		$exceptionfuncs = new ExceptionFuncs($userid, $cid, false);
+	}
+
+	$infoline = array('replyby'=>$replyby, 'postby'=>$postby, 'enddate'=>$enddate, 'allowlate'=>$allowlate);
+	list($canundolatepassP, $canundolatepassR, $canundolatepass, $canuselatepassP, $canuselatepassR, $postby, $replyby, $enddate) = $exceptionfuncs->getCanUseLatePassForums($exception, $infoline);
+	if ($postby>0 && $postby<2000000000) {
+		if ($postby>$now) {
+			$duedates .= sprintf(_('New Threads due %s. '), tzdate("D n/j/y, g:i a",$postby));
+		} else {
+			$duedates .= sprintf(_('New Threads were due %s. '), tzdate("D n/j/y, g:i a",$postby));
+		}
+	}
+	if ($replyby>0 && $replyby<2000000000) {
+		//if ($duedates != '') {$duedates .= '<br/>';}
+		if ($replyby>$now) {
+			$duedates .= sprintf(_('Replies due %s. '), tzdate("D n/j/y, g:i a",$replyby));
+		} else {
+			$duedates .= sprintf(_('Replies were due %s. '), tzdate("D n/j/y, g:i a",$replyby));
+		}
+	}
+	//if ($duedates != '' && ($canuselatepassP || $canuselatepassR || $canundolatepass)) {$duedates .= '<br/>';}
+	if ($canuselatepassP || $canuselatepassR) {
+		$duedates .= " <a href=\"$imasroot/course/redeemlatepassforum.php?cid=$cid&fid=$forumid&from=forum\">". _('Use LatePass'). "</a>";
+		if ($canundolatepass) {
+			$duedates .= ' |';
+		}
+	}
+	if ($canundolatepass) {
+		$duedates .= " <a href=\"$imasroot/course/redeemlatepassforum.php?cid=$cid&fid=$forumid&undo=true&from=forum\">". _('Un-use LatePass'). "</a>";
+	}
+}
 
 if (isset($studentid) && ($avail==0 || ($avail==1 && time()>$enddate))) {
 	require("../header.php");
@@ -123,6 +204,7 @@ $postbeforeview = (($forumsettings&16)==16);
 $canviewall = (isset($teacherid) || isset($tutorid));
 $dofilter = false;
 $now = time();
+
 $grpqs = '';
 if ($groupsetid>0) {
 	if (isset($_GET['ffilter'])) {
@@ -158,12 +240,12 @@ if ($groupsetid>0) {
 		$limthreads = array();
 		if ($isteacher || $groupid==0) {
 			//DB $query = "SELECT id FROM imas_forum_threads WHERE stugroupid='$groupid' AND forumid='$forumid'";
-			$stm = $DBH->prepare("SELECT id FROM imas_forum_threads WHERE stugroupid=:stugroupid AND forumid=:forumid");
-			$stm->execute(array(':stugroupid'=>$groupid, ':forumid'=>$forumid));
+			$stm = $DBH->prepare("SELECT id FROM imas_forum_threads WHERE stugroupid=:stugroupid AND forumid=:forumid AND lastposttime<:now");
+			$stm->execute(array(':stugroupid'=>$groupid, ':forumid'=>$forumid, ':now'=>$isteacher?2000000000:$now));
 		} else {
 			//DB $query = "SELECT id FROM imas_forum_threads WHERE (stugroupid=0 OR stugroupid='$groupid') AND forumid='$forumid'";
-			$stm = $DBH->prepare("SELECT id FROM imas_forum_threads WHERE (stugroupid=0 OR stugroupid=:stugroupid) AND forumid=:forumid");
-			$stm->execute(array(':stugroupid'=>$groupid, ':forumid'=>$forumid));
+			$stm = $DBH->prepare("SELECT id FROM imas_forum_threads WHERE (stugroupid=0 OR stugroupid=:stugroupid) AND forumid=:forumid AND lastposttime<:now");
+			$stm->execute(array(':stugroupid'=>$groupid, ':forumid'=>$forumid, ':now'=>$now));
 		}
 		//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 		//DB while ($row = mysql_fetch_row($result)) {
@@ -212,10 +294,15 @@ if ($tagfilter != '') {
 	$dofilter = true;
 }
 
+$caller = 'thread';
+if (isset($_GET['modify']) || isset($_GET['remove']) || isset($_GET['move'])) {
+	require("posthandler.php");
+}
+
 if (isset($_GET['search']) && trim($_GET['search'])!='') {
 	require("../header.php");
-	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; ";
-	echo "<a href=\"thread.php?page=$page&cid=$cid&forum=$forumid\">Forum Topics</a> &gt; Search Results</div>\n";
+	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=".Sanitize::courseId($cid)."\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; ";
+	echo "<a href=\"thread.php?page=".Sanitize::onlyInt($page)."&cid=".Sanitize::courseId($cid)."&forum=".Sanitize::onlyInt($forumid)."\">Forum Topics</a> &gt; Search Results</div>\n";
 
 	echo "<h2>Forum Search Results</h2>";
 
@@ -281,21 +368,22 @@ if (isset($_GET['search']) && trim($_GET['search'])!='') {
 	//DB while ($row = mysql_fetch_row($result)) {
 	while ($row = $stm->fetch(PDO::FETCH_NUM)) {
 		echo "<div class=block>";
-		echo "<b>{$row[2]}</b>";
+		echo "<b>".Sanitize::encodeStringForDisplay($row[2])."</b>";
 		if (isset($_GET['allforums'])) {
-			echo ' (in '.$row[7].')';
+			echo ' (in '.Sanitize::encodeStringForDisplay($row[7]).')';
 		}
 		if ($row[8]==1) {
 			$name = "Anonymous";
 		} else {
-			$name = "{$row[4]} {$row[5]}";
+		    $name = sprintf("%s %s", Sanitize::encodeStringForDisplay($row[4]),
+                Sanitize::encodeStringForDisplay($row[5]));
 		}
 		printf("<br/>Posted by: %s, ", Sanitize::encodeStringForDisplay($name));
 		echo tzdate("F j, Y, g:i a",$row[6]);
 
 		echo "</div><div class=blockitems>";
-		echo filter($row[3]);
-		echo "<p><a href=\"posts.php?cid=$cid&forum={$row[0]}&thread={$row[1]}\">Show full thread</a></p>";
+		echo Sanitize::outgoingHtml(filter($row[3]));
+		echo "<p><a href=\"posts.php?cid=".Sanitize::courseId($cid)."&forum=".Sanitize::encodeUrlParam($row[0])."&thread=".Sanitize::encodeUrlParam($row[1])."\">Show full thread</a></p>";
 		echo "</div>\n";
 	}
 	require("../footer.php");
@@ -336,56 +424,6 @@ if (isset($_GET['markallread'])) {
 	}
 }
 
-$duedates = '';
-if (($postby>0 && $postby<2000000000) || ($replyby>0 && $replyby<2000000000)) {
-	$exception = null; $latepasses = 0;
-	if (isset($studentid)) {
-		//DB $query = "SELECT startdate,enddate,islatepass,waivereqscore,itemtype FROM imas_exceptions WHERE assessmentid='$forumid' AND userid='$userid' AND (itemtype='F' OR itemtype='P' OR itemtype='R')";
-		//DB $result = mysql_query($query) or die("Query failed : $query" . mysql_error());
-		//DB if (mysql_num_rows($result)>0) {
-			//DB $exception = mysql_fetch_row($result);
-		$stm = $DBH->prepare("SELECT startdate,enddate,islatepass,waivereqscore,itemtype FROM imas_exceptions WHERE assessmentid=:assessmentid AND userid=:userid AND (itemtype='F' OR itemtype='P' OR itemtype='R')");
-		$stm->execute(array(':assessmentid'=>$forumid, ':userid'=>$userid));
-		if ($stm->rowCount()>0) {
-			$exception = $stm->fetch(PDO::FETCH_NUM);
-		}
-		$latepasses = $studentinfo['latepasses'];
-	}
-
-	require_once("../includes/exceptionfuncs.php");
-	$infoline = array('replyby'=>$replyby, 'postby'=>$postby, 'enddate'=>$enddate, 'allowlate'=>$allowlate);
-	list($canundolatepassP, $canundolatepassR, $canundolatepass, $canuselatepassP, $canuselatepassR, $postby, $replyby, $enddate) = getCanUseLatePassForums($exception, $infoline);
-	if ($postby>0 && $postby<2000000000) {
-		if ($postby>$now) {
-			$duedates .= sprintf(_('New Threads due %s. '), tzdate("D n/j/y, g:i a",$postby));
-		} else {
-			$duedates .= sprintf(_('New Threads were due %s. '), tzdate("D n/j/y, g:i a",$postby));
-		}
-	}
-	if ($replyby>0 && $replyby<2000000000) {
-		//if ($duedates != '') {$duedates .= '<br/>';}
-		if ($replyby>$now) {
-			$duedates .= sprintf(_('Replies due %s. '), tzdate("D n/j/y, g:i a",$replyby));
-		} else {
-			$duedates .= sprintf(_('Replies were due %s. '), tzdate("D n/j/y, g:i a",$replyby));
-		}
-	}
-	//if ($duedates != '' && ($canuselatepassP || $canuselatepassR || $canundolatepass)) {$duedates .= '<br/>';}
-	if ($canuselatepassP || $canuselatepassR) {
-		$duedates .= " <a href=\"$imasroot/course/redeemlatepassforum.php?cid=$cid&fid=$forumid&from=forum\">". _('Use LatePass'). "</a>";
-		if ($canundolatepass) {
-			$duedates .= ' |';
-		}
-	}
-	if ($canundolatepass) {
-		$duedates .= " <a href=\"$imasroot/course/redeemlatepassforum.php?cid=$cid&fid=$forumid&undo=true&from=forum\">". _('Un-use LatePass'). "</a>";
-	}
-}
-
-$caller = 'thread';
-if (isset($_GET['modify']) || isset($_GET['remove']) || isset($_GET['move'])) {
-	require("posthandler.php");
-}
 
 $pagetitle = "Threads";
 $placeinhead = "<style type=\"text/css\">\n@import url(\"$imasroot/forums/forums.css\"); td.pointer:hover {text-decoration: underline;}\n</style>\n";
@@ -400,6 +438,7 @@ echo "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$
 echo '<div id="headerthread" class="pagetitle"><h2>Forum: '.Sanitize::encodeStringForDisplay($forumname).'</h2></div>';
 
 if ($duedates!='') {
+	//$duedates contains HTML from above
 	echo '<p id="forumduedates">'.$duedates.'</p>';
 }
 
@@ -416,11 +455,13 @@ if ($postinstr != '' || $replyinstr != '') {
 	echo '<div id="postreplyinstr" style="display:none;" class="intro">';
 	if ($postinstr != '') {
 		echo '<h4>'._('Posting Instructions').'</h4>';
-		echo $postinstr;
+		// $postinstr contains HTML.
+		echo Sanitize::outgoingHtml($postinstr);
 	}
 	if ($replyinstr != '') {
 		echo '<h4>'._('Reply Instructions').'</h4>';
-		echo $replyinstr;
+		// $postinstr contains HTML.
+		echo Sanitize::outgoingHtml($replyinstr);
 	}
 	echo '</div><br/>';
 }
@@ -500,7 +541,7 @@ if ($page>0) {
 		if ($page==1) {
 			$prevnext .= "<b>1</b> ";
 		} else {
-			$prevnext .= "<a href=\"thread.php?page=1&cid=$cid&forum=$forumid\">1</a> ";
+			$prevnext .= "<a href=\"thread.php?page=1&cid=".Sanitize::courseId($cid)."&forum=".Sanitize::onlyInt($forumid)."\">1</a> ";
 		}
 		if ($min!=2) { $prevnext .= " ... ";}
 		for ($i = $min; $i<=$max; $i++) {
@@ -533,7 +574,7 @@ if ($page>0) {
 	}
 }
 echo "<form method=get action=\"thread.php\">";
-echo "<input type=hidden name=page value=\"$page\"/>";
+echo "<input type=hidden name=page value=\"".Sanitize::onlyInt($page)."\"/>";
 echo "<input type=hidden name=cid value=\"$cid\"/>";
 echo "<input type=hidden name=forum value=\"$forumid\"/>";
 
@@ -581,21 +622,21 @@ if ($isteacher && $groupsetid>0) {
 	foreach ($groupnames as $gid=>$gname) {
 		echo "<option value=\"$gid\" ";
 		if ($curfilter==$gid) { echo 'selected="1"';}
-		echo ">$gname</option>";
+		echo ">".Sanitize::encodeStringForDisplay($gname)."</option>";
 	}
 	echo '</select></p>';
 } else if ($groupsetid>0 && $groupid>0) {
-	echo '<p><b>'._('Showing posts for group: ').$groupname.'</b> ';
-	echo '<a class="small" href="#" onclick="basicahah(\'../course/showstugroup.php?cid='.$cid.'&gid='.$groupid.'\',\'grouplistout\');$(this).hide();return false;">['._('Show group members').']</a> <span id="grouplistout"></span>';
+	echo '<p><b>'._('Showing posts for group: ').Sanitize::encodeStringForDisplay($groupname).'</b> ';
+	echo '<a class="small" href="#" onclick="basicahah(\'../course/showstugroup.php?cid='.$cid.'&gid='.Sanitize::onlyInt($groupid).'\',\'grouplistout\');$(this).hide();return false;">['._('Show group members').']</a> <span id="grouplistout"></span>';
 	echo '</p>';
 }
 echo '<p>';
 $toshow = array();
 if (($myrights > 5 && time()<$postby) || $isteacher) {
-	$toshow[] =  "<button type=\"button\" onclick=\"window.location.href='thread.php?page=$page&cid=$cid&forum=$forumid&modify=new'\">"._('Add New Thread')."</button>";
+	$toshow[] =  "<button type=\"button\" onclick=\"window.location.href='thread.php?page=". Sanitize::onlyInt($page)."&cid=$cid&forum=$forumid&modify=new'\">"._('Add New Thread')."</button>";
 }
 //if ($isteacher || isset($tutorid)) {
-$toshow[] =  "<a href=\"postsbyname.php?page=$page&cid=$cid&forum=$forumid\">List Posts by Name</a>";
+$toshow[] =  "<a href=\"postsbyname.php?page=". Sanitize::onlyInt($page)."&cid=$cid&forum=$forumid\">List Posts by Name</a>";
 //}
 
 if ($page<0) {
@@ -605,10 +646,11 @@ if ($page<0) {
 		$toshow[] =  "<a href=\"thread.php?cid=$cid&forum=$forumid&page=-1\">Limit to New</a>";
 	}
 	$toshow[] =  "<a href=\"thread.php?cid=$cid&forum=$forumid&page=-2\">Limit to Flagged</a>";
+
 	if ($taglist!='') {
 		$p = strpos($taglist,':');
 
-		$tagselect = 'Filter by '.substr($taglist,0,$p).': ';
+		$tagselect = 'Filter by '.Sanitize::encodeStringForDisplay(substr($taglist,0,$p)).': ';
 		$tagselect .= '<select id="tagfilter" onChange="chgtagfilter()"><option value="" ';
 		if ($tagfilter=='') {
 			$tagselect .= 'selected="selected"';
@@ -616,10 +658,12 @@ if ($page<0) {
 		$tagselect .= '>All</option>';
 		$tags = explode(',',substr($taglist,$p+1));
 		foreach ($tags as $tag) {
-			$tag =  str_replace('"','&quot;',$tag);
-			$tagselect .= '<option value="'.$tag.'" ';
-			if ($tag==$tagfilter) {$tagselect .= 'selected="selected"';}
-			$tagselect .= '>'.$tag.'</option>';
+			$tagEncoded =  Sanitize::encodeStringForDisplay($tag);
+			$tagselect .= '<option value="'.$tagEncoded.'" ';
+
+			$tagQuotesEscaped =  str_replace('"','&quot;',$tag);
+			if ($tagQuotesEscaped==$tagfilter) {$tagselect .= 'selected="selected"';}
+			$tagselect .= '>'.$tagEncoded.'</option>';
 		}
 		$tagselect .= '</select>';
 		$toshow[] = $tagselect;
@@ -627,7 +671,7 @@ if ($page<0) {
 
 }
 if (count($newpost)>0) {
-	$toshow[] =  "<button type=\"button\" onclick=\"window.location.href='thread.php?page=$page&cid=$cid&forum=$forumid&markallread=true'\">"._('Mark all Read')."</button>";
+	$toshow[] =  "<button type=\"button\" onclick=\"window.location.href='thread.php?page=". Sanitize::onlyInt($page)."&cid=$cid&forum=$forumid&markallread=true'\">"._('Mark all Read')."</button>";
 }
 
 echo implode(' | ',$toshow);
@@ -674,8 +718,10 @@ echo "</p>";
 
 			//DB $query = "SELECT imas_forum_posts.*,imas_forum_threads.views as tviews,imas_users.LastName,imas_users.FirstName,imas_forum_threads.stugroupid FROM imas_forum_posts,imas_users,imas_forum_threads WHERE ";
 			//DB $query .= "imas_forum_posts.userid=imas_users.id AND imas_forum_posts.threadid=imas_forum_threads.id AND imas_forum_posts.parent=0 AND imas_forum_posts.forumid='$forumid' ";
-			$query = "SELECT imas_forum_posts.*,imas_forum_threads.views as tviews,imas_users.LastName,imas_users.FirstName,imas_forum_threads.stugroupid FROM imas_forum_posts,imas_users,imas_forum_threads WHERE ";
+			$query = "SELECT imas_forum_posts.*,imas_forum_threads.views as tviews,imas_users.LastName,imas_users.FirstName,imas_forum_threads.stugroupid,imas_forum_threads.lastposttime ";
+			$query .= "FROM imas_forum_posts,imas_users,imas_forum_threads WHERE ";
 			$query .= "imas_forum_posts.userid=imas_users.id AND imas_forum_posts.threadid=imas_forum_threads.id AND imas_forum_posts.parent=0 AND imas_forum_posts.forumid=:forumid ";
+			$query .= "AND imas_forum_threads.lastposttime<:now ";
 			if ($dofilter) {
 				$query .= "AND imas_forum_posts.threadid IN ($limthreads) ";
 			}
@@ -697,7 +743,7 @@ echo "</p>";
 			}
 			// $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 			$stm = $DBH->prepare($query);
-			$stm->execute(array(':forumid'=>$forumid));
+			$stm->execute(array(':forumid'=>$forumid, ':now'=>$isteacher?2000000000:$now));
 
 			//DB $query = "SELECT imas_forum_posts.*,imas_forum_threads.views as tviews,imas_users.LastName,imas_users.FirstName,imas_forum_threads.stugroupid FROM imas_forum_posts,imas_users,imas_forum_threads WHERE ";
 			//DB $query .= "imas_forum_posts.userid=imas_users.id AND imas_forum_posts.threadid=imas_forum_threads.id AND imas_forum_posts.parent=0 AND imas_forum_posts.forumid='$forumid' ";
@@ -733,7 +779,7 @@ echo "</p>";
 					$posts = 0;
 					$lastpost = '';
 				}
-				echo "<tr id=\"tr{$line['id']}\"";
+				echo "<tr id=\"tr".Sanitize::onlyInt($line['id'])."\"";
 				if ($line['posttype']>0) {
 					echo "class=sticky";
 				} else if (isset($flags[$line['id']])) {
@@ -741,15 +787,18 @@ echo "</p>";
 				}
 				echo "><td>";
 				echo "<span class=\"right\">\n";
+				if ($line['lastposttime']>$now) {
+					echo "<img class=mida src=\"$imasroot/img/time.png\" alt=\"Scheduled\" title=\"Scheduled for later release\" /> ";
+				}
 				if ($line['tag']!='') { //category tags
-					echo '<span class="forumcattag">'.$line['tag'].'</span> ';
+					echo '<span class="forumcattag">'.Sanitize::encodeStringForDisplay($line['tag']).'</span> ';
 				}
 
 				if ($line['posttype']==0) {
 					if (isset($flags[$line['id']])) {
-						echo "<img class=\"pointer\" id=\"tag{$line['id']}\" src=\"$imasroot/img/flagfilled.gif\" onClick=\"toggletagged({$line['id']});return false;\" alt=\"Flagged\" />";
+						echo "<img class=\"pointer\" id=\"tag". Sanitize::onlyInt($line['id'])."\" src=\"$imasroot/img/flagfilled.gif\" onClick=\"toggletagged(". Sanitize::onlyInt($line['id']) . ");return false;\" alt=\"Flagged\" />";
 					} else {
-						echo "<img class=\"pointer\" id=\"tag{$line['id']}\" src=\"$imasroot/img/flagempty.gif\" onClick=\"toggletagged({$line['id']});return false;\" alt=\"Not flagged\"/>";
+						echo "<img class=\"pointer\" id=\"tag". Sanitize::onlyInt($line['id'])."\" src=\"$imasroot/img/flagempty.gif\" onClick=\"toggletagged(". Sanitize::onlyInt($line['id'])  . ");return false;\" alt=\"Not flagged\"/>";
 					}
 				} else if ($isteacher) {
 					if ($line['posttype']==2) {
@@ -760,19 +809,19 @@ echo "</p>";
 				}
 				if ($isteacher || ($line['userid']==$userid && $allowmod && time()<$postby) || ($allowdel && $line['userid']==$userid && $posts==0)) {
 					echo '<span class="dropdown">';
-					echo '<a tabindex=0 class="dropdown-toggle" id="dropdownMenu'.$line['id'].'" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+					echo '<a tabindex=0 class="dropdown-toggle" id="dropdownMenu'.Sanitize::onlyInt($line['id']).'" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
 					echo ' <img src="../img/gears.png" class="mida" alt="Options"/>';
 					echo '</a>';
-					echo '<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu'.$line['id'].'">';
+					echo '<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu'.Sanitize::onlyInt($line['id']).'">';
 
 					if ($isteacher) {
-						echo "<li><a href=\"thread.php?page=$page&cid=$cid&forum={$line['forumid']}&move={$line['id']}\">Move</a></li> ";
+						echo "<li><a href=\"thread.php?page=". Sanitize::onlyInt($page)."&cid=$cid&forum=". Sanitize::onlyInt($line['forumid'])."&move=". Sanitize::onlyInt($line['id']) ."\">Move</a></li> ";
 					}
 					if ($isteacher || ($line['userid']==$userid && $allowmod && time()<$postby)) {
-						echo "<li><a href=\"thread.php?page=$page&cid=$cid&forum={$line['forumid']}&modify={$line['id']}\">Modify</a></li> ";
+						echo "<li><a href=\"thread.php?page=". Sanitize::onlyInt($page)."&cid=$cid&forum=". Sanitize::onlyInt($line['forumid'])."&modify=" .Sanitize::onlyInt($line['id'])."\">Modify</a></li> ";
 					}
 					if ($isteacher || ($allowdel && $line['userid']==$userid && $posts==0)) {
-						echo "<li><a href=\"thread.php?page=$page&cid=$cid&forum={$line['forumid']}&remove={$line['id']}\">Remove</a></li>";
+						echo "<li><a href=\"thread.php?page=". Sanitize::onlyInt($page) ."&cid=$cid&forum=". Sanitize::onlyInt($line['forumid'])."&remove=".Sanitize::onlyInt($line['id'])."\">Remove</a></li>";
 					}
 					echo '</ul></span>';
 				}
@@ -780,24 +829,29 @@ echo "</p>";
 				if ($line['isanon']==1) {
 					$name = "Anonymous";
 				} else {
-					$name = "{$line['LastName']}, {$line['FirstName']}";
+					$name = Sanitize::encodeStringForDisplay($line['LastName']) .", ". Sanitize::encodeStringForDisplay($line['FirstName']);
 				}
-				echo "<a href=\"posts.php?cid=$cid&forum=$forumid&thread={$line['id']}&page=$page$grpqs\">{$line['subject']}</a></td>";
-
+				if ($line['lastposttime']>$now) {
+					echo '<i class="grey">';
+				}
+				echo "<a href=\"posts.php?cid=$cid&forum=$forumid&thread=" .Sanitize::onlyInt($line['id']). "&page=". Sanitize::onlyInt($page) . Sanitize::encodeUrlParam($grpqs) .'">'. Sanitize::encodeStringForDisplay($line['subject']) ."</a></td>";
+				if ($line['lastposttime']>$now) {
+					echo '</i>';
+				}
 				printf("<td>%s</td>\n", Sanitize::encodeStringForDisplay($name));
 
 				if ($isteacher && $groupsetid>0 && !$dofilter) {
-					echo '<td class=c>'.$groupnames[$line['stugroupid']].'</td>';
+					echo '<td class=c>'.Sanitize::encodeStringForDisplay($groupnames[$line['stugroupid']]).'</td>';
 				}
 
-				echo "<td class=c>$posts</td>";
+				echo "<td class=c>".Sanitize::encodeStringForDisplay($posts)."</td>";
 
 				if ($isteacher) {
-					echo '<td class="pointer c" onclick="GB_show(\''._('Thread Views').'\',\'listviews.php?cid='.$cid.'&amp;thread='.$line['id'].'\',500,500);">';
+					echo '<td class="pointer c" onclick="GB_show(\''._('Thread Views').'\',\'listviews.php?cid='.$cid.'&amp;thread='.Sanitize::onlyInt($line['id']).'\',500,500);">';
 				} else {
 					echo '<td class="c">';
 				}
-				echo "{$line['tviews']} ({$uniqviews[$line['id']]})</td><td class=c>$lastpost ";
+				echo Sanitize::encodeStringForDisplay($line['tviews']) ." (".Sanitize::encodeStringForDisplay($uniqviews[$line['id']]).")</td><td class=c>".Sanitize::encodeStringForDisplay($lastpost);
 				if ($lastpost=='' || $maxdate[$line['id']]>$lastview[$line['id']]) {
 					echo "<span class=\"noticetext\">New</span>";
 				}
@@ -808,7 +862,7 @@ echo "</p>";
 	</table>
 	<?php
 	if (($myrights > 5 && time()<$postby) || $isteacher) {
-		echo "<p><button type=\"button\" onclick=\"window.location.href='thread.php?page=$page&cid=$cid&forum=$forumid&modify=new'\">"._('Add New Thread')."</button></p>\n";
+		echo "<p><button type=\"button\" onclick=\"window.location.href='thread.php?page=".Sanitize::onlyInt($page)."&cid=$cid&forum=$forumid&modify=new'\">"._('Add New Thread')."</button></p>\n";
 	}
 	if ($prevnext!='') {
 		echo "<p>$prevnext</p>";

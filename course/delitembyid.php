@@ -10,6 +10,7 @@ function delitembyid($itemid) {
 	$stm = $DBH->prepare("SELECT itemtype,typeid FROM imas_items WHERE id=:id");
 	$stm->execute(array(':id'=>$itemid));
 	list($itemtype,$typeid) = $stm->fetch(PDO::FETCH_NUM);
+	$typeid = Sanitize::simpleString($typeid);
 
 	if ($itemtype == "InlineText") {
 		//DB $query = "DELETE FROM imas_inlinetext WHERE id='$typeid'";
@@ -29,10 +30,12 @@ function delitembyid($itemid) {
 			//DB $query = "SELECT id FROM imas_instr_files WHERE filename='$safefn'";
 			//DB $r2 = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB if (mysql_num_rows($r2)==1) {
-			$file_src->execute(array(':filename'=>$row[0]));
-			if ($file_src->rowCount()==1) {
-				//unlink($uploaddir . $row[0]);
-				deletecoursefile($row[0]);
+			if (substr($row[0],0,4)!='http') {
+				$file_src->execute(array(':filename'=>$row[0]));
+				if ($file_src->rowCount()==1) {
+					//unlink($uploaddir . $row[0]);
+					deletecoursefile($row[0]);
+				}
 			}
 		}
 		//DB $query = "DELETE FROM imas_instr_files WHERE itemid='$typeid'";
@@ -110,6 +113,8 @@ function delitembyid($itemid) {
 		$stm = $DBH->prepare("DELETE FROM imas_forum_threads WHERE forumid=:forumid");
 		$stm->execute(array(':forumid'=>$typeid));
 
+		$stm = $DBH->prepare("DELETE FROM imas_grades WHERE gradetype='forum' AND gradetypeid=:forumid");
+		$stm->execute(array(':forumid'=>$typeid));
 
 	} else if ($itemtype == "Assessment") {
 

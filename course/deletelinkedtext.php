@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
 
 /*** pre-html data manipulation, including function code *******/
@@ -29,7 +29,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 	$block = Sanitize::stripHtmlTags($_GET['block']);
 
 	if ($_POST['remove']=="really") {
-		require("../includes/filehandler.php");
+		require_once("../includes/filehandler.php");
 		$textid = $_GET['id'];
 
 		$DBH->beginTransaction();
@@ -132,9 +132,9 @@ if ($overwriteBody==1) {
 ?>
 
 	<div class=breadcrumb><?php echo $curBreadcrumb ?></div>
-	<h3><?php echo $itemname; ?></h3>
+	<h3><?php echo Sanitize::encodeStringForDisplay($itemname); ?></h3>
 	Are you SURE you want to delete this link item?
-	<form method="POST" action="deletelinkedtext.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>&block=<?php echo Sanitize::encodeStringForDisplay($block) ?>&id=<?php echo Sanitize::onlyInt($_GET['id']) ?>">
+	<form method="POST" action="deletelinkedtext.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>&block=<?php echo Sanitize::encodeUrlParam($block) ?>&id=<?php echo Sanitize::onlyInt($_GET['id']) ?>">
 	<p>
 	<button type=submit name="remove" value="really">Yes, Delete</button>		
 	<input type=button value="Nevermind" class="secondarybtn" onClick="window.location='course.php?cid=<?php echo Sanitize::courseId($_GET['cid']); ?>'">

@@ -1,8 +1,8 @@
 <?php
 //IMathAS:  Display grade list for one online assessment by group
 //(c) 2007 David Lippman
-	require("../validate.php");
-	
+	require("../init.php");
+
 	$isteacher = isset($teacherid);
 	$istutor = isset($tutorid);
 
@@ -25,10 +25,15 @@
 		$stm->execute(array(':courseid'=>$cid));
 		$gbmode = $stm->fetchColumn(0);
 	}
-
+	$placeinhead .= '<script type="text/javascript">
+		function showfb(id,type) {
+			GB_show(_("Feedback"), "showfeedback.php?cid="+cid+"&type="+type+"&id="+id, 500, 500);
+			return false;
+		}
+		</script>';
 	require("../header.php");
-	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid={$_GET['cid']}\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-	echo "&gt; <a href=\"gradebook.php?gbmode=$gbmode&cid=$cid\">Gradebook</a> &gt; View Group Scores</div>";
+	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+	echo "&gt; <a href=\"gradebook.php?gbmode=" . Sanitize::encodeUrlParam($gbmode) . "&cid=$cid\">Gradebook</a> &gt; View Group Scores</div>";
 
 	//DB $query = "SELECT minscore,timelimit,deffeedback,enddate,name,defpoints,itemorder,groupsetid FROM imas_assessments WHERE id='$aid'";
 	//DB $result = mysql_query($query) or die("Query failed : $query" . mysql_error());
@@ -75,7 +80,7 @@
 
 
 	echo '<div id="headerisolateassessgrade" class="pagetitle"><h2>';
-	echo "Group grades for $name</h2></div>";
+	echo "Group grades for " . Sanitize::encodeStringForDisplay($name) . "</h2></div>";
 	echo "<p>$totalpossible points possible</p>";
 
 //	$query = "SELECT iu.LastName,iu.FirstName,istu.section,istu.timelimitmult,";
@@ -109,6 +114,7 @@
 	$stm->execute(array(':groupsetid'=>$groupsetid));
 	$grpnums = 1;
 	$stu_name = null;
+	$groupnames = array();
 	//DB while ($row = mysql_fetch_row($result)) {
 	while ($row = $stm->fetch(PDO::FETCH_NUM)) {
 		if ($row[1] == 'Unnamed group') {
@@ -140,9 +146,9 @@
 			echo "<tr class=odd onMouseOver=\"this.className='highlight'\" onMouseOut=\"this.className='odd'\">";
 		}
 		$lc++;
-		echo "<td>$gname</td>";
+		echo "<td>" . Sanitize::encodeStringForDisplay($gname) . "</td>";
 		if (!isset($scoredata[$gid])) {
-			echo "<td>-</td><td>-</td><td></td>";
+			echo "<td>-</td><td>-</td><td></td></tr>";
 			continue;
 		} else {
 			$line = $scoredata[$gid];
@@ -157,20 +163,38 @@
 		$timeused = $line['endtime']-$line['starttime'];
 
 		if ($line['id']==null) {
-			echo "<td><a href=\"gb-viewasid.php?gbmode=$gbmode&cid=$cid&asid=new&uid={$line['userid']}&from=gisolate&aid=$aid\">-</a></td><td>-</td><td></td>";
+			$querymap = array(
+				'gbmode' => $gbmode,
+				'cid' => $cid,
+				'asid' => 'new',
+				'uid' => $line['userid'],
+				'from' => 'gisolate',
+				'aid' => $aid
+			);
+
+			echo '<td><a href="gb-viewasid.php?' . Sanitize::generateQueryStringFromMap($querymap) . '">-</a></td><td>-</td><td></td>';
 		} else {
-			echo "<td><a href=\"gb-viewasid.php?gbmode=$gbmode&cid=$cid&asid={$line['id']}&uid={$line['userid']}&from=gisolate&aid=$aid\">";
+			$querymap = array(
+                'gbmode' => $gbmode,
+                'cid' => $cid,
+                'asid' => $line['id'],
+                'uid' => $line['userid'],
+                'from' => 'gisolate',
+				'aid' => $aid
+			);
+
+      echo '<td><a href="gb-viewasid.php?' . Sanitize::generateQueryStringFromMap($querymap) . '">';
 			//if ($total<$minscore) {
 			if (($minscore<10000 && $total<$minscore) || ($minscore>10000 && $total<($minscore-10000)/100*$totalpossible)) {
-				echo "{$total}&nbsp;(NC)";
+				echo Sanitize::onlyFloat($total) . "&nbsp;(NC)";
 			} else 	if ($IP==1 && $enddate>$now) {
-				echo "{$total}&nbsp;(IP)";
+				echo Sanitize::onlyFloat($total) . "&nbsp;(IP)";
 			} else	if (($timelimit>0) &&($timeused > $timelimit*$line['timelimitmult'])) {
-				echo "{$total}&nbsp;(OT)";
+				echo Sanitize::onlyFloat($total) . "&nbsp;(OT)";
 			} else if ($assessmenttype=="Practice") {
-				echo "{$total}&nbsp;(PT)";
+				echo Sanitize::onlyFloat($total) . "&nbsp;(PT)";
 			} else {
-				echo "{$total}";
+				echo Sanitize::onlyFloat($total);
 				$tot += $total;
 				$n++;
 			}
@@ -181,7 +205,24 @@
 			} else {
 				echo '<td></td>';
 			}
-			echo "<td>{$line['feedback']}</td>";
+			$feedback = json_decode($line['feedback']);
+			if ($feedback===null) {
+				$hasfeedback = ($line['feedback'] != '');
+			} else {
+				$hasfeedback = false;
+				foreach ($feedback as $k=>$v) {
+					if ($v != '' && $v != '<p></p>') {
+						$hasfeedback = true;
+						break;
+					}
+				}
+			}
+			if ($hasfeedback) {
+				echo '<td><a href="#" class="small feedbacksh pointer" onclick="return showfb('.Sanitize::onlyInt($line['id']).',\'A\')">', _('[Show Feedback]'), '</a></td>';
+			} else {
+				echo '<td></td>';
+			}
+			//echo "<td>{$line['feedback']}</td>";
 		}
 		echo "</tr>";
 	}
@@ -192,12 +233,12 @@
 	} else {
 		echo '-';
 	}
-	if ($totalpossible > 0 ) {
+	if ($totalpossible > 0 && $n > 0) {
 		$pct = round(100*($tot/$n)/$totalpossible,1).'%';
 	} else {
 		$pct = '';
 	}
-	echo "</a></td><td>$pct</td></tr>";
+	echo "</a></td><td>".Sanitize::onlyFloat($pct)."</td></tr>";
 	echo "</tbody></table>";
 	echo "<script> initSortTable('myTable',Array('S','N','N'),true);</script>";
 	require("../footer.php");

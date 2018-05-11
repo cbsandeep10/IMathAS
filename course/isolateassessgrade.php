@@ -1,8 +1,8 @@
 <?php
 //IMathAS:  Display grade list for one online assessment
 //(c) 2007 David Lippman
-	require("../validate.php");
-	
+	require("../init.php");
+
 	$isteacher = isset($teacherid);
 	$istutor = isset($tutorid);
 
@@ -29,7 +29,8 @@
 		$gbmode = $stm->fetchColumn(0);
 	}
 	$hidelocked = ((floor($gbmode/100)%10&2)); //0: show locked, 1: hide locked
-
+	$includeduedate = (((floor($gbmode/100)%10)&4)==4); //0: hide due date, 4: show due date
+	
 	if (isset($tutorsection) && $tutorsection!='') {
 		$secfilter = $tutorsection;
 	} else {
@@ -43,10 +44,15 @@
 			$secfilter = -1;
 		}
 	}
-
+	$placeinhead .= '<script type="text/javascript">
+		function showfb(id,type) {
+			GB_show(_("Feedback"), "showfeedback.php?cid="+cid+"&type="+type+"&id="+id, 500, 500);
+			return false;
+		}
+		</script>';
 	require("../header.php");
-	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid={$_GET['cid']}\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-	echo "&gt; <a href=\"gradebook.php?gbmode=$gbmode&cid=$cid\">Gradebook</a> &gt; View Scores</div>";
+	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+	echo "&gt; <a href=\"gradebook.php?gbmode=" . Sanitize::encodeUrlParam($gbmode) . "&cid=$cid\">Gradebook</a> &gt; View Scores</div>";
 
 	echo '<div class="cpmid"><a href="gb-itemanalysis.php?cid='.$cid.'&amp;aid='.$aid.'">View Item Analysis</a></div>';
 
@@ -131,7 +137,7 @@
 
 
 	echo '<div id="headerisolateassessgrade" class="pagetitle"><h2>';
-	echo "Grades for $name</h2></div>";
+	echo "Grades for " . Sanitize::encodeStringForDisplay($name) . "</h2></div>";
 	echo "<p>$totalpossible points possible</p>";
 
 //	$query = "SELECT iu.LastName,iu.FirstName,istu.section,istu.timelimitmult,";
@@ -150,6 +156,7 @@
 	}
 	if (count($exceptions)>0) {
 		require_once("../includes/exceptionfuncs.php");
+		$exceptionfuncs = new ExceptionFuncs($userid, $cid, !$isteacher && !$istutor);
 	}
 
 	//DB $query = "SELECT iu.LastName,iu.FirstName,istu.section,istu.timelimitmult,";
@@ -190,7 +197,11 @@
 	if ($hascodes) {
 		echo '<th>Code</th>';
 	}
-	echo "<th>Grade</th><th>%</th><th>Last Change</th><th>Time Spent (In Questions)</th><th>Feedback</th></tr></thead><tbody>";
+	echo "<th>Grade</th><th>%</th><th>Last Change</th>";
+	if ($includeduedate) {
+		echo "<th>Due Date</th>";
+	}
+	echo "<th>Time Spent (In Questions)</th><th>Feedback</th></tr></thead><tbody>";
 	$now = time();
 	$lc = 1;
 	$n = 0;
@@ -232,7 +243,7 @@
 		$timeontask = round(array_sum(explode(',',str_replace('~',',',$line['timeontask'])))/60,1);
 		$useexception = false;
 		if (isset($exceptions[$line['userid']])) {
-			$useexception = getCanUseAssessException($exceptions[$line['userid']], array('startdate'=>$startdate, 'enddate'=>$enddate, 'allowlate'=>$allowlate), true);
+			$useexception = $exceptionfuncs->getCanUseAssessException($exceptions[$line['userid']], array('startdate'=>$startdate, 'enddate'=>$enddate, 'allowlate'=>$allowlate), true);
 			if ($useexception) {
 				$thisenddate = $exceptions[$line['userid']][1];
 			}
@@ -240,7 +251,16 @@
 			$thisenddate = $enddate;
 		}
 		if ($line['id']==null) {
-			echo "<td><a href=\"gb-viewasid.php?gbmode=$gbmode&cid=$cid&asid=new&uid={$line['userid']}&from=isolate&aid=$aid\">-</a>";
+			$querymap = array(
+				'gbmode' => $gbmode,
+				'cid' => $cid,
+				'asid' => 'new',
+				'uid' => $line['userid'],
+				'from' => 'isolate',
+				'aid' => $aid
+			);
+
+			echo '<td><a href="gb-viewasid.php?' . Sanitize::generateQueryStringFromMap($querymap) . '">-</a>';
 			if ($useexception) {
 				if ($exceptions[$line['userid']][2]>0) {
 					echo '<sup>LP</sup>';
@@ -248,13 +268,26 @@
 					echo '<sup>e</sup>';
 				}
 			}
-			echo "</td><td>-</td><td></td><td></td><td></td>";
+			echo "</td><td>-</td><td></td>";
+			if ($includeduedate) {
+				echo '<td>'.tzdate("n/j/y g:ia",$thisenddate).'</td>';
+			}
+			echo "<td></td><td></td>";
 		} else {
-			echo "<td><a href=\"gb-viewasid.php?gbmode=$gbmode&cid=$cid&asid={$line['id']}&uid={$line['userid']}&from=isolate&aid=$aid\">";
+			$querymap = array(
+				'gbmode' => $gbmode,
+				'cid' => $cid,
+				'asid' => $line['id'],
+				'uid' => $line['userid'],
+				'from' => 'isolate',
+				'aid' => $aid
+			);
+
+			echo '<td><a href="gb-viewasid.php?' . Sanitize::generateQueryStringFromMap($querymap) . '">';
 			if ($thisenddate>$now) {
-				echo '<i>'.$total;
+				echo '<i>'.Sanitize::onlyFloat($total);
 			} else {
-				echo $total;
+				echo Sanitize::onlyFloat($total);
 			}
 			//if ($total<$minscore) {
 			if (($minscore<10000 && $total<$minscore) || ($minscore>10000 && $total<($minscore-10000)/100*$totalpossible)) {
@@ -295,6 +328,9 @@
 			} else {
 				echo '<td>'.tzdate("n/j/y g:ia",$line['endtime']).'</td>';
 			}
+			if ($includeduedate) {
+				echo '<td>'.tzdate("n/j/y g:ia",$thisenddate).'</td>';
+			}
 			if ($line['endtime']==0 || $line['starttime']==0) {
 				echo '<td>&nbsp;</td>';
 			} else {
@@ -307,7 +343,23 @@
 				$tottime += $timeused;
 				$ntime++;
 			}
-			echo "<td>{$line['feedback']}&nbsp;</td>";
+			$feedback = json_decode($line['feedback']);
+			if ($feedback===null) {
+				$hasfeedback = ($line['feedback'] != '');
+			} else {
+				$hasfeedback = false;
+				foreach ($feedback as $k=>$v) {
+					if ($v != '' && $v != '<p></p>') {
+						$hasfeedback = true;
+						break;
+					}
+				}
+			}
+			if ($hasfeedback) {
+				echo '<td><a href="#" class="small feedbacksh pointer" onclick="return showfb('.Sanitize::onlyInt($line['id']).',\'A\')">', _('[Show Feedback]'), '</a></td>';
+			} else {
+				echo '<td></td>';
+			}
 		}
 		echo "</tr>";
 	}

@@ -3,7 +3,7 @@
 //(c) 2011 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 
 
@@ -17,16 +17,19 @@ $from = $_GET['from'];
 
 $curBreadcrumb = "$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
 if ($from=='modq') {
-	$fromstr = '&amp;from=modq&amp;aid='.Sanitize::onlyInt($_GET['aid']).'&amp;qid='.Sanitize::onlyInt($_GET['qid']);
-	$returnstr = 'modquestion.php?cid='.$cid.'&amp;aid='.Sanitize::onlyInt($_GET['aid']).'&amp;id='.Sanitize::onlyInt($_GET['qid']);
+	$fromstr = '&amp;' . Sanitize::generateQueryStringFromMap(array('from' => 'modq', 'aid' => $_GET['aid'],
+			'qid' => $_GET['qid']));
+	$returnstr = 'modquestion.php?' . Sanitize::generateQueryStringFromMap(array('cid' => $cid,
+			'aid' => $_GET['aid'], 'id' => $_GET['qid']));
 	$curBreadcrumb .= "&gt; <a href=\"$returnstr\">Modify Question Settings</a> ";
 } else if ($from=='addg') {
-	$fromstr = '&amp;from=addg&amp;gbitem='.$_GET['gbitem'];
-	$returnstr = 'addgrades.php?cid='.$cid.'&amp;gbitem='.$_GET['gbitem'].'&amp;grades=all';
+	$fromstr = '&amp;' . Sanitize::generateQueryStringFromMap(array('from' => 'addg', 'gbitem' => $_GET['gbitem']));
+	$returnstr = 'addgrades.php?'. Sanitize::generateQueryStringFromMap(array('cid' => $cid,
+			'gbitem' => $_GET['gbitem'], 'grades' => 'all'));
 	$curBreadcrumb .= "&gt; <a href=\"$returnstr\">Offline Grades</a> ";
 } else if ($from=='addf') {
-	$fromstr = '&amp;from=addf&amp;fid='.Sanitize::onlyInt($_GET['fid']);
-	$returnstr = 'addforum.php?cid='.$cid.'&amp;id='.Sanitize::onlyInt($_GET['fid']);
+	$fromstr = '&amp;' . Sanitize::generateQueryStringFromMap(array('from' => 'addf', 'fid' => $_GET['fid']));
+	$returnstr = 'addforum.php?' . Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'id' => $_GET['fid']));
 	$curBreadcrumb .= "&gt; <a href=\"$returnstr\">Modify Forum</a> ";
 }
 
@@ -133,7 +136,7 @@ if (!isset($_GET['id'])) {//displaying "Manage Rubrics" page
 	$stm = $DBH->prepare("SELECT id, name FROM imas_rubrics WHERE ownerid=:ownerid OR groupid=:groupid ORDER BY name");
 	$stm->execute(array(':ownerid'=>$userid, ':groupid'=>$groupid));
 	while ($row = $stm->fetch(PDO::FETCH_NUM)) {
-		echo "{$row[1]} <a href=\"addrubric.php?cid=$cid&amp;id={$row[0]}$fromstr\">Edit</a><br/>";
+		echo Sanitize::encodeStringForDisplay($row[1]) . " <a href=\"addrubric.php?cid=$cid&amp;id=" . Sanitize::onlyInt($row[0]) . $fromstr . "\">Edit</a><br/>";
 	}
 	echo '</p>';
 } else {  //adding/editing a rubric
@@ -146,7 +149,7 @@ if (!isset($_GET['id'])) {//displaying "Manage Rubrics" page
 	*/
 	$rubtypeval = array(1,0,3,4,2);
 	$rubtypelabel = array('Score breakdown, record score and feedback','Score breakdown, record score only','Score total, record score and feedback','Score total, record score only','Feedback only');
-	echo "<form method=\"post\" action=\"addrubric.php?cid=$cid&amp;id={$_GET['id']}$fromstr\">";
+    echo "<form method=\"post\" action=\"addrubric.php?cid=$cid&amp;id=" . Sanitize::encodeUrlParam($_GET['id']) . $fromstr . "\">";
 	echo '<p>Name:  <input type="text" size="70" name="rubname" value="'.str_replace('"','\\"',$rubname).'"/></p>';
 
 	echo '<p>Rubric Type: ';

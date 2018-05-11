@@ -1,6 +1,6 @@
 <?php
-require("config.php");
-require_once("includes/sanitize.php");
+$init_skip_csrfp = true;
+require("init_without_validate.php");
 if((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']=='https'))  {
  	 $urlmode = 'https://';
  } else {

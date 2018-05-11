@@ -1,8 +1,8 @@
 <?php
-//A library of Stats functions.  Version 1.9, March 30, 2008
+//A library of Stats functions.  Version 1.10, Nov 17, 2017
 
 global $allowedmacros;
-array_push($allowedmacros,"nCr","nPr","mean","stdev","absmeandev","percentile","quartile","TIquartile","Excelquartile","median","freqdist","frequency","histogram","fdhistogram","fdbargraph","normrand","boxplot","normalcdf","tcdf","invnormalcdf","invtcdf","invtcdf2","linreg","expreg","countif","binomialpdf","binomialcdf","chicdf","invchicdf","chi2cdf","invchi2cdf","fcdf","invfcdf","piechart","mosaicplot","checklineagainstdata","chi2teststat","checkdrawnlineagainstdata");
+array_push($allowedmacros,"nCr","nPr","mean","stdev","absmeandev","percentile","Nplus1percentile","quartile","TIquartile","Excelquartile","Nplus1quartile","allquartile","median","freqdist","frequency","histogram","fdhistogram","fdbargraph","normrand","boxplot","normalcdf","tcdf","invnormalcdf","invtcdf","invtcdf2","linreg","expreg","countif","binomialpdf","binomialcdf","chicdf","invchicdf","chi2cdf","invchi2cdf","fcdf","invfcdf","piechart","mosaicplot","checklineagainstdata","chi2teststat","checkdrawnlineagainstdata");
 
 //nCr(n,r)
 //The Choose function
@@ -69,7 +69,7 @@ function absmeandev($a) {
 
 //percentile(array,percentile)
 //example: percentile($a,30) would find the 30th percentile of the data
-//method based on Triola
+//Calculates using the p/100*(N) method (e.g. Triola)
 function percentile($a,$p) {
 	sort($a, SORT_NUMERIC);
 	if ($p==0) {
@@ -78,11 +78,32 @@ function percentile($a,$p) {
 		return $a[count($a)-1];
 	}
 
-	$l = $p*count($a)/100;
+	$l = round($p*count($a)/100,2);
 	if (floor($l)==$l) {
 		return (($a[$l-1]+$a[$l])/2);
 	} else {
 		return ($a[ceil($l)-1]);
+	}
+}
+
+//Nplus1percentile(array,percentile)
+//example: percentile($a,30) would find the 30th percentile of the data
+//Calculates using the p/100*(N+1) method (e.g. OpenStax).
+function Nplus1percentile($a,$p) {
+	sort($a, SORT_NUMERIC);
+	if ($p==0) {
+		return $a[0];
+	} else if ($p==100) {
+		return $a[count($a)-1];
+	}
+
+	$l = round(($p/100)*(count($a)+1),2);
+	if (floor($l)==$l) {
+		return ($a[$l-1]);
+	} else if ($l>count($a)) {
+		return $a[floor($l)-1];
+	} else {
+		return (($a[floor($l)-1]+$a[ceil($l)-1])/2);
 	}
 }
 
@@ -163,6 +184,54 @@ function Excelquartile($a,$q) {
 			return ($d*$a[floor($l)+1] + (1-$d)*$a[floor($l)]);
 		}
 	}
+}
+
+//Nplus1quartile(array,quartile)
+//finds the 0 (min), 1st, 2nd (median), 3rd, or 4th (max) quartile of an
+//array of numbers.  Calculates using the N+1 method, which is like
+//percentiles, but calculated using N+1 (OpenStax).
+function Nplus1quartile($a,$q) {
+	return Nplus1percentile($a,$q*25);
+}
+
+//allquartile(array,quartile)
+//finds the 0 (min), 1st, 2nd (median), 3rd, or 4th (max) quartile of an
+//array of numbers.  Uses all the quartile methods, and returns an "or" joined
+//string of all unique answers.
+function allquartile($a,$q) {
+	sort($a, SORT_NUMERIC);
+	$n = count($a);
+	if ($q==0) {
+		return $a[0];
+	} else if ($q==4) {
+		return $a[count($a)-1];
+	}
+	if ($q==2) {
+		if ($n%2==0) { //even
+			$m = $n/2;
+			return (($a[$m-1] + $a[$m])/2);
+		} else {
+			return ($a[floor($n/2)]);
+		}
+	}
+	
+	//%4==0, all same except Excel
+	//%4==1, q and Excel same, TI and Nplus1 same
+	//%4==2, q and TI same, Excel and Nplus1 diff
+	//%4==3, all same except Excel
+	$qs = array();
+	if ($n%4==1) {
+		$qs[] = percentile($a,$q*25);
+		$qs[] = Nplus1percentile($a,$q*25);
+	} else if ($n%4==2) {
+		$qs[] = percentile($a,$q*25);
+		$qs[] = Nplus1percentile($a,$q*25);
+		$qs[] = Excelquartile($a,$q);
+	} else {
+		$qs[] = percentile($a,$q*25);
+		$qs[] = Excelquartile($a,$q);
+	}
+	return implode(' or ',array_unique($qs));
 }
 
 //median(array)
@@ -356,7 +425,7 @@ function fdhistogram($freq,$label,$start,$cw,$startlabel=false,$upper=false,$wid
 	if ($GLOBALS['sessiondata']['graphdisp']==0) {
 		return $alt;
 	}
-	$outst = "setBorder(".(40+7*strlen($maxfreq)).",40,10,5);  initPicture(".($start>0?(max($start-.9*$cw,0)):$start).",$x,0,$maxfreq);";
+	$outst = "setBorder(".(40+7*strlen($maxfreq)).",40,20,5);  initPicture(".($start>0?(max($start-.9*$cw,0)):$start).",$x,0,$maxfreq);";
 	//$outst = "setBorder(10);  initPicture(". ($start-.1*($x-$start)) .",$x,". (-.1*$maxfreq) .",$maxfreq);";
 	$power = floor(log10($maxfreq))-1;
 	$base = $maxfreq/pow(10,$power);
@@ -392,6 +461,7 @@ function fdhistogram($freq,$label,$start,$cw,$startlabel=false,$upper=false,$wid
 //  options['showgrid'] = false to hide the horizontal grid lines
 //  options['vertlabel'] = label for vertical axis. Defaults to none
 //  options['gap'] = gap (0 &le; gap &lt; 1) between bars
+//  options['toplabel'] = label for top of chart
 function fdbargraph($bl,$freq,$label,$width=300,$height=200,$options=array()) {
 	if (!is_array($bl) || !is_array($freq)) {echo "barlabels and freqarray must be arrays"; return 0;}
 	if (count($bl) != count($freq)) { echo "barlabels and freqarray must have same length"; return 0;}
@@ -441,15 +511,17 @@ function fdbargraph($bl,$freq,$label,$width=300,$height=200,$options=array()) {
 		return $alt;
 	}
 	$x++;
-	$topborder = ($valuelabels===false?10:25);
-	$leftborder = min(60, 9*strlen($maxfreq)+10) + ($usevertlabel?30:0);
-	//$outst = "setBorder(10);  initPicture(". ($start-.1*($x-$start)) .",$x,". (-.1*$maxfreq) .",$maxfreq);";
-	$outst = "setBorder($leftborder,45,0,$topborder);  initPicture(".($start>0?(max($start-.9*$cw,0)):$start).",$x,0,$maxfreq);";
-
+	
 	$power = floor(log10($maxfreq))-1;
 	$base = $maxfreq/pow(10,$power);
 
 	if ($base>75) {$step = 20*pow(10,$power);} else if ($base>40) { $step = 10*pow(10,$power);} else if ($base>20) {$step = 5*pow(10,$power);} else if ($base>9) {$step = 2*pow(10,$power);} else {$step = pow(10,$power);}
+
+	$topborder = ($valuelabels===false?10:25) + (isset($options['toplabel'])?20:0);
+	$leftborder = min(60, 9*max(strlen($maxfreq),strlen($maxfreq-$step))+10) + ($usevertlabel?30:0);
+	//$outst = "setBorder(10);  initPicture(". ($start-.1*($x-$start)) .",$x,". (-.1*$maxfreq) .",$maxfreq);";
+	$bottomborder = 25+($label===''?0:20);
+	$outst = "setBorder($leftborder,$bottomborder,0,$topborder);  initPicture(".($start>0?(max($start-.9*$cw,0)):$start).",$x,0,$maxfreq);";
 
 	if (isset($options['showgrid']) && $options['showgrid']==false) {
 		$gdy = 0;
@@ -457,9 +529,15 @@ function fdbargraph($bl,$freq,$label,$width=300,$height=200,$options=array()) {
 		$gdy = $step;
 	}
 	//if ($maxfreq>100) {$step = 20;} else if ($maxfreq > 50) { $step = 10; } else if ($maxfreq > 20) { $step = 5;} else {$step=1;}
-	$outst .= "axes(1000,$step,1,1000,$gdy); fill=\"blue\"; textabs([". ($width/2+15)  .",0],\"$label\",\"above\");";
+	$outst .= "axes(1000,$step,1,1000,$gdy); fill=\"blue\"; ";
+	if ($label!=='') {
+		$outst .= "textabs([". ($width/2+15)  .",0],\"$label\",\"above\");";
+	}
 	if ($usevertlabel) {
 		$outst .= "textabs([0,". ($height/2+20) . "],\"$vertlabel\",\"right\",90);";
+	}
+	if (isset($options['toplabel'])) {
+		$outst .= "textabs([". ($width/2+15)  .",$height],\"{$options['toplabel']}\",\"below\");";
 	}
 
 	//$outst .= "axes($cw,$step,1,1000,$step); fill=\"blue\"; text([". ($start + .5*($x-$start))  .",". (-.1*$maxfreq) . "],\"$label\");";
@@ -510,67 +588,137 @@ function normrand($mu,$sig,$n,$rnd=null) {
 	}
 }
 
-//boxplot(array,axislabel,[datalabel])
+//boxplot(array,axislabel,[options])
 //draws a boxplot based on the data in array, with given axislabel
 //and optionally a datalabel (to topleft of boxplot)
-//array and datalabel can also be an array of dataarrays and
-//array of datalabels to do comparative boxplots
-function boxplot($arr,$label) {
-	if (func_num_args()>2) {
-		$dlbls = func_get_arg(2);
+//array also be an array of dataarrays to do comparative boxplots
+//opts is an array of options:
+//   "datalabels" = array of data labels for comparative boxplots
+//   "showvals" = true to show 5 number summary above boxplot
+//   "showoutliers" = true to put whiskers at 1.5IQR and show outliers
+//   "qmethod" = quartile method: "N", "TI", "Excel" or "Nplus1"
+//       N: percentile method, using .25*n
+//       Nplus1: percentile method, using .25*(n+1)
+//       TI: TI calculator method, a mix of n and nplus1 methods
+//       Excel: A method based on (n-1), with some linear interpolation
+//For backwards compatability, options can also just be an array of datalabels
+function boxplot($arr,$label="",$options = array()) {
+	if (is_array($arr[0]) && count($options)==count($arr) && isset($options[0])) {
+		$dlbls = $options;
+		$options = array();
+	} else if (isset($options['datalabels'])) {
+		$dlbls = $options['datalabels'];
 	}
 	if (is_array($arr[0])) { $multi = count($arr);} else {$multi = 1;}
+	$qmethod = 'quartile';
+	if (isset($options['qmethod'])) {
+		if ($options['qmethod']=='TI') {
+			$qmethod = 'TIquartile';
+		} else if ($options['qmethod']=='Excel') {
+			$qmethod = 'Excelquartile';
+		} else if ($options['qmethod']=='N') {
+			$qmethod = 'quartile';
+		} else if ($options['qmethod']=='Nplus1') {
+			$qmethod = 'Nplus1quartile';
+		}
+	}
+
 	$st = '';
 	$bigmax = -10000000;
 	$bigmin = 100000000;
 	$alt = "Boxplot, axis label: $label. ";
+	$ybase = 2;
 	for ($i=0;$i<$multi;$i++) {
 		if ($multi==1) { $a = $arr;} else {$a = $arr[$i];}
 		sort($a,SORT_NUMERIC);
-		$max = $a[count($a)-1];
+		$min = $a[0]*1;
+		$max = $a[count($a)-1]*1;
 		if ($max>$bigmax) { $bigmax = $max;}
 		if ($a[0]<$bigmin) {$bigmin = $a[0];}
-		$q1 = percentile($a,25);
-		$q2 = percentile($a,50);
-		$q3 = percentile($a,75);
-		$yl = 2+5*$i;
+		$q1 = $qmethod($a,1)*1;
+		$q2 = $qmethod($a,2)*1;
+		$q3 = $qmethod($a,3)*1;
+		$outliers = array();
+		if (count($a)>5 && isset($options['showoutliers'])) {
+			$iqr = $q3-$q1;
+			$lfence = $q1 - 1.5*$iqr;
+			$rfence = $q3 + 1.5*$iqr;
+			foreach ($a as $v) {
+				if ($v<$lfence || $v>$rfence) {
+					$outliers[] = $v*1;
+				}
+			}
+			if (count($outliers)>0) {
+				if ($lfence>$min) {
+					$min = $lfence;
+				}
+				if ($rfence<$max) {
+					$max = $rfence;
+				}
+			}
+		}
+		$yl = $ybase;
 		$ym = $yl+1;
 		$yh = $ym+1;
-		$st .= "line([$a[0],$yl],[$a[0],$yh]); rect([$q1,$yl],[$q3,$yh]); line([$q2,$yl],[$q2,$yh]);";
-		$st .= "line([$max,$yl],[$max,$yh]); line([$a[0],$ym],[$q1,$ym]); line([$q3,$ym],[$max,$ym]);";
+		$st .= "line([$min,$yl],[$min,$yh]); rect([$q1,$yl],[$q3,$yh]); line([$q2,$yl],[$q2,$yh]);";
+		$st .= "line([$max,$yl],[$max,$yh]); line([$min,$ym],[$q1,$ym]); line([$q3,$ym],[$max,$ym]);";
+		if (isset($options['showvals'])) {
+			$st .= "fontsize*=.8;fontfill='blue';text([$min,$yh],'$min','above');";
+			$st .= "text([$q1,$yh],'$q1','above');";
+			$st .= "text([$q2,$yh],'$q2','above');";
+			$st .= "text([$q3,$yh],'$q3','above');";
+			$st .= "text([$max,$yh],'$max','above');fontfill='black';fontsize*=1.25;";
+			$ybase += 2;
+		}
 		$alt .= 'Boxplot ';
 		if (isset($dlbls[$i])) {
 			$alt .= "for {$dlbls[$i]}";
+			$ybase += 2;
 		} else {
 			$alt .= ($i+1);
 		}
-		$alt .= ": Left whisker at {$a[0]}. Leftside of box at $q1. Line through box at $q2.  Rightside of box at $q3. Right whisker at $max.\n";
-
+		$ybase += 3;
+		$alt .= ": Left whisker at {$a[0]}. Left side of box at $q1. Line through box at $q2.  Right side of box at $q3. Right whisker at $max.\n";
+		if (count($outliers)>0) {
+			foreach ($outliers as $v) {
+				$st .= "dot([$v,$ym],'open');";
+				$alt .= "Dot at $v. ";
+			}
+		}
 	}
+	$ycnt = $ybase-1;
 	if ($GLOBALS['sessiondata']['graphdisp']==0) {
 		return $alt;
 	}
-	$outst = "setBorder(15); initPicture($bigmin,$bigmax,-3,".(5*$multi).");";
 	$dw = $bigmax-$bigmin;
 
 	if ($dw>100) {$step = 20;} else if ($dw > 50) { $step = 10; } else if ($dw > 20) { $step = 5;} else {$step=1;}
+	$bigmin = floor($bigmin/$step)*$step;
+	$bigmax = ceil($bigmax/$step)*$step;
+	
+	$outst = "setBorder(15); initPicture($bigmin,$bigmax,-3,".($ycnt).");";
 	$outst .= "axes($step,100,1,null,null,1,'off');";
 	$outst .= "text([". ($bigmin+.5*$dw) . ",-3],\"$label\");";
 	if (isset($dlbls)) {
+		$ybase = 0;
 		for ($i=0;$i<$multi;$i++) {
+			$ybase += isset($options['showvals'])?7:5;
 			if ($multi>1) { $dlbl = $dlbls[$i];} else {$dlbl = $dlbls;}
-			$st .= "text([$bigmin,". (5+5*$i)  ."],\"$dlbl\",\"right\");";
+			$st .= "text([$bigmin,". $ybase ."],\"$dlbl\",\"right\");";
 		}
 	}
 	$outst .= $st;
-	return showasciisvg($outst,400,50+50*$multi);
+	$width = isset($options['width'])?$options['width']:400;
+	return showasciisvg($outst,$width*1,50+12*$ycnt);
 }
 
 //normalcdf(z,[dec])
 //calculates the area under the standard normal distribution to the left of the
-//z-value z, to dec decimals (defaults to 4)
+//z-value z, to dec decimals (defaults to 4, max of 10)
 //based on someone else's code - can't remember whose!
 function normalcdf($ztest,$dec=4) {
+	if ($dec>10) { $dec = 10;}
+
 	$eps = pow(.1,$dec);
 	$eps2 = pow(.1,$dec+3);
 
@@ -578,6 +726,26 @@ function normalcdf($ztest,$dec=4) {
 	$s = 0;
 	$i = 0;
 	$z = abs($ztest);
+	if ($z>5) { //alternate code, less accuracy; around 10^-8 vs 10^-10 w above
+		$b1 =  0.319381530;
+		$b2 = -0.356563782;
+		$b3 =  1.781477937;
+		$b4 = -1.821255978;
+		$b5 =  1.330274429;
+		$p  =  0.2316419;
+		$c  =  0.39894228;
+		
+		$x = $ztest;
+		if($x >= 0.0) {
+		     $t = 1.0 / ( 1.0 + $p * $x );
+		      return round((1.0 - $c * exp( -$x * $x / 2.0 ) * $t *
+		      ( $t *( $t * ( $t * ( $t * $b5 + $b4 ) + $b3 ) + $b2 ) + $b1 )), $dec);
+		} else {
+		      $t = 1.0 / ( 1.0 - $p * $x );
+		      return round(( $c * exp( -$x * $x / 2.0 ) * $t *
+		       ( $t *( $t * ( $t * ( $t * $b5 + $b4 ) + $b3 ) + $b2 ) + $b1 )), $dec);
+		}
+	}
 	$fact = 1;
 	while (abs($ds)>$eps2) {
 		$ds = pow(-1,$i)*pow($z,2.0*$i+1.0)/(pow(2.0,$i)*$fact*(2.0*$i+1.0));
@@ -588,28 +756,7 @@ function normalcdf($ztest,$dec=4) {
 			break;
 		}
 	}
-/* alternate code, less accuracy; around 10^-8 vs 10^-10 w above
-	$b1 =  0.319381530;
- $b2 = -0.356563782;
-  $b3 =  1.781477937;
-  $b4 = -1.821255978;
- $b5 =  1.330274429;
-  $p  =  0.2316419;
- $c  =  0.39894228;
-
-$x = $ztest;
-	if($x >= 0.0) {
-     $t = 1.0 / ( 1.0 + $p * $x );
-      return (1.0 - $c * exp( -$x * $x / 2.0 ) * $t *
-      ( $t *( $t * ( $t * ( $t * $b5 + $b4 ) + $b3 ) + $b2 ) + $b1 ));
-  }
-  else {
-      $t = 1.0 / ( 1.0 - $p * $x );
-      return ( $c * exp( -$x * $x / 2.0 ) * $t *
-       ( $t *( $t * ( $t * ( $t * $b5 + $b4 ) + $b3 ) + $b2 ) + $b1 ));
-    }
-*/
-	$s *= 0.3989422804;
+	$s *= 0.3989422804014327;
 	$s = round($s,$dec);
 	if ($ztest > 0) {
 		$pval = .5 + $s;

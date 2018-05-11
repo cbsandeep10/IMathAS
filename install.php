@@ -9,8 +9,6 @@ if (isset($_POST['dbserver'])) {
 	$contents = "<?php
 //IMathAS Math Config File.  Adjust settings here!
 
-require_once(__DIR__ . \"/includes/security.php\");
-
 //database access settings
 \$dbserver = \"{$_POST['dbserver']}\";
 \$dbname = \"{$_POST['dbname']}\";
@@ -29,11 +27,11 @@ error_reporting(E_ALL & ~E_NOTICE);
 \$loginformat = '";
 
 if ($_POST['loginformat']==0) {
-	$contents .= '/^\w+$/';
+	$contents .= '/^[\w+\-]+$/';
 } else if ($_POST['loginformat']==1) {
-	$contents .= '/^\d{9}$/';
+	$contents .= '/^(\d{9}|lti-\d+)$/';
 } else if ($_POST['loginformat']==2) {
-	$contents .= '/^\d{3}-\d{2}-\d{4}$/';
+	$contents .= '/^(\d{3}-\d{2}-\d{4}|lti-\d+)$/';
 } else if ($_POST['loginformat']==3) {
 	$contents .= $_POST['loginformatother'];
 }
@@ -53,8 +51,10 @@ $contents .= "';
 \$imasroot = \"{$_POST['imasroot']}\";
 
 //base site url - use when generating full URLs to site pages.
-\$httpmode = isset(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://';
-\$basesiteurl = \$httpmode . Sanitize::domainNameWithPort(\$_SERVER['HTTP_HOST']) . \$imasroot;
+\$httpmode = (isset(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] == 'on')
+    || (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')
+	? 'https://' : 'http://';
+\$GLOBALS['basesiteurl'] = \$httpmode . Sanitize::domainNameWithPort(\$_SERVER['HTTP_HOST']) . \$imasroot;
 
 //mimetex path
 \$mathimgurl = \"{$_POST['mathimgurl']}\";
@@ -122,7 +122,6 @@ $contents .= '
 	  unset($dbusername);
 	  unset($dbpassword);
 
-
 ?>';
 $file = fopen('config.php','w');
 $f =  fwrite($file,$contents);
@@ -160,7 +159,7 @@ if ($c6 && $c7 && $c8) {
 	echo 'Couldn\'t make copies of infoheader.php, loginpage,php, and newinstructor.php.  Please copy the .dist files as described in readme.html<br/>';
 }
 ?>
-<form method="post" action="dbsetup.php">
+<form method="post" action="setupdb.php">
 <input type="hidden" name="dbsetup" value="true" />
 
 <input type="submit" value="Continue to creating database tables"/>
@@ -277,7 +276,7 @@ Color shift icons from green to red as deadlines approach?<br/>
 <p>
 Path to IMathAS install.  Blank if install is in web root directory.  Might be something like "/imathas" if in a
 subdirectory.<br/>
-<input type="text" name="imasroot" value="<?php echo rtrim(dirname($_SERVER['PHP_SELF']), '/\\'); ?>" />
+<input type="text" name="imasroot" value="<?php echo rtrim(dirname($_SERVER['PHP_SELF'])); ?>" />
 </p>
 
 <p>

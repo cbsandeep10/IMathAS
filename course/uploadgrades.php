@@ -3,9 +3,16 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 
-
+function fopen_utf8 ($filename, $mode) {
+    $file = @fopen($filename, $mode);
+    $bom = fread($file, 3);
+    if ($bom != b"\xEF\xBB\xBF") {
+        rewind($file);
+    }
+    return $file;
+}
 
  //set some page specific variables and counters
 $overwriteBody = 0;
@@ -36,15 +43,15 @@ if (!(isset($teacherid))) {
 			$successes = 0;
 
 			if ($_POST['useridtype']==0) {
-				$usercol = $_POST['usernamecol']-1;
+				$usercol =Sanitize::onlyInt($_POST['usernamecol'])-1;
 			} else if ($_POST['useridtype']==1) {
-				$usercol = $_POST['fullnamecol']-1;
+				$usercol =Sanitize::onlyInt( $_POST['fullnamecol'])-1;
 			}
-			$scorecol = $_POST['gradecol']-1;
-			$feedbackcol = $_POST['feedbackcol']-1;
+			$scorecol = Sanitize::onlyInt($_POST['gradecol'])-1;
+			$feedbackcol = Sanitize::onlyInt($_POST['feedbackcol'])-1;
 
 			// $_FILES[]['tmp_name'] is not user provided. This is safe.
-			$handle = fopen($_FILES['userfile']['tmp_name'],'r');
+			$handle = fopen_utf8($_FILES['userfile']['tmp_name'],'r');
 			if ($_POST['hashdr']==1) {
 				$data = fgetcsv($handle,4096,',');
 			} else if ($_POST['hashdr']==2) {
@@ -84,7 +91,7 @@ if (!(isset($teacherid))) {
 					$feedback = '';
 				} else {
 					//DB $feedback = addslashes($data[$feedbackcol]);
-					$feedback = $data[$feedbackcol];
+					$feedback = Sanitize::incomingHtml($data[$feedbackcol]);
 				}
 				//DB $score = addslashes($data[$scorecol]);
 				$score = $data[$scorecol];
@@ -120,7 +127,7 @@ if (!(isset($teacherid))) {
 				$body .= '</p>';
 			}
 			if ($successes>0) {
-				$body .= "<a href=\"addgrades.php?stu=0&gbmode={$_GET['gbmode']}&cid=$cid&gbitem={$_GET['gbitem']}&grades=all\">Return to grade list</a></p>";
+				$body .= "<a href=\"addgrades.php?stu=0&gbmode=".Sanitize::encodeUrlParam($_GET['gbmode'])."&cid=$cid&gbitem=".Sanitize::encodeUrlParam($_GET['gbitem'])."&grades=all\">Return to grade list</a></p>";
 			}
 
 		} else {
@@ -129,8 +136,8 @@ if (!(isset($teacherid))) {
 		}
 	} else { //DEFAULT DATA MANIPULATION
 		$curBreadcrumb ="$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-		$curBreadcrumb .=" &gt; <a href=\"gradebook.php?stu=0&gbmode={$_GET['gbmode']}&cid=$cid\">Gradebook</a> ";
-		$curBreadcrumb .=" &gt; <a href=\"addgrades.php?stu=0&gbmode={$_GET['gbmode']}&cid=$cid&gbitem={$_GET['gbitem']}&grades=all\">Offline Grades</a> &gt; Upload Grades";
+		$curBreadcrumb .=" &gt; <a href=\"gradebook.php?stu=0&gbmode=".Sanitize::encodeUrlParam($_GET['gbmode'])."&cid=$cid\">Gradebook</a> ";
+		$curBreadcrumb .=" &gt; <a href=\"addgrades.php?stu=0&gbmode=".Sanitize::encodeUrlParam($_GET['gbmode'])."&cid=$cid&gbitem=".Sanitize::encodeUrlParam($_GET['gbitem'])."&grades=all\">Offline Grades</a> &gt; Upload Grades";
 	}
 }
 
@@ -144,10 +151,10 @@ if ($overwriteBody==1) {
 
 	<div class=breadcrumb><?php echo $curBreadcrumb ?></div>
 
-	<div id="headeruploadgrades" class="pagetitle"><h2><?php echo $pagetitle ?></h2></div>
+	<div id="headeruploadgrades" class="pagetitle"><h2><?php echo Sanitize::encodeStringForDisplay($pagetitle) ?></h2></div>
 
 
-	<form enctype="multipart/form-data" method=post action="uploadgrades.php?cid=<?php echo $cid ?>&gbmode=<?php echo $_GET['gbmode'] ?>&gbitem=<?php echo $_GET['gbitem'] ?>">
+	<form enctype="multipart/form-data" method=post action="uploadgrades.php?cid=<?php echo $cid ?>&gbmode=<?php echo Sanitize::encodeUrlParam($_GET['gbmode']); ?>&gbitem=<?php echo Sanitize::encodeUrlParam($_GET['gbitem']); ?>">
 		<input type="hidden" name="MAX_FILE_SIZE" value="3000000" />
 		<span class=form>Grade file (CSV): </span>
 		<span class=formright><input name="userfile" type="file" /></span><br class=form>

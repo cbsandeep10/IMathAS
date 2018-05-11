@@ -2,7 +2,7 @@
 	//Displays Message list
 	//(c) 2006 David Lippman
 
-	require("../validate.php");
+	require("../init.php");
 
 
 	if ($cid!=0 && !isset($teacherid) && !isset($tutorid) && !isset($studentid)) {
@@ -29,7 +29,7 @@
 
 	$cid = Sanitize::courseId($_GET['cid']);
 	$page = Sanitize::onlyInt($_GET['page']);
-	$type = Sanitize::encodeStringForDisplay($_GET['type']);
+	$type = $_GET['type'];
 
 	$teacherof = array();
 	//DB $query = "SELECT courseid FROM imas_teachers WHERE userid='$userid'";
@@ -45,7 +45,7 @@
 		$msg = Sanitize::onlyInt($_GET['msgid']);
 		//DB $query = "UPDATE imas_msgs SET isread=isread-1 WHERE id='$msg'";
 		//DB mysql_query($query) or die("Query failed : $query " . mysql_error());
-		$stm = $DBH->prepare("UPDATE imas_msgs SET isread=isread-1 WHERE id=:id");
+		$stm = $DBH->prepare("UPDATE imas_msgs SET isread=isread-1 WHERE id=:id and isread>0");
 		$stm->execute(array(':id'=>$msg));
 		if ($type=='new') {
 			header('Location: ' . $GLOBALS['basesiteurl'] . "/msgs/newmsglist.php?cid=$cid");
@@ -96,7 +96,12 @@
 	//DB $result = mysql_query($query) or die("Query failed : $query " . mysql_error());
 	//DB if (mysql_num_rows($result)==0) {
 	$query = "SELECT imas_msgs.*,imas_users.LastName,imas_users.FirstName,imas_users.email,imas_users.hasuserimg,imas_students.section ";
-	$query .= "FROM imas_msgs JOIN imas_users ON imas_msgs.msgfrom=imas_users.id LEFT JOIN imas_students ON imas_students.userid=imas_users.id AND imas_students.courseid=:courseid ";
+	if ($type=='sent') {
+		$query .= "FROM imas_msgs JOIN imas_users ON imas_msgs.msgto=imas_users.id ";
+	} else {
+		$query .= "FROM imas_msgs JOIN imas_users ON imas_msgs.msgfrom=imas_users.id ";
+	}
+	$query .= "LEFT JOIN imas_students ON imas_students.userid=imas_users.id AND imas_students.courseid=:courseid ";
 	$query .= "WHERE imas_msgs.id=:id ";
 	if ($type!='allstu' || !$isteacher) {
 		$query .= "AND (imas_msgs.msgto=:msgto OR imas_msgs.msgfrom=:msgfrom)";
@@ -121,28 +126,33 @@
 	$curdir = rtrim(dirname(__FILE__), '/\\');
 	if ($line['hasuserimg']==1) {
 		if(isset($GLOBALS['CFG']['GEN']['AWSforcoursefiles']) && $GLOBALS['CFG']['GEN']['AWSforcoursefiles'] == true) {
-			echo " <img style=\"float:left;\" src=\"{$urlmode}s3.amazonaws.com/{$GLOBALS['AWSbucket']}/cfiles/userimg_sm{$line['msgfrom']}.jpg\"  onclick=\"togglepic(this)\" alt=\"User picture\"/><br/>";
+			echo " <img style=\"float:left;\" src=\"{$urlmode}{$GLOBALS['AWSbucket']}.s3.amazonaws.com/cfiles/userimg_sm{$line['msgfrom']}.jpg\"  onclick=\"togglepic(this)\" alt=\"User picture\"/><br/>";
 		} else {
 			echo " <img style=\"float:left;\" src=\"$imasroot/course/files/userimg_sm{$line['msgfrom']}.jpg\"  onclick=\"togglepic(this)\" alt=\"User picture\"/><br/>";
 		}
 	}
 	echo "<table class=gb ><tbody>";
-	printf("<tr><td><b>From:</b></td><td>%s, %s", Sanitize::encodeStringForDisplay($line['LastName']),
-		Sanitize::encodeStringForDisplay($line['FirstName']));
+	if ($type=='sent') {
+		echo '<tr><td><b>'._('To').':</b></td>';
+	} else {
+		echo '<tr><td><b>'._('From').':</b></td>';
+	}
+	printf("<td>%s, %s", Sanitize::encodeStringForDisplay($line['LastName']),Sanitize::encodeStringForDisplay($line['FirstName']));
 	if ($line['section']!='') {
-		echo ' <span class="small">(Section: '.$line['section'].')</span>';
+		echo ' <span class="small">(Section: '.Sanitize::encodeStringForDisplay($line['section']).')</span>';
 	}
 	if (isset($teacherof[$line['courseid']])) {
-		echo " <a href=\"mailto:{$line['email']}\">email</a> | ";
-		echo " <a href=\"$imasroot/course/gradebook.php?cid={$line['courseid']}&stu={$line['msgfrom']}\" target=\"_popoutgradebook\">gradebook</a>";
+		echo " <a href=\"mailto:".Sanitize::emailAddress($line['email'])."\">email</a> | ";
+		echo " <a href=\"$imasroot/course/gradebook.php?cid=". Sanitize::courseId($line['courseid'])."&stu=".Sanitize::encodeUrlParam($line['msgfrom'])."\" target=\"_popoutgradebook\">gradebook</a>";
 		if (preg_match('/Question\s+about\s+#(\d+)\s+in\s+(.*)\s*$/',$line['title'],$matches)) {
 			//DB $aname = addslashes($matches[2]);
 			$qn = $matches[1];
 			$aname = $matches[2];
+
 			//DB $query = "SELECT id,enddate FROM imas_assessments WHERE name='$aname' AND courseid='{$line['courseid']}'";
 			//DB $res = mysql_query($query) or die("Query failed : $query " . mysql_error());
-			$stm = $DBH->prepare("SELECT id,startdate,enddate,allowlate FROM imas_assessments WHERE name=:name AND courseid=:courseid");
-			$stm->execute(array(':name'=>$aname, ':courseid'=>$line['courseid']));
+			$stm = $DBH->prepare("SELECT id,startdate,enddate,allowlate FROM imas_assessments WHERE (name=:name OR name=:name2) AND courseid=:courseid");
+			$stm->execute(array(':name'=>$aname, ':name2'=>htmlentities($aname), ':courseid'=>$line['courseid']));
 			//DB if (mysql_num_rows($res)>0) {
 			if ($stm->rowCount()>0) {
 
@@ -160,7 +170,8 @@
 				if ($stm->rowCount()>0) {
 					$exception = $stm->fetch(PDO::FETCH_NUM);
 					require_once("../includes/exceptionfuncs.php");
-					$useexception = getCanUseAssessException($exception, $adata, true);
+					$exceptionfuncs = new ExceptionFuncs($userid, $cid, true);
+					$useexception = $exceptionfuncs->getCanUseAssessException($exception, $adata, true);
 					if ($useexception) {
 						$due = $exception[1];
 					}
@@ -175,16 +186,16 @@
 				$stm->execute(array(':assessmentid'=>$adata['id'], ':userid'=>$line['msgfrom']));
 				if ($stm->rowCount()>0) {
 					$asid = $stm->fetchColumn(0);
-					echo " | <a href=\"$imasroot/course/gb-viewasid.php?cid={$line['courseid']}&uid={$line['msgfrom']}&asid=$asid#qwrap$qn\" target=\"_popoutgradebook\">assignment</a>";
+					echo " | <a href=\"$imasroot/course/gb-viewasid.php?cid=".Sanitize::courseId($line['courseid'])."&uid=".Sanitize::encodeUrlParam($line['msgfrom'])."&asid=".Sanitize::onlyInt($asid)."#qwrap".Sanitize::encodeUrlParam($qn)."\" target=\"_popoutgradebook\">assignment</a>";
 					if ($due<2000000000) {
-						echo ' <span class="small">Due '.$duedate.'</span>';
+						echo ' <span class="small">Due '.Sanitize::encodeStringForDisplay($duedate).'</span>';
 					}
 				}
 			}
 		}
 	}
 	echo "</td></tr><tr><td><b>Sent:</b></td><td>$senddate</td></tr>";
-	echo "<tr><td><b>Subject:</b></td><td>{$line['title']}</td></tr>";
+	echo "<tr><td><b>Subject:</b></td><td>".Sanitize::encodeStringForDisplay($line['title'])."</td></tr>";
 	echo "</tbody></table>";
 	echo "<div style=\"border: 1px solid #000; margin: 10px; padding: 10px;\">";
 	if (($p = strpos($line['message'],'<hr'))!==false) {
@@ -231,18 +242,36 @@
 			$cansendmsgs = true;
 		}
 		if ($cansendmsgs) {
-			echo "<button type=\"button\" onclick=\"window.location.href='msglist.php?cid=$cid&filtercid=$filtercid&page=$page&type=$type&add=new&to={$line['msgfrom']}&toquote=$msgid'\">"._('Reply')."</button> | ";
+			echo "<button type=\"button\" onclick=\"window.location.href='msglist.php?"
+				. Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'filtercid' => $filtercid,
+					'page' => $page, 'type' => $type, 'add' => 'new', 'to' => $line['msgfrom'], 'toquote' => $msgid))
+				. "'\">"._('Reply')."</button> | ";
 		}
-		echo "<button type=\"button\" onclick=\"if(confirm('"._('Are you SURE you want to delete this message?')."')){window.location.href='msglist.php?cid=$cid&filtercid=$filtercid&page=$page&removeid=$msgid&type=$type'}\">"._('Delete')."</button>";
-		echo " | <button type=\"button\" onclick=\"window.location.href='viewmsg.php?markunread=true&cid=$cid&filtercid=$filtercid&page=$page&msgid=$msgid&type=$type'\">"._('Mark Unread')."</button>";
+		echo "<button type=\"button\" onclick=\"if(confirm('"._('Are you SURE you want to delete this message?')."')){window.location.href='msglist.php?"
+			. Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'filtercid' => $filtercid, 'page' => $page,
+				'removeid' => $msgid, 'type' => $type))
+			. "'}\">"._('Delete')."</button>";
 
-		echo " | <a href=\"msghistory.php?cid=$cid&filtercid=$filtercid&page=$page&msgid=$msgid&type=$type\">View Conversation</a> ";
+		echo " | <button type=\"button\" onclick=\"window.location.href='viewmsg.php?"
+			. Sanitize::generateQueryStringFromMap(array('markunread' => 'true', 'cid' => $cid,
+				'filtercid' => $filtercid, 'page' => $page, 'msgid' => $msgid, 'type' => $type))
+			. "'\">"._('Mark Unread')."</button>";
+
+		echo " | <a href=\"msghistory.php?"
+			. Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'filtercid' => $filtercid, 'page' => $page,
+				'msgid' => $msgid, 'type' => $type))
+			."\">View Conversation</a> ";
 		if ($isteacher && $line['courseid']==$cid) {
-			echo " | <a href=\"$imasroot/course/gradebook.php?cid={$line['courseid']}&stu={$line['msgfrom']}\">Gradebook</a>";
+			echo " | <a href=\"$imasroot/course/gradebook.php?"
+				. Sanitize::generateQueryStringFromMap(array('cid' => $line['courseid'], 'stu' => $line['msgfrom']))
+			."\">Gradebook</a>";
 		}
 
 	} else if ($type=='sent' && $type!='allstu') {
-		echo "<a href=\"msghistory.php?cid=$cid&filtercid=$filtercid&page=$page&msgid=$msgid&type=$type\">View Conversation</a>";
+		echo "<a href=\"msghistory.php?"
+			. Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'filtercid' => $filtercid, 'page' => $page,
+				'msgid' => $msgid, 'type' => $type))
+			."\">View Conversation</a>";
 
 	}
 	if ($type!='sent' && $type!='allstu' && ($line['isread']==0 || $line['isread']==4)) {

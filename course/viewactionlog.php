@@ -2,7 +2,7 @@
 //IMathAS:  View content tracking logs
 //(c) 2013 David Lippman
 
-require("../validate.php");
+require("../init.php");
 
 
 $cid = intval($_GET['cid']);
@@ -154,82 +154,95 @@ foreach ($actions as $r) {
 	if (isset($r[3])) {
 		$r3pts = explode('::',$r[3]);
 		if (count($r3pts)==2) {
-			$thelink = '<a href="'.Sanitize::fullUrl($r3pts[0]).'" target="_blank">'.Sanitize::encodeStringForDisplay($r3pts[1]).'</a>';
-			$href = Sanitize::fullUrl($r3pts[0]);
+			$thelink = '<a href="'.Sanitize::url($r3pts[0]).'" target="_blank">'.Sanitize::encodeStringForDisplay($r3pts[1]).'</a>';
+			$href = Sanitize::url($r3pts[0]);
 		} else {
-			$thelink = Sanitize::fullUrl($r[3]);
-			$href = Sanitize::fullUrl($r[3]);
+			$thelink = Sanitize::url($r[3]);
+			$href = Sanitize::url($r[3]);
 		}
 	}
-	echo '<tr>';
-	echo '<td>'.tzdate("l, F j, Y, g:i a",$r[2]).'</td>';
-	echo '<td>';
+	$actionmsg = '';
 	switch ($r[0]) {
 	case 'inlinetext':
-		echo 'In inline text item '.Sanitize::encodeStringForDisplay($innames[$r[1]]).', clicked link to '.$thelink;
+		$actionmsg =  'In inline text item '.Sanitize::encodeStringForDisplay($innames[$r[1]]).', clicked link to '.$thelink;
 		break;
 	case 'linkedsum':
-		echo 'From linked item '.Sanitize::encodeStringForDisplay($linames[$r[1]]).' summary, clicked link to '.$thelink;
+		$actionmsg =  'From linked item '.Sanitize::encodeStringForDisplay($linames[$r[1]]).' summary, clicked link to '.$thelink;
 		break;
 	case 'linkedlink':
 		if ($r[3]==$r[1] || (strpos($href,'showlinkedtext')!==false && strpos($href,'id='.$r[1])!==false)) {
-			echo 'Opened linked text item '.Sanitize::encodeStringForDisplay($linames[$r[1]]);
+			$actionmsg =  'Opened linked text item '.Sanitize::encodeStringForDisplay($linames[$r[1]]);
 		} else {
-			echo 'Clicked linked item <a target="_blank" href="'.$href.'">'.Sanitize::encodeStringForDisplay($linames[$r[1]]).'</a>';
+			$actionmsg =  'Clicked linked item <a target="_blank" href="'.$href.'">'.Sanitize::encodeStringForDisplay($linames[$r[1]]).'</a>';
 		}
 		break;
 	case 'linkedintext':
-		echo 'In linked text '.Sanitize::encodeStringForDisplay($linames[$r[1]]).', clicked link to '.$thelink;
+		$actionmsg =  'In linked text '.Sanitize::encodeStringForDisplay($linames[$r[1]]).', clicked link to '.$thelink;
 		break;
 	case 'linkedviacal':
 		if ($r[3]==$r[1] || (strpos($href,'showlinkedtext')!==false && strpos($href,'id='.$r[1])!==false)) {
-			echo 'Via calendar, opened linked text item '.Sanitize::encodeStringForDisplay($linames[$r[1]]);
+			$actionmsg =  'Via calendar, opened linked text item '.Sanitize::encodeStringForDisplay($linames[$r[1]]);
 		} else {
-			echo 'Via calendar, clicked linked item <a target="_blank" href="'.$href.'">'.Sanitize::encodeStringForDisplay($linames[$r[1]]).'</a>';
+			$actionmsg =  'Via calendar, clicked linked item <a target="_blank" href="'.$href.'">'.Sanitize::encodeStringForDisplay($linames[$r[1]]).'</a>';
 		}
 		break;
 	case 'extref':
 		$p = explode(': ',$r[3]);
-		echo 'In assessment '.Sanitize::encodeStringForDisplay($exnames[$r[1]]).', clicked help for <a target="_blank" href="'.Sanitize::fullUrl($p[1]).'">'.Sanitize::encodeStringForDisplay($p[0]).'</a>';
+		$actionmsg =  'In assessment '.Sanitize::encodeStringForDisplay($exnames[$r[1]]).', clicked help for <a target="_blank" href="'.Sanitize::url($p[1]).'">'.Sanitize::encodeStringForDisplay($p[0]).'</a>';
 		break;
 	case 'assessintro':
-		echo 'In assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' intro, clicked link to '.$thelink;
+		$actionmsg =  'In assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' intro, clicked link to '.$thelink;
 		break;
 	case 'assesssum':
-		echo 'In assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' summary, clicked link to '.$thelink;
+		$actionmsg =  'In assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' summary, clicked link to '.$thelink;
 		break;
 	case 'assess':
-		echo 'Opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
+		$actionmsg =  'Opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
+		break;
+	case 'assessreview':
+		$actionmsg =  'Opened in review mode assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
+		break;
+	case 'gbviewasid':
+		$actionmsg =  'Viewed in gradebook assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
+		break;
+	case 'assessreview':
+		echo 'Opened in review mode assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
 		break;
 	case 'assesslti':
-		echo 'Opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' via LTI';
+		$actionmsg =  'Opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]).' via LTI';
 		break;
 	case 'assessviacal':
-		echo 'Via calendar, opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
+		$actionmsg =  'Via calendar, opened assessment '.Sanitize::encodeStringForDisplay($asnames[$r[1]]);
 		break;
 	case 'wiki':
-		echo 'Opened wiki '.Sanitize::encodeStringForDisplay($winames[$r[1]]);
+		$actionmsg =  'Opened wiki '.Sanitize::encodeStringForDisplay($winames[$r[1]]);
 		break;
 	case 'wikiintext':
-		echo 'In wiki '.Sanitize::encodeStringForDisplay($winames[$r[1]]).', clicked link to '.$thelink;
+		$actionmsg =  'In wiki '.Sanitize::encodeStringForDisplay($winames[$r[1]]).', clicked link to '.$thelink;
 		break;
 	case 'forumpost':
 		$fp = explode(';',$r[3]);
-		echo 'New post <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($r[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
+		$actionmsg =  'New post <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($r[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
 		break;
 	case 'forumreply':
 		$fp = explode(';',$r[3]);
-		echo 'New reply <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($fp[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
+		$actionmsg =  'New reply <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($fp[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
 		break;
 	case 'forummod':
 		$fp = explode(';',$r[3]);
-		echo 'Modified post/reply <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($fp[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
+		$actionmsg =  'Modified post/reply <a target="_blank" href="../forums/posts.php?cid='.$cid.'&forum='.Sanitize::encodeUrlParam($fp[0]).'&thread='.Sanitize::encodeUrlParam($fp[1]).'">'.Sanitize::encodeStringForDisplay($fpnames[$r[1]]).'</a> in forum '.Sanitize::encodeStringForDisplay($forumnames[$fp[0]]);
 		break;
+	default:
+		if (isset($_GET['showall'])) {
+			$actionmsg = 'Type: '.Sanitize::encodeStringForDisplay($r[0]).'. Type ID: '.Sanitize::encodeStringForDisplay($r[1]).'. Info: '.Sanitize::encodeStringForDisplay($r[3]);
+		}
 	}
-
-
-	echo '</td>';
-	echo '</tr>';
+	if ($actionmsg != '') {
+		echo '<tr>';
+		echo '<td>'.tzdate("l, F j, Y, g:i a",$r[2]).'</td>';
+		echo '<td>', $actionmsg, '</td>';
+		echo '</tr>';
+	}
 }
 echo '</tbody></table>';
 

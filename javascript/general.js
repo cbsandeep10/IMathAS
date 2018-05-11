@@ -94,7 +94,7 @@ function tipshow(el,tip) {
 	tipobj.style.display = "block";
 	tipobj.setAttribute("aria-hidden","false");
 	el.setAttribute("aria-describedby", "hovertipsholder");
-	
+
 	if (typeof usingASCIIMath!='undefined' && typeof noMathRender != 'undefined') {
 		if (usingASCIIMath && !noMathRender) {
 			rendermathnode(tipobj);
@@ -211,16 +211,19 @@ function submitlimiter(e) {
 		alert("You have already submitted this page.  Please be patient while your submission is processed.");
 		target.className = "submitted2";
 		e.preventDefault ? e.preventDefault() : e.returnValue = false;
+		return false;
 	} else if (target.className == 'submitted2') {
 		e.preventDefault ? e.preventDefault() : e.returnValue = false;
+		return false;
 	} else {
 		target.className = 'submitted';
+		return true;
 	}
 }
 function setupFormLimiters() {
 	var el = document.getElementsByTagName("form");
 	for (var i=0;i<el.length;i++) {
-		if (typeof el[i].onsubmit != 'function' && el[i].className!="nolimit") {
+		if (typeof el[i].onsubmit != 'function' && el[i].className!="nolimit" && el[i].className!="limitaftervalidate") {
 			$(el[i]).on('submit',submitlimiter);
 		}
 	}
@@ -274,8 +277,8 @@ function GB_show(caption,url,width,height) {
 	document.getElementById("GB_window").style.width = width + "px";
 	document.getElementById("GB_window").style.height = (h-30) + "px";
 	//document.getElementById("GB_window").style.left = ((w - width)/2)+"px";
-	document.getElementById("GB_frame").style.height = (h - 30 -34)+"px";
-	
+	document.getElementById("GB_frame").style.height = (h - 30 -36)+"px";
+
 	document.getElementById("GB_window").focus();
 	$(document).on('keydown.GB', function(evt) {
 		if (evt.keyCode == 27) {
@@ -328,18 +331,18 @@ function initeditor(edmode,edids,css,inline,setupfunction){
 		inline: inlinemode,
 		plugins: [
 			"lists advlist autolink attach image charmap anchor",
-			"searchreplace code link textcolor",
-			"media table paste asciimath asciisvg rollups"
+			"searchreplace code link textcolor snippet",
+			"media table paste asciimath asciisvg rollups colorpicker"
 		],
 		menubar: false,//"edit insert format table tools ",
-		toolbar1: "myEdit myInsert styleselect | bold italic underline subscript superscript | forecolor backcolor | code | saveclose",
+		toolbar1: "myEdit myInsert styleselect | bold italic underline subscript superscript | forecolor backcolor | snippet code | saveclose",
 		toolbar2: " alignleft aligncenter alignright | bullist numlist outdent indent  | attach link unlink image | table | asciimath asciimathcharmap asciisvg",
 		extended_valid_elements : 'iframe[src|width|height|name|align|allowfullscreen|frameborder],param[name|value],@[sscr]',
 		content_css : imasroot+(cssmode==1?'/assessment/mathtest.css,':'/imascore.css,')+imasroot+'/themes/'+coursetheme,
 		AScgiloc : imasroot+'/filter/graph/svgimg.php',
 		convert_urls: false,
 		file_picker_callback: filePickerCallBackFunc,
-		file_browser_types: 'file image',
+		file_picker_types: 'file image',
 		//imagetools_cors_hosts: ['s3.amazonaws.com'],
 		images_upload_url: imasroot+'/tinymce4/upload_handler.php',
 		//images_upload_credentials: true,
@@ -354,6 +357,7 @@ function initeditor(edmode,edids,css,inline,setupfunction){
 			{title:"Gridded", value:"gridded"},
 			{title:"Gridded Centered", value:"gridded centered"}],
 		style_formats_merge: true,
+		snippets: (tinymceUseSnippets==1)?imasroot+'/tinymce4/getsnippets.php':false,
 		style_formats: [{
 			title: "Font Family",
 			items: [
@@ -395,9 +399,10 @@ function initeditor(edmode,edids,css,inline,setupfunction){
 	if (setupfunction) {
 		edsetup.setup = setupfunction;
 	}
-	for (var i in tinymce.editors) {
-		tinymce.editors[i].remove();
-	}
+	//for (var i in tinymce.editors) {
+	//	tinymce.editors[i].remove();
+	//}
+	tinymce.remove();
 	tinymce.init(edsetup);
 
 };
@@ -540,6 +545,9 @@ function togglevideoembed() {
 				var vidid = href.split('list=')[1].split(/[#&]/)[0];
 				var vidsrc = 'www.youtube.com/embed/videoseries?list=';
 				qsconn = '&'
+			} else if (href.match(/\/embed\//)) {
+				var vidid = href.split("/embed/")[1].split(/[#&\?]/)[0];
+				var vidsrc = 'www.youtube.com/embed/';
 			} else {
 				var vidid = href.split('v=')[1].split(/[#&]/)[0];
 				var vidsrc = 'www.youtube.com/embed/';
@@ -622,11 +630,27 @@ function hidefromcourselist(el,cid,type) {
 	if (confirm("Are you SURE you want to hide this course from your course list?")) {
 		jQuery.ajax({
 				type: "GET",
-				url: imasroot+'/admin/hidefromcourselist.php?cid='+cid+'&type='+type
+				url: imasroot+'/admin/hidefromcourselist.php?tohide='+cid+'&type='+type
 		}).done(function(msg) {
 			if (msg=='OK') {
 				jQuery(el).closest("ul.courselist > li").slideUp();
 				jQuery('#unhidelink'+type).show();
+			}
+		});
+	}
+	return false;
+}
+function removeSelfAsCoteacher(el,cid,selector,uid) {
+	selector = selector || "ul.courselist > li";
+	uid = uid || null;
+	if (confirm("Are you SURE you want to remove yourself as a co-teacher on this course?")) {
+		jQuery.ajax({
+			type: "POST",
+			url: imasroot+'/admin/actions.php',
+			data: {action: "removeself", id: cid, uid: uid}
+		}).done(function(msg) {
+			if (msg=='OK') {
+				jQuery(el).closest(selector).slideUp();
 			}
 		});
 	}
@@ -652,14 +676,36 @@ function rotateimg(el) {
 
 jQuery(document).ready(function($) {
 	$(window).on("message", function(e) {
-		if (e.originalEvent.data.match(/lti\.frameResize/)) {
+		if (typeof e.originalEvent.data=='string' && e.originalEvent.data.match(/lti\.frameResize/)) {
 			var edata = JSON.parse(e.originalEvent.data);
-			var frames = document.getElementsByTagName('iframe');
-			for (var i = 0; i < frames.length; i++) {
-			    if (frames[i].contentWindow === e.originalEvent.source) {
-				$(frames[i]).height(edata.height); //the height sent from iframe
-				break;
-			    }
+			if ("frame_id" in edata) {
+				$("#"+edata["frame_id"]).height(edata.height);
+			} else if ("iframe_resize_id" in edata) {
+				$("#"+edata["iframe_resize_id"]).height(edata.height);
+			} else {
+				var frames = document.getElementsByTagName('iframe');
+				for (var i = 0; i < frames.length; i++) {
+				    if (frames[i].contentWindow === e.originalEvent.source) {
+					$(frames[i]).height(edata.height); //the height sent from iframe
+					break;
+				    }
+				}
+			}
+		} else if (typeof e.originalEvent.data=='string' && e.originalEvent.data.match(/\[iFrameSizer\]/)) {
+			var edata = e.originalEvent.data.substr("[iFrameSizer]".length).split(":");
+			$("#"+edata[0]).height(edata[1]);
+		} else if (typeof e.originalEvent.data=='string' && e.originalEvent.data.match(/imathas\.update/)) {
+			var edata = JSON.parse(e.originalEvent.data);
+			if ("qn" in edata) {
+				var qn = edata['qn'].replace(/[^\d]/, "");
+				if (qn != "") {
+					$("#qn"+qn).val(edata['value']);
+				}
+			} else {
+				var id = edata['id'].replace(/[^\w\-]/, "");
+				if ($("#"+id).hasClass("allowupdate")) {
+					$("#"+id).val(edata['value']);
+				}
 			}
 		}
 	});
@@ -670,25 +716,21 @@ jQuery(document).ready(function($) {
 	$('a[href*="youtu"]').each(setupvideoembeds);
 	$('a[href*="vimeo"]').each(setupvideoembeds);
 	$('body').fitVids();
-	$('a[target="_blank"]').each(function() {
-		if (!this.href.match(/youtu/) && !this.href.match(/vimeo/)) {
-		   $(this).append(' <img src="'+imasroot+'/img/extlink.png" alt="External link"/>')
-		}
-	});
 });
-
-jQuery.fn.isolatedScroll = function() {
-    this.bind('mousewheel DOMMouseScroll', function (e) {
-        var delta = e.wheelDelta || (e.originalEvent && e.originalEvent.wheelDelta) || -e.detail,
-            bottomOverflow = this.scrollTop + jQuery(this).outerHeight() - this.scrollHeight >= 0,
-            topOverflow = this.scrollTop <= 0;
-
-        if ((delta < 0 && bottomOverflow) || (delta > 0 && topOverflow)) {
-            e.preventDefault();
-        }
-    });
-    return this;
-};
+jQuery(document).ready(function() {
+	jQuery.fn.isolatedScroll = function() {
+	    this.bind('mousewheel DOMMouseScroll', function (e) {
+		var delta = e.wheelDelta || (e.originalEvent && e.originalEvent.wheelDelta) || -e.detail,
+		    bottomOverflow = this.scrollTop + jQuery(this).outerHeight() - this.scrollHeight >= 0,
+		    topOverflow = this.scrollTop <= 0;
+	
+		if ((delta < 0 && bottomOverflow) || (delta > 0 && topOverflow)) {
+		    e.preventDefault();
+		}
+	    });
+	    return this;
+	};
+});
 
 jQuery(document).ready(function($) {
 	var fixedonscrollel = $('.fixedonscroll');
@@ -816,7 +858,7 @@ jQuery(document).ready(function($) {
 				$("#topnavmenu").attr("aria-expanded",true);
 			});
 			$("#navlist").slideDown(100, function() {
-				$("#navlist").addClass("menuexpanded").removeAttr("style");	
+				$("#navlist").addClass("menuexpanded").removeAttr("style");
 			});
 		} else { //collapse it
 			$("#navlist").slideUp(100, function() {
@@ -833,6 +875,70 @@ jQuery(document).ready(function($) {
 	$("#topnavmenu").on("click", toggleHeaderMobileMenuList)
 	   .on("keydown", function(e) { if (e.which===13 || e.which==32) { toggleHeaderMobileMenuList(e);}});
 });
+var sagecellcounter = 0;
+function initSageCell(base) {
+	jQuery(base).find(".converttosagecell").each(function() {
+		var ta, code;
+		var $this = jQuery(this);
+		if ($this.is("pre")) {
+			ta = this;
+			code = jQuery(ta).html().replace(/<br\s*\/?>/g,"\n").replace(/<\/?[a-zA-Z][^>]*>/g,'');
+		} else {
+			ta = $this.find("textarea");
+			if (ta.length==0 || jQuery(ta[0]).val()=="") {
+				if ($this.find("pre").length>0) {
+					code = $this.find("pre").html().replace(/<br\s*\/?>/g,"\n").replace(/<\/?[a-zA-Z][^>]*>/g,'').replace(/\n\n/g,"\n");
+					if (ta.length==0) {
+						ta = $this.find("pre")[0];
+					} else {
+						ta = ta[0];
+					}
+				} else {
+					return false;
+				}
+			} else {
+				code = jQuery(ta[0]).val();
+				ta = ta[0];
+			}
+		}
+		if (m = code.match(/^\s+/)) {
+			var chop = m[0].length;
+			var re = new RegExp('\\n\\s{'+chop+'}',"g");
+			code = code.substr(chop).replace(re, "\n").replace(/\s+$/,'');
+		}
+		var frame_id = "sagecell-"+sagecellcounter;
+		sagecellcounter++;
+		var url = imasroot+'/assessment/libs/sagecellframe.html?frame_id='+frame_id;
+		url += '&code='+encodeURIComponent(code);
+		var returnid = null;
+		if (typeof jQuery(ta).attr("id") != "undefined") {
+				url += '&update_id='+jQuery(ta).attr("id");
+		}
+		jQuery(ta).addClass("allowupdate").hide()
+		.after(jQuery("<iframe/>", {
+				id: frame_id,
+				class: "sagecellframe",
+				style: "border:0",
+				width: "100%",
+				height: 100,
+				src: url
+		}));
+	});
+}
+jQuery(function() {
+	initSageCell("body");
+});
+
+function setActiveTab(el) {
+	var tabid = el.id;
+	jQuery(el).closest(".tabwrap").find("li.active").removeClass("active");
+	jQuery(el).closest(".tablist").find("a[role=tab]").attr("aria-selected",false);
+	jQuery(el).attr("aria-selected",true);
+	jQuery(el).parent().addClass("active");
+	jQuery(el).closest(".tabwrap").find(".tabpanel").hide().attr("aria-hidden",true);    
+	var tabpanelid = tabid.replace(/tab/,"tabpanel");
+	jQuery(el).closest(".tabwrap").find("#"+tabpanelid).show().attr("aria-hidden",false);
+}
 
 /* ========================================================================
  * Bootstrap: dropdown.js v3.3.5

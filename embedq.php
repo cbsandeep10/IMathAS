@@ -1,8 +1,9 @@
 <?php
 //IMathAS:  Embed a Question via iFrame
 //(c) 2010 David Lippman
-
-require("./config.php");
+$init_skip_csrfp = true;
+require("./init_without_validate.php");
+unset($init_skip_csrfp);
 require("i18n/i18n.php");
 header('P3P: CP="ALL CUR ADM OUR"');
 $public = '?public=true';
@@ -45,20 +46,33 @@ if (empty($_GET['id'])) {
 	echo 'Need to supply an id';
 	exit;
 }
-$qsetid=$_GET['id'];
+$qsetid=Sanitize::onlyInt($_GET['id']);
 
 $page_formAction = "embedq.php?id=$qsetid";
 
 if (isset($_GET['theme'])) {
 	$theme = preg_replace('/\W/','',$_GET['theme']);
 	$sessiondata['coursetheme'] = $theme . '.css';
-	$page_formAction .= "&theme=$theme";	
+	$page_formAction .= "&theme=$theme";
 } else {
 	$sessiondata['coursetheme'] = $coursetheme;
 }
 
 if (isset($_GET['noscores'])) {
 	$page_formAction .= '&noscores=true';
+}
+if (isset($_GET['showans'])) {
+	//options:
+	//  0: never
+	//  1: after wrong attempts
+	//  2: after all attempts    *default
+	//  3: always
+	$page_formAction .= '&showans='.Sanitize::onlyInt($_GET['showans']);
+} else {
+	$_GET['showans'] = 2;
+}
+if (isset($_GET['noresults'])) {
+	$page_formAction .= '&noresults=true';
 }
 if (isset($_GET['noregen'])) {
 	$page_formAction .= '&noregen=true';
@@ -67,8 +81,13 @@ if (isset($_GET['resizer'])) {
 	$page_formAction .= '&resizer=true';
 }
 
-$showans = false;
-if (isset($_POST['seed'])) {
+if ($_GET['showans']==3) {//show always
+	$showans = 1;
+} else {
+	$showans = 0;
+}
+$qcol = array();
+if (isset($_POST['seed']) && isset($_POST['check'])) {
 	list($score,$rawscores) = scoreq(0,$qsetid,$_POST['seed'],$_POST['qn0']);
 	if (strpos($score,'~')===false) {
 		$after = round($score,1);
@@ -81,6 +100,9 @@ if (isset($_POST['seed'])) {
 			if ($after[$k]<0) {$after[$k]=0;}
 		}
 		$after = implode('~',$after);
+	}
+	if (empty($_GET['noresults'])) {
+		$qcol = explode('~',$rawscores);
 	}
 	$lastanswers[0] = $lastanswers[0];
 	$page_scoreMsg =  printscore($after,$qsetid,$_POST['seed']);
@@ -97,18 +119,16 @@ if (isset($_POST['seed'])) {
 		window.parent.postMessage('.$pts.',"*");
 	}
 	</script>';
-	if (isset($_GET['noregen'])) {
-		$seed = $_POST['seed'];
-	} else if (getpts($score)<1) {
-		$showans = true;
-		$seed = $_POST['seed'];
-	} else {
-		unset($lastanswers);
-		$seed = rand(1,9999);
+	$seed = $_POST['seed'];
+	if ($_GET['showans']==2) {
+		$showans = 1;
+	} else if ($_GET['showans']==1 && getpts($after)<1) {
+		$showans = 1;
 	}
 } else {
 	$page_scoreMsg = '';
 	$seed = rand(1,9999);
+	$lastanswers = array();
 }
 
 $flexwidth = true; //tells header to use non _fw stylesheet
@@ -116,6 +136,46 @@ $useeditor = 1;
 if (isset($_GET['resizer'])) {
 	$placeinhead = '<script type="text/javascript" src="'.$imasroot.'/javascript/iframeSizer_contentWindow_min.js"></script>';
 }
+if (isset($_GET['frame_id'])) {
+	$frameid = preg_replace('/[^\w:.-]/','',$_GET['frame_id']);
+	$placeinhead .= '<script type="text/javascript">
+		function sendresizemsg() {
+		 if(self != top){
+		  var default_height = Math.max(
+	              document.body.scrollHeight, document.body.offsetHeight,
+	              document.documentElement.clientHeight, document.documentElement.scrollHeight,
+	              document.documentElement.offsetHeight);
+		  window.parent.postMessage( JSON.stringify({
+		      subject: "lti.frameResize",
+		      height: default_height,
+		      frame_id: "'.$frameid.'"
+		  }), "*");
+		 }
+		}
+
+		if (mathRenderer == "Katex") {
+			window.katexDoneCallback = sendresizemsg;
+		} else if (typeof MathJax != "undefined") {
+			MathJax.Hub.Queue(function () {
+				sendresizemsg();
+			});
+		} else {
+			$(function() {
+				sendresizemsg();
+			});
+		}
+		</script>';
+	if ($sessiondata['mathdisp']==1 || $sessiondata['mathdisp']==3) {
+		//in case MathJax isn't loaded yet
+		$placeinhead .= '<script type="text/x-mathjax-config">
+			MathJax.Hub.Queue(function () {
+				sendresizemsg();
+			});
+			</script>';
+	}
+}
+
+
 require("./assessment/header.php");
 
 if ($page_scoreMsg != '' && !isset($_GET['noscores'])) {
@@ -123,20 +183,31 @@ if ($page_scoreMsg != '' && !isset($_GET['noscores'])) {
 	echo '</div>';
 }
 
+echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"" . Sanitize::encodeStringForDisplay($page_formAction) . "\" onsubmit=\"doonsubmit(this)\">\n";
+echo "<input type=\"hidden\" name=\"seed\" value=\"" . Sanitize::encodeStringForDisplay($seed) . "\" />";
+displayq(0,$qsetid,$seed,$showans,true,0,false,false,false,$qcol);
+echo "<p><input type=submit name=\"check\" value=\"" . _('Check Answer') . "\">\n";
+if (empty($_GET['noregen'])) {
+	echo " <input type=submit name=\"next\" value=\"" . _('New Question') . "\"/>\n";
+}
+echo '</p>';
+echo '</form>';
+/*
 if ($showans) {
-	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"$page_formAction\" onsubmit=\"doonsubmit()\">\n";
+	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"" . Sanitize::encodeStringForDisplay($page_formAction) . "\" onsubmit=\"doonsubmit()\">\n";
 	echo "<p>" . _('Displaying last question with solution') . " <input type=submit name=\"next\" value=\"" . _('New Question') . "\"/></p>\n";
-	displayq(0,$qsetid,$seed,2,true,0);
+	displayq(0,$qsetid,$seed,2,true,0,false,false,false,$qcol);
 	echo "</form>\n";
 } else {
 	$doshowans = 0;
-	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"$page_formAction\" onsubmit=\"doonsubmit()\">\n";
-	echo "<input type=\"hidden\" name=\"seed\" value=\"$seed\" />";
+	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"" . Sanitize::encodeStringForDisplay($page_formAction) . "\" onsubmit=\"doonsubmit()\">\n";
+	echo "<input type=\"hidden\" name=\"seed\" value=\"" . Sanitize::encodeStringForDisplay($seed) . "\" />";
 	$lastanswers = array();
-	displayq(0,$qsetid,$seed,$doshowans,true,0);
+	displayq(0,$qsetid,$seed,$doshowans,true,0,false,false,false,$qcol);
 	echo "<input type=submit name=\"check\" value=\"" . _('Check Answer') . "\">\n";
 	echo "</form>\n";
 }
+*/
 
 require("./footer.php");
 

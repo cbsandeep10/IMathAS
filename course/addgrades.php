@@ -4,7 +4,7 @@
 	//add/modify gbitem w/ grade edit
 	//grade edit
 	//single grade edit
-	require("../validate.php");
+	require("../init.php");
 	require("../includes/htmlutil.php");
 
 
@@ -42,7 +42,7 @@
 
 
 	if (isset($_GET['del']) && $isteacher) {
-		if (isset($_GET['confirm'])) {
+		if (isset($_POST['confirm'])) {
 			//DB $query = "DELETE FROM imas_gbitems WHERE id='{$_GET['del']}'";
 			//DB mysql_query($query) or die("Query failed : " . mysql_error());
 			$stm = $DBH->prepare("DELETE FROM imas_gbitems WHERE id=:id AND courseid=:courseid");
@@ -54,17 +54,25 @@
 				$stm->execute(array(':gradetypeid'=>$_GET['del']));
 			}
 
-			header(sprintf('Location: %s/course/gradebook.php?stu=%s&gbmode=%s&cid=%s', $GLOBALS['basesiteurl'],
-                Sanitize::encodeUrlParam($_GET['stu']), Sanitize::encodeUrlParam($_GET['gbmode']), $cid));
+			header(sprintf('Location: %s/course/gradebook.php?stu=%s&cid=%s', $GLOBALS['basesiteurl'],
+				Sanitize::encodeUrlParam($_GET['stu']), $cid));
 			exit;
 		} else {
 			require("../header.php");
-			echo "<p>Are you SURE you want to delete this item and all associated grades from the gradebook?</p>";
-			printf("<p><a href=\"addgrades.php?stu=%s&gbmode=%s&cid=%s&del=%s&confirm=true\">Delete Item</a>",
-                Sanitize::encodeUrlParam($_GET['stu']), Sanitize::encodeUrlParam($_GET['gbmode']), $cid,
-                Sanitize::encodeUrlParam($_GET['del']));
-			printf(" <a href=\"gradebook.php?stu=%s&gbmode=%s&cid=%s\">Nevermind</a>",
-                Sanitize::encodeUrlParam($_GET['stu']), Sanitize::encodeUrlParam($_GET['gbmode']), $cid);
+			$stm = $DBH->prepare("SELECT name FROM imas_gbitems WHERE id=:id");
+			$stm->execute(array(':id'=>$_GET['del']));
+			$itemname = $stm->fetchColumn(0);
+
+			echo "<p>Are you SURE you want to delete <strong>".Sanitize::encodeStringForDisplay($itemname);
+			echo "</strong> and all associated grades from the gradebook?</p>";
+			echo '<form method="POST" action="'.sprintf("addgrades.php?stu=%s&cid=%s&del=%s",
+				Sanitize::encodeUrlParam($_GET['stu']), $cid, Sanitize::encodeUrlParam($_GET['del'])).'">';
+			echo '<p><button type=submit name=confirm value=true>'._('Delete Item').'</button>';
+
+			printf(" <input type=button value=\"Nevermind\" class=\"secondarybtn\" onClick=\"window.location='addgrades.php?stu=%s&cid=%s&gbitem=%d&grades=all'\" />",
+				Sanitize::encodeUrlParam($_GET['stu']), $cid, Sanitize::encodeUrlParam($_GET['del']));
+			
+			echo '</p></form>';
 			require("../footer.php");
 			exit;
 		}
@@ -177,16 +185,20 @@
 			foreach($_POST['score'] as $k=>$sc) {
 				if (trim($k)=='') { continue;}
 				$sc = trim($sc);
+				$_POST['feedback'.$k] = Sanitize::incomingHtml(trim($_POST['feedback'.$k]));
+				if ($_POST['feedback'.$k] == '<p></p>') {
+					$_POST['feedback'.$k] = '';
+				}
 				if ($sc!='') {
 					//DB $query = "UPDATE imas_grades SET score='$sc',feedback='{$_POST['feedback'][$k]}' WHERE userid='$k' AND gradetype='offline' AND gradetypeid='{$_GET['gbitem']}'";
 					//DB mysql_query($query) or die("Query failed : " . mysql_error());
 					$stm = $DBH->prepare("UPDATE imas_grades SET score=:score,feedback=:feedback WHERE userid=:userid AND gradetype='offline' AND gradetypeid=:gradetypeid");
-					$stm->execute(array(':score'=>$sc, ':feedback'=>$_POST['feedback'][$k], ':userid'=>$k, ':gradetypeid'=>$_GET['gbitem']));
+					$stm->execute(array(':score'=>$sc, ':feedback'=>$_POST['feedback'.$k], ':userid'=>$k, ':gradetypeid'=>$_GET['gbitem']));
 				} else {
 					//DB $query = "UPDATE imas_grades SET score=NULL,feedback='{$_POST['feedback'][$k]}' WHERE userid='$k' AND gradetype='offline' AND gradetypeid='{$_GET['gbitem']}'";
 					//DB mysql_query($query) or die("Query failed : " . mysql_error());
 					$stm = $DBH->prepare("UPDATE imas_grades SET score=NULL,feedback=:feedback WHERE userid=:userid AND gradetype='offline' AND gradetypeid=:gradetypeid");
-					$stm->execute(array(':feedback'=>$_POST['feedback'][$k], ':userid'=>$k, ':gradetypeid'=>$_GET['gbitem']));
+					$stm->execute(array(':feedback'=>$_POST['feedback'.$k], ':userid'=>$k, ':gradetypeid'=>$_GET['gbitem']));
 					//$query = "DELETE FROM imas_grades WHERE gbitemid='{$_GET['gbitem']}' AND userid='$k'";
 				}
 			}
@@ -195,6 +207,10 @@
 		if (isset($_POST['newscore'])) {
 			foreach($_POST['newscore'] as $k=>$sc) {
 				if (trim($k)=='') {continue;}
+				$_POST['feedback'.$k] = Sanitize::incomingHtml(trim($_POST['feedback'.$k]));
+				if ($_POST['feedback'.$k] == '<p></p>') {
+					$_POST['feedback'.$k] = '';
+				}
 				if ($sc!='') {
 					//DB $query = "INSERT INTO imas_grades (gradetype,gradetypeid,userid,score,feedback) VALUES ";
 					//DB $query .= "('offline','{$_GET['gbitem']}','$k','$sc','{$_POST['feedback'][$k]}')";
@@ -202,7 +218,7 @@
 					$query = "INSERT INTO imas_grades (gradetype,gradetypeid,userid,score,feedback) VALUES ";
 					$query .= "(:gradetype, :gradetypeid, :userid, :score, :feedback)";
 					$stm = $DBH->prepare($query);
-					$stm->execute(array(':gradetype'=>'offline', ':gradetypeid'=>$_GET['gbitem'], ':userid'=>$k, ':score'=>$sc, ':feedback'=>$_POST['feedback'][$k]));
+					$stm->execute(array(':gradetype'=>'offline', ':gradetypeid'=>$_GET['gbitem'], ':userid'=>$k, ':score'=>$sc, ':feedback'=>$_POST['feedback'.$k]));
 				} else if (trim($_POST['feedback'][$k])!='') {
 					//DB $query = "INSERT INTO imas_grades (gradetype,gradetypeid,userid,score,feedback) VALUES ";
 					//DB $query .= "('offline','{$_GET['gbitem']}','$k',NULL,'{$_POST['feedback'][$k]}')";
@@ -210,7 +226,7 @@
 					$query = "INSERT INTO imas_grades (gradetype,gradetypeid,userid,score,feedback) VALUES ";
 					$query .= "(:gradetype, :gradetypeid, :userid, :score, :feedback)";
 					$stm = $DBH->prepare($query);
-					$stm->execute(array(':gradetype'=>'offline', ':gradetypeid'=>$_GET['gbitem'], ':userid'=>$k, ':score'=>NULL, ':feedback'=>$_POST['feedback'][$k]));
+					$stm->execute(array(':gradetype'=>'offline', ':gradetypeid'=>$_GET['gbitem'], ':userid'=>$k, ':score'=>NULL, ':feedback'=>$_POST['feedback'.$k]));
 				}
 			}
 		}
@@ -255,7 +271,7 @@
 	}
 
 	$placeinhead = "<script type=\"text/javascript\" src=\"$imasroot/javascript/DatePicker.js\"></script>";
-	$placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/addgrades.js?v=112016\"></script>";
+	$placeinhead .= "<script type=\"text/javascript\" src=\"$imasroot/javascript/addgrades.js?v=092817\"></script>";
 	$placeinhead .= '<style type="text/css">
 		 .suggestion_list
 		 {
@@ -292,8 +308,23 @@
 		 {
 		 display: none;
 		 }
+		 #gradeboxes .fbbox {
+		 	min-width: 15em;
+		 	min-height: 1em;
+		 	margin: 0;
+		 }
+		 .fbbox p {
+		 	padding: 1px;
+		 }
+		 .fbbox p + p {
+		 	padding-top: .5em;
+		 }
 		 </style>';
 	$placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/rubric.js?v=113016"></script>';
+	$useeditor = "noinit";
+	if ($sessiondata['useed']!=0) {
+		$placeinhead .= '<script type="text/javascript"> initeditor("divs","fbbox",null,true);</script>';
+	}
 	require("../includes/rubric.php");
 	require("../header.php");
 	echo "<div class=breadcrumb>$breadcrumbbase <a href=\"course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
@@ -574,15 +605,22 @@ at <input type=text size=10 name=stime value="<?php echo Sanitize::encodeStringF
 		}
 		*/
 		echo '<div id="gradeboxes">';
-		echo '<input type=button value="Expand Feedback Boxes" onClick="togglefeedback(this)"/> ';
-		echo '<button type="button" id="useqa" onclick="togglequickadd(this)">'._("Use Quicksearch Entry").'</button>';
+		if ($sessiondata['useed']==0) {
+			echo '<input type=button value="Expand Feedback Boxes" onClick="togglefeedback(this)"/> ';
+		}
 		if ($hassection) {
 			echo "<script type=\"text/javascript\" src=\"$imasroot/javascript/tablesorter.js\"></script>\n";
 		}
 		if ($_GET['grades']=='all') {
+			echo '<button type="button" id="useqa" onclick="togglequickadd(this)">'._("Use Quicksearch Entry").'</button>';
 			echo "<br/><span class=form>Add/Replace to all grades:</span><span class=formright><input type=text size=3 id=\"toallgrade\" onblur=\"this.value = doonblur(this.value);\"/>";
 			echo ' <input type=button value="Add" onClick="sendtoall(0,0);"/> <input type=button value="Multiply" onclick="sendtoall(0,1)"/> <input type=button value="Replace" onclick="sendtoall(0,2)"/></span><br class="form"/>';
-			echo "<span class=form>Add/Replace to all feedback:</span><span class=formright><input type=text size=40 id=\"toallfeedback\"/>";
+			echo "<span class=form>Add/Replace to all feedback:</span><span class=formright>";
+			if ($sessiondata['useed']==0) {
+				echo "<input type=text size=40 id=\"toallfeedback\" name=\"toallfeedback\"/>";
+			} else {
+				echo '<div class="fbbox" id="toallfeedback"></div>';
+			}
 			echo ' <input type=button value="Append" onClick="sendtoall(1,0);"/> <input type=button value="Prepend" onclick="sendtoall(1,1)"/> <input type=button value="Replace" onclick="sendtoall(1,2)"/></span><br class="form"/>';
 		}
 		echo '<div class="clear"></div>';
@@ -593,7 +631,7 @@ at <input type=text size=10 name=stime value="<?php echo Sanitize::encodeStringF
 		if ($hascodes) {
 			echo '<th>Code</th>';
 		}
-		echo "<th>Grade</th><th>Feedback</th></tr></thead><tbody>";
+		echo "<th>Grade</th><th>Feedback</th><th></th></tr></thead><tbody>";
 		echo '<tr id="quickadd" style="display:none;"><td><input type="text" id="qaname" /></td>';
 		if ($hassection) {
 			echo '<td></td>';
@@ -602,8 +640,12 @@ at <input type=text size=10 name=stime value="<?php echo Sanitize::encodeStringF
 			echo '<td></td>';
 		}
 		echo '<td><input type="text" id="qascore" size="3" onblur="this.value = doonblur(this.value);" onkeydown="return qaonenter(event,this);" /></td>';
-		echo '<td><textarea id="qafeedback" rows="1" cols="40"></textarea>';
-		echo '<input type="button" value="Next" onfocus="addsuggest()" /></td></tr>';
+		if ($sessiondata['useed']==0) {
+			echo '<td><textarea id="qafeedback" rows="1" cols="60"></textarea></td><td>';
+		} else {
+			echo '<td><div id="qafeedback" class="fbbox"></div></td><td>';
+		}
+		echo '<input type="button" value="Next" onclick="addsuggest()" /></td></tr>';
 		if ($_GET['gbitem']=="new") {
 			//DB $query = "SELECT imas_users.id,imas_users.LastName,imas_users.FirstName,imas_students.section,imas_students.locked ";
 			//DB $query .= "FROM imas_users,imas_students WHERE ";
@@ -638,6 +680,7 @@ at <input type=text size=10 name=stime value="<?php echo Sanitize::encodeStringF
 				}
 				$feedback[$row[0]] = $row[2];
 			}
+
 			$query = "SELECT imas_users.id,imas_users.LastName,imas_users.FirstName,imas_students.section,imas_students.locked,imas_students.code FROM imas_users,imas_students ";
 			if ($_GET['grades']!='all') {
 				//DB $query .= "WHERE imas_users.id=imas_students.userid AND imas_users.id='{$_GET['grades']}' AND imas_students.courseid='$cid'";
@@ -693,12 +736,19 @@ at <input type=text size=10 name=stime value="<?php echo Sanitize::encodeStringF
 			}
 			echo "\" onkeypress=\"return onenter(event,this)\" onkeyup=\"onarrow(event,this)\" onblur=\"this.value = doonblur(this.value);\" />";
 			if ($rubric != 0) {
-				echo printrubriclink($rubric,$points,"score{$row[0]}","feedback{$row[0]}");
+				echo printrubriclink($rubric,$points,"score". Sanitize::onlyint($row[0]),"feedback". Sanitize::onlyint($row[0]));
 			}
 			echo "</td>";
-			printf('<td><textarea cols=60 rows=1 id="feedback%d" name="feedback[%d]">%s</textarea></td>',
-                Sanitize::encodeStringForDisplay($row[0]), Sanitize::encodeStringForDisplay($row[0]),
-                Sanitize::encodeStringForDisplay($feedback[$row[0]]));
+			if ($sessiondata['useed']==0) {
+				printf('<td><textarea cols=60 rows=1 id="feedback%d" name="feedback%d">%s</textarea></td>',
+					Sanitize::encodeStringForDisplay($row[0]), Sanitize::encodeStringForDisplay($row[0]),
+					Sanitize::encodeStringForDisplay($feedback[$row[0]]));
+			} else {
+				printf('<td><div class="fbbox" id="feedback%d">%s</div></td>',
+					Sanitize::encodeStringForDisplay($row[0]), 
+					Sanitize::outgoingHtml($feedback[$row[0]]));
+			}
+			echo '<td></td>';
 			echo "</tr>";
 		}
 

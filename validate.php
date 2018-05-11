@@ -1,19 +1,10 @@
 <?php
 //IMathAS:  Checks user's login - prompts if none.
 //(c) 2006 David Lippman
-require_once(__DIR__ . "/includes/sanitize.php");
 
  header('P3P: CP="ALL CUR ADM OUR"');
 
  $curdir = rtrim(dirname(__FILE__), '/\\');
- if (!file_exists("$curdir/config.php")) {
- 	// Can't use $basesiteurl here, as it's defined in config.php.
-	$httpMode = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on')
-		|| (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']=='https')
-		? 'https://' : 'http://';
-	header('Location: ' . $httpMode . Sanitize::domainNameWithPort($_SERVER['HTTP_HOST']) . Sanitize::encodeStringForDisplay(rtrim(dirname($_SERVER['PHP_SELF'])), '/\\') . "/install.php");
- }
- require_once("$curdir/config.php");
  require("i18n/i18n.php");
  if (isset($sessionpath) && $sessionpath!='') { session_save_path($sessionpath);}
  ini_set('session.gc_maxlifetime',86400);
@@ -96,9 +87,9 @@ require_once(__DIR__ . "/includes/sanitize.php");
 	 } else {
 	 	 //no reason we should be here...
 		 if (!empty($_SERVER['QUERY_STRING'])) {
-			 $querys = '?'.$_SERVER['QUERY_STRING'].(isset($addtoquerystring)?'&'.$addtoquerystring:'');
+			 $querys = '?' . Sanitize::fullQueryString($_SERVER['QUERY_STRING']) . (isset($addtoquerystring) ? '&' . Sanitize::fullQueryString($addtoquerystring) : '');
 		 } else {
-			 $querys = (!empty($addtoquerystring)?'?'.$addtoquerystring:'');
+			 $querys = (!empty($addtoquerystring) ? '?' . Sanitize::fullQueryString($addtoquerystring) : '');
 		 }
 
 		 $sessiondata['useragent'] = $_SERVER['HTTP_USER_AGENT'];
@@ -124,7 +115,7 @@ require_once(__DIR__ . "/includes/sanitize.php");
 		$stm->execute(array(':now'=>$now, ':log'=>"$userid login from IP:{$_SERVER['REMOTE_ADDR']}"));
 
 
-		 header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . Sanitize::fullUrl($querys));
+		 header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . $querys);
 		 exit;
 	 }
 
@@ -286,17 +277,28 @@ require_once(__DIR__ . "/includes/sanitize.php");
 		 	 $stm->execute(array(':lastaccess'=>$now, ':id'=>$userid));
 		 }
 
-
 		 if (!empty($_SERVER['QUERY_STRING'])) {
-			 $querys = '?'.$_SERVER['QUERY_STRING'].(isset($addtoquerystring)?'&'.$addtoquerystring:'');
+		 	 $querys = '?' . Sanitize::fullQueryString($_SERVER['QUERY_STRING']) . (isset($addtoquerystring) ? '&' . Sanitize::fullQueryString($addtoquerystring) : '');
 		 } else {
-			 $querys = (!empty($addtoquerystring)?'?'.$addtoquerystring:'');
+			 $querys = (!empty($addtoquerystring) ? '?' . Sanitize::fullQueryString($addtoquerystring) : '');
 		 }
-		 //$now = time();
-		 //DB //$query = "INSERT INTO imas_log (time,log) VALUES ($now,'$userid from IP: {$_SERVER['REMOTE_ADDR']}')";
-		 //DB //mysql_query($query) or die("Query failed : " . mysql_error());
 
-		 header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . Sanitize::fullUrl($querys));
+		 $needToForcePasswordReset = false;
+		 if (isset($CFG['acct']['passwordMinlength']) && strlen($_POST['password'])<$CFG['acct']['passwordMinlength']) {
+		 	 $needToForcePasswordReset = true;
+		 } else if (isset($CFG['acct']['passwordFormat'])) {
+		 	 require_once("includes/newusercommon.php");
+		 	 if (!checkFormatAgainstRegex($_POST['password'], $CFG['acct']['passwordFormat'])) {
+		 	 	 $needToForcePasswordReset = true;
+		 	 }
+		 } 
+		 
+		 if ($needToForcePasswordReset) {
+		 	 header('Location: ' . $GLOBALS['basesiteurl'] . '/forms.php?action=forcechgpwd');
+		 } else {
+		 	 header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . $querys);
+		 }
+		 exit;
 	 } else {
 		 if (empty($_SESSION['challenge'])) {
 			 $badsession = true;
@@ -328,14 +330,14 @@ require_once(__DIR__ . "/includes/sanitize.php");
 		/*
 		$query = "DELETE FROM imas_sessions WHERE userid='$userid'";
 		mysql_query($query) or die("Query failed : " . mysql_error());
-		header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . Sanitize::fullUrl($querys));
+		header('Location: ' . $GLOBALS['basesiteurl'] . substr($_SERVER['SCRIPT_NAME'],strlen($imasroot)) . Sanitize::url($querys));
 		exit;
 		*/
 	}
 	//$username = $_COOKIE['username'];
 	$query = "SELECT SID,rights,groupid,LastName,FirstName,deflib";
 	if (strpos(basename($_SERVER['PHP_SELF']),'upgrade.php')===false) {
-		$query .= ',listperpage,hasuserimg,theme,specialrights,FCMtoken';
+		$query .= ',listperpage,hasuserimg,theme,specialrights,FCMtoken,forcepwreset';
 	}
 	//DB $query .= " FROM imas_users WHERE id='$userid'";
 	//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -367,6 +369,11 @@ require_once(__DIR__ . "/includes/sanitize.php");
 	}
 	if (isset($sessiondata['userprefs']['usertheme']) && strcmp($sessiondata['userprefs']['usertheme'],'0')!=0) {
 		$coursetheme = $sessiondata['userprefs']['usertheme'];
+	}
+	
+	if (!empty($line['forcepwreset']) && (empty($_GET['action']) || $_GET['action']!='forcechgpwd') && (!isset($sessiondata['ltiitemtype']) || $sessiondata['ltirole']!='learner')) {
+		 header('Location: ' . $GLOBALS['basesiteurl'] . '/forms.php?action=forcechgpwd');
+		 exit;
 	}
 
 	$basephysicaldir = rtrim(dirname(__FILE__), '/\\');
@@ -405,8 +412,25 @@ require_once(__DIR__ . "/includes/sanitize.php");
 	}
 	if (isset($sessiondata['isdiag']) && strpos(basename($_SERVER['PHP_SELF']),'showtest.php')===false) {
 		header('Location: ' . $GLOBALS['basesiteurl'] . "/assessment/showtest.php");
+		exit;
 	}
 
+	if (isset($sessiondata['ltiitemtype']) && $_SERVER['PHP_SELF']==$imasroot.'/index.php') {
+		if ($myrights>18) {
+			foreach ($sessiondata as $k=>$v) {
+				if (substr($k,0,3)=='lti') {
+					unset($sessiondata[$k]);
+				}
+			}
+			writesessiondata();
+		} else if ($sessiondata['ltiitemtype']==0 && $sessiondata['ltirole']=='learner') {
+			require(__DIR__.'/includes/userutils.php');
+			logout();
+			header('Location: ' . $GLOBALS['basesiteurl'] . '/index.php');
+			exit;
+		}
+	}
+	
 	if (isset($sessiondata['ltiitemtype'])) {
 		$flexwidth = true;
 		if ($sessiondata['ltiitemtype']==1) {
@@ -425,7 +449,7 @@ require_once(__DIR__ . "/includes/sanitize.php");
 				//DB $cid = mysql_result($result,0,0);
 				$stm = $DBH->prepare("SELECT courseid FROM imas_assessments WHERE id=:id");
 				$stm->execute(array(':id'=>$sessiondata['ltiitemid']));
-				$cid = $stm->fetchColumn(0);
+				$cid = Sanitize::courseId($stm->fetchColumn(0));
 				header('Location: ' . $GLOBALS['basesiteurl'] . "/assessment/showtest.php?cid=$cid&id={$sessiondata['ltiitemid']}");
 				exit;
 			}
@@ -523,11 +547,16 @@ require_once(__DIR__ . "/includes/sanitize.php");
 				if ($line != null) {
 					$tutorid = $line['id'];
 					$tutorsection = trim($line['section']);
-				}
-
+				} else if ($myrights==5 && isset($_GET['guestaccess']) && isset($CFG['GEN']['guesttempaccts'])) {
+					//guest user not enrolled, but trying via guestaccess; enroll	
+					$stm = $DBH->prepare("INSERT INTO imas_students (userid,courseid) VALUES (?,?)");
+					$stm->execute(array($userid, $cid));
+					$studentid = $DBH->lastInsertId();
+					$studentinfo = array('latepasses'=>0, 'timelimitmult'=>1, 'section'=>null);
+				} 
 			}
 		}
-		$query = "SELECT imas_courses.name,imas_courses.available,imas_courses.lockaid,imas_courses.copyrights,imas_users.groupid,imas_courses.theme,imas_courses.newflag,imas_courses.msgset,imas_courses.toolset,imas_courses.deftime,imas_courses.picicons,imas_courses.latepasshrs ";
+		$query = "SELECT imas_courses.name,imas_courses.available,imas_courses.lockaid,imas_courses.copyrights,imas_users.groupid,imas_courses.theme,imas_courses.newflag,imas_courses.msgset,imas_courses.toolset,imas_courses.deftime,imas_courses.picicons,imas_courses.latepasshrs,imas_courses.startdate,imas_courses.enddate ";
 		$query .= "FROM imas_courses JOIN imas_users ON imas_users.id=imas_courses.ownerid WHERE imas_courses.id=:id";
 		$stm = $DBH->prepare($query);
 		$stm->execute(array(':id'=>$cid));
@@ -556,10 +585,11 @@ require_once(__DIR__ . "/includes/sanitize.php");
 			} else {
 				$coursedefstime = $coursedeftime;
 			}
+			$courseenddate = $crow['enddate'];
 			$picicons = $crow['picicons'];
 			$latepasshrs = $crow['latepasshrs'];
 
-			if (isset($studentid) && !$inInstrStuView && (($crow['available'])&1)==1) {
+			if (isset($studentid) && !$inInstrStuView && ((($crow['available'])&1)==1 || time()<$crow['startdate'])) {
 				echo "This course is not available at this time";
 				exit;
 			}
@@ -568,7 +598,7 @@ require_once(__DIR__ . "/includes/sanitize.php");
 				if (strpos(basename($_SERVER['PHP_SELF']),'showtest.php')===false) {
 					require("header.php");
 					echo '<p>This course is currently locked for an assessment</p>';
-					echo "<p><a href=\"$imasroot/assessment/showtest.php?cid=$cid&id=$lockaid\">Go to Assessment</a> | <a href=\"$imasroot/index.php\">Go Back</a></p>";
+					echo "<p><a href=\"$imasroot/assessment/showtest.php?cid=$cid&id=".Sanitize::encodeUrlParam($lockaid)."\">Go to Assessment</a> | <a href=\"$imasroot/index.php\">Go Back</a></p>";
 					require("footer.php");
 					//header('Location: ' . $GLOBALS['basesiteurl'] . "/assessment/showtest.php?cid=$cid&id=$lockaid");
 					exit;

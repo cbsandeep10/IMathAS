@@ -99,11 +99,10 @@ function handleClickTextSegmentButton(e) {
 }
 
 function refreshTable() {
+	tinymce.remove();
 	document.getElementById("curqtbl").innerHTML = generateTable();
 	if (usingASCIIMath) {
-		$("#curqtbl tr:not(.textsegmentrow)").each(function(i,el) {
-			rendermathnode(el);
-		});
+		rendermathnode(document.getElementById("curqtbl"));
 
   }
   updateqgrpcookie();
@@ -432,7 +431,7 @@ function generateMoveSelect2(num) {
 
 		if (!curistxt) {
 			if (itemarray[i-1].length<5) { //is group
-				qcnt += itemarray[i-1][0];//itemarray[i-1][2].length;
+				qcnt += parseInt(itemarray[i-1][0]);//itemarray[i-1][2].length;
 			} else {
 				qcnt++;
 			}
@@ -507,6 +506,10 @@ function generateShowforSelect(num) {
 		i++;
 		n++;
 	}
+	if (!(5 in itemarray[num])) {
+		itemarray[num][5] = 0;
+	}
+	console.log(itemarray[num]);
 	if (n==0) {
 		return '';
 	} else {
@@ -519,6 +522,15 @@ function generateShowforSelect(num) {
 			out += '>'+j+"</option>";
 		}
 		out += '</select>';
+		if (itemarray[num][2]>1) {
+			out += '<br/><select id="showforntype'+num+'" onchange="updateTextShowNType('+num+','+itemarray[num][5]+')">';
+			out += '<option value=0';
+			if (itemarray[num][5]==0) { out += ' selected';}
+			out += '>Closed after 1st</option>';
+			out += '<option value=1';
+			if (itemarray[num][5]==1) { out += ' selected';}
+			out += '>Expanded for all</option></select>';
+		}
 		return out;
 	}
 }
@@ -664,20 +676,24 @@ function groupSelected() {
 		return;
 	}
 	var to = grplist[grplist.length-1];
+	var existingcnt = 0;
 	if (itemarray[to].length<5) {  //moving to existing group
-
+		existingcnt = itemarray[to][2].length;
 	} else {
 		var existing = itemarray[to];
 		itemarray[to] = [1,0,[existing],1];
+		existingcnt = 1;
 	}
 	for (i=0; i<grplist.length-1; i++) { //going from last in current to first in current
 		tomove = itemarray.splice(grplist[i],1);
 		if (tomove[0].length<5) { //if grouping a group
 			for (var j=0; j<tomove[0][2].length; j++) {
-				itemarray[to][2].push(tomove[0][2][j]);
+				//itemarray[to][2].push(tomove[0][2][j]);
+				itemarray[to][2].splice(existingcnt+j,0,tomove[0][2][j]);
 			}
 		} else {
-			itemarray[to][2].push(tomove[0]);
+			//itemarray[to][2].push(tomove[0]);
+			itemarray[to][2].splice(existingcnt,0,tomove[0]);
 		}
 	}
 	submitChanges();
@@ -749,6 +765,15 @@ function updateTextShowN(i,old_i) {
 		submitChanges();
 	}
 }
+function updateTextShowNType(i,old_i) {
+	if (!confirm_textseg_dirty()) {
+		//if aborted, restore old value
+		$("#showforntype"+i).val(old_i);
+	} else {
+		itemarray[i][5] = $("#showforntype"+i).val()*1;
+		submitChanges();
+	}
+}
 
 function chgpagetitle(i) {
 	if (!confirm_textseg_dirty()) {
@@ -788,7 +813,7 @@ function generateOutput() {
 	for (var i=0; i<itemarray.length; i++) {
 		if (itemarray[i][0]=='text') { //is text item
 			//itemarray[i] is ['text',text,displayforN]
-			text_segments.push({"displayBefore":qcnt,"displayUntil":qcnt+itemarray[i][2]-1,"text":itemarray[i][1],"ispage":itemarray[i][3],"pagetitle":itemarray[i][4]});
+			text_segments.push({"displayBefore":qcnt,"displayUntil":qcnt+itemarray[i][2]-1,"text":itemarray[i][1],"ispage":itemarray[i][3],"pagetitle":itemarray[i][4],"forntype":itemarray[i][5]});
 		} else if (itemarray[i].length<5) {  //is group
 			if (out.length>0) {
 				out += ',';
@@ -835,7 +860,6 @@ function updateqgrpcookie() {
 function generateTable() {
 	olditemarray = itemarray;
 	itemcount = itemarray.length;
-	tinymce.editors = []; // clear any previous editors
 	var alt = 0;
 	var ln = 0;
 	var pttotal = 0;
@@ -854,7 +878,8 @@ function generateTable() {
 		html += "<th>Template</th><th>Remove</th>";
 	}
 	html += "</thead><tbody>";
-	var text_segment_count = 0; var curqnum = 0;
+	var text_segment_count = 0; var curqnum = 0; var curqitemloc = 0;
+	var badgrppoints = false; var badthisgrppoints = false; var grppoints = -1;
 	for (var i=0; i<itemcount; i++) {
 		curistext = 0;
 		curisgroup = 0;
@@ -869,9 +894,10 @@ function generateTable() {
 			var curitems = new Array();
 			curitems[0] = itemarray[i];
 		}
-		curqnum = i-text_segment_count;
+		curqitemloc = i-text_segment_count;
 		//var ms = generateMoveSelect(i,itemcount);
 		var ms = generateMoveSelect2(i);
+		grppoints = -1; badthisgrppoints = false;
 		for (var j=0; j<curitems.length; j++) {
 			if (alt == 0) {
 				curclass = 'even';
@@ -879,7 +905,7 @@ function generateTable() {
 				curclass = 'odd';
 			}
 			if (curistext==1) {
-				curclass += ' textsegmentrow';
+				curclass += ' textsegmentrow skipmathrender';
 			}
 			html += "<tr class='"+curclass+"'>";
 			if (beentaken) {
@@ -967,10 +993,10 @@ function generateTable() {
 					html += '>New page</label></td>';
 				} else {
 					var contents = curitems[j][1];
-					html += "<td colspan=8 id=\"textsegdescr"+i+"\" class=\"description-cell\">"; //description
+					html += "<td colspan=7 id=\"textsegdescr"+i+"\" class=\"description-cell\">"; //description
 					html += "<div class=\"intro intro-like\"><div id=\"textseg"+i+"\" class=\"textsegment collapsed\">"+contents+"</div>";
 					html += "<div class=\"text-segment-icon\"><button id=\"edit-button"+i+"\" type=\"button\" title=\"Expand and Edit\" class=\"text-segment-button\"><span id=\"edit-button-span"+i+"\" class=\"icon-pencil text-segment-icon\"></span></button></div></div></div></td>";
-					html += "<td>"+generateShowforSelect(i)+"</td>";
+					html += "<td colspan=2>"+generateShowforSelect(i)+"</td>";
 				}
 				//if (beentaken) {
 				//	html += "<td></td>";
@@ -1012,14 +1038,27 @@ function generateTable() {
 				}
 				html += "<td>"+curitems[j][3]+"</td>"; //question type
 				if (curitems[j][4]==9999) { //points
-					html += "<td>"+defpoints+"</td>";
 					curpt = defpoints;
 				} else {
-					html += "<td>"+curitems[j][4]+"</td>";
 					curpt = curitems[j][4];
 				}
+				if (curisgroup) {
+					if (grppoints==-1) {
+						grppoints = curpt;
+					} else if (curpt != grppoints) {
+						badgrppoints = true;
+						badthisgrppoints = true;
+					}
+				}
+				if (badthisgrppoints) {
+					html += "<td><span class=noticehighlight>"+curpt+"</span></td>"; //points
+				} else {
+					html += "<td>"+curpt+"</td>"; //points
+				}
+
+
 				html += "<td class=c><a href=\"modquestion.php?id="+curitems[j][0]+"&aid="+curaid+"&cid="+curcid+"&loc="+(curisgroup?(curqnum+1)+'-'+(j+1):curqnum+1)+"\">Change</a></td>"; //settings
-				if (curitems[j][5]) {
+				if (curitems[j][5]==1) {
 					html += "<td class=c><a href=\"moddataset.php?id="+curitems[j][1]+"&qid="+curitems[j][0]+"&aid="+curaid+"&cid="+curcid+"\">Edit</a></td>"; //edit
 				} else {
 					html += "<td class=c><a href=\"moddataset.php?id="+curitems[j][1]+"&template=true&makelocal="+curitems[j][0]+"&aid="+curaid+"&cid="+curcid+"\">Edit</a></td>"; //edit makelocal
@@ -1029,7 +1068,7 @@ function generateTable() {
 					if (curitems[j][6]==1) {
 						html += "<td><span class='red'>Withdrawn</span></td>";
 					} else {
-						html += "<td><a href=\"addquestions.php?aid="+curaid+"&cid="+curcid+"&withdraw="+(curisgroup?curqnum+'-'+j:curqnum)+"\">Withdraw</a></td>";
+						html += "<td><a href=\"addquestions.php?aid="+curaid+"&cid="+curcid+"&withdraw="+(curisgroup?curqitemloc+'-'+j:curqitemloc)+"\">Withdraw</a></td>";
 					}
 				} else {
 					html += "<td class=c><a href=\"moddataset.php?id="+curitems[j][1]+"&template=true&aid="+curaid+"&cid="+curcid+"\">Template</a></td>"; //add link
@@ -1041,6 +1080,7 @@ function generateTable() {
 		}
 		if (curistext==0) {
 			pttotal += curpt*(curisgroup?itemarray[i][0]:1);
+			curqnum += curisgroup?itemarray[i][0]:1;
 		}
 		alt = 1-alt;
 	}
@@ -1058,6 +1098,9 @@ function generateTable() {
 	html += '</td><td></td><td></td></tr>';
 
 	html += "</tbody></table>";
+	if (badgrppoints) {
+		html += "<p class=noticetext>WARNING: All question in a group should be given the same point values.</p>";
+	}
 	document.getElementById("pttotal").innerHTML = pttotal;
 	return html;
 }
@@ -1138,7 +1181,7 @@ function submitChanges() {
 			status + "\n" +req.statusText+
 			"\nError: "+errorThrown
 		itemarray = olditemarray;
-		generateTable();
+		refreshTable();
 	})
 }
 

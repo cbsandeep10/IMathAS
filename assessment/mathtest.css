@@ -177,6 +177,8 @@ div.right {
 
 ul.qlist {list-style-type: none; margin: 0px; padding: 0px;}
 ul.qlist li {margin-top: .2em; margin-left: 10px; padding: 0px;}
+ul.navlist {list-style-type: none; margin: 0px; margin-left: -10px; padding: 0px;}
+ul.navlist li {margin-top: .2em; margin-left: 10px; margin-bottom: 7px; padding: 0px;}
 
 ul.nomark {list-style-type: none;}
 ul.nomark li { margin-top: .7em;}
@@ -264,7 +266,21 @@ img.skipnav {
 	border: 0px;
 }
 .hidden {
-	display: none;
+	visibility: hidden;
+	position: absolute;
+	top:0;
+	left:0;
+	width:0;
+	height:0;
+}
+.screenreader {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	color: transparent;
 }
 span.shown {
 	display: inline;
@@ -486,6 +502,65 @@ div.ansred, div.ansgrn, div.ansyel, div.ansorg {
 	border: 1px solid #f60;
 }
 
+ul.tablist {
+	padding: 0;
+	margin: 0;
+	margin-bottom: -1px;
+}
+ul.tablist li {
+	display: inline-block;
+	border: 1px solid #ccc;
+	background-color: #eee;
+	margin-right: 2px;
+}
+ul.tablist li a {
+	display: inline-block;
+	padding: 0.2em 1em;
+	text-decoration: none;
+	color: #000;
+}
+
+ul.tablist li.active {
+	border-bottom: 1px solid #fff;
+	background-color: #fff;
+}
+div.tabpanel {
+	border: 1px solid #ccc;
+	background-color: #fff;
+	margin:0px;
+	padding:5px 10px;
+}
+ul.courselist {
+	margin: 0px;
+	padding-left: 0px;
+}
+ul.courselist li {
+	list-style-type: none;
+}
+ul.courselist ul {
+	margin-left: 2px;
+	padding-left: 5px;
+}
+li.coursegroup ul {
+	border-left: 1px dashed #ccc;
+}
+ul.courselist > li {
+	border-bottom: 1px solid #999;
+	padding: 3px 0px 2px;
+}
+ul.courselist > li:last-child {
+	border: 0;
+}
+div > ul.courselist {
+	margin-bottom: 15px;
+}
+ul.courselist > li > a {
+	display:inline-block;
+	margin-right:20px;
+}
+ul.courselist li {
+	position: relative;
+}
 
 ul#navlist
 {
@@ -749,6 +824,12 @@ span.inlinebtn:hover {
 	 border-bottom: 1px solid #000;
  }
 
+.fbbox {
+	background-color: #fff;
+	border: 1px solid #ccc;
+	margin: 5px;
+	padding: 0px 5px;
+}
 
  #autosuggest
  {
@@ -780,6 +861,21 @@ span.inlinebtn:hover {
 	cursor: pointer;
 }
 
+a.attach {
+    background: url(../tinymce4/plugins/attach/ed_attach.gif) center left no-repeat;
+    padding-left: 20px;
+}
+a[target=_blank]:after {
+	content: "";
+	width:16px;
+	height:1em;
+	display: inline-block;
+	background: url(../img/extlink.png) center right no-repeat;
+}
+.mce-content-body a[target=_blank]:after {
+	display: none;
+}
+.mce-content-body span.AMedit {border: 1px solid #ff0000;} 
 .clearfix:after {
     content: " ";
     display: block;
@@ -795,7 +891,9 @@ span.inlinebtn:hover {
 .altContentOff {
 	display:none;
 }
-
+.midwrapper {
+	position: relative;
+}
 .fw1000 div#headercontent, .fw1000 div#navlistcont,.fw1000 .footerwrapper {
 	max-width: 1000px;
 	margin: auto;
@@ -813,4 +911,80 @@ span.inlinebtn:hover {
 	margin:auto;
 	padding: 0px 10px;
 	max-width:1900px;
+}
+
+button.hamburger {
+	border: 0;
+	background-color: transparent;
+	margin: 0;
+	padding: 2px;
+	width: 28px;
+	height: 28px;
+	cursor: pointer;
+}
+.hamburger-box {
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	width: 24px;
+	height: 24px;
+}
+.hamburger-inner {
+	display: block;
+	top: auto;
+	bottom: 3px;
+}
+.hamburger-inner, .hamburger-inner:before, .hamburger-inner:after {
+	width: 24px;
+ 	height: 4px;
+ 	border-radius: 4px;
+ 	position: absolute;
+	background-color: #000;
+ }
+ #videocuedmenubtn:hover {
+ 	opacity: .7;
+ }
+.hamburger-inner:before, .hamburger-inner:after {
+	display: block;
+	content: "";
+}
+.hamburger-inner:before {
+	top: -7px;
+}
+.hamburger-inner:after {
+	top: -14px;
+}
+
+#videocuedmenubtn {
+	display: none;
+}
+
+.inset.videocued {
+	margin-left: 215px;
+	margin-right: 0px;
+	padding-left: 0px;
+	overflow: visible;
+	position: relative;
+}
+.navbar.videocued {
+	width: 175px;
+}
+@media only screen and (max-width: 760px) {
+	#videocuedmenubtn {
+		display: block;
+	}
+	.navbar.videocued {
+		position: absolute;
+		left: -250px;
+		display: none;
+		z-index: 100;
+		box-shadow: 5px 2px 10px rgba(0,0,0,.175);
+	}
+	.inset.videocued {
+		margin-left: 0px;
+		padding-left: 0px;
+	}
+	.navbar.videocued.shownav {
+		display: block;
+	}
 }

@@ -162,6 +162,7 @@ function normalizemathunicode(str) {
 	str = str.replace(/±/g,"+-").replace(/÷/g,"/").replace(/·|✕|×|⋅/g,"*");
 	str = str.replace(/√/g,"sqrt").replace(/∛/g,"root(3)");
 	str = str.replace(/²/g,"^2").replace(/³/g,"^3");
+	str = str.replace(/\u2329/g, "<").replace(/\u232a/g, ">");
 	str = str.replace(/₀/g,"_0").replace(/₁/g,"_1").replace(/₂/g,"_2").replace(/₃/g,"_3");
 	str = str.replace(/\bOO\b/i,"oo");
 	str = str.replace(/θ/,"theta").replace(/φ/,"phi").replace(/π/,"pi").replace(/σ/,"sigma").replace(/μ/,"mu")
@@ -204,7 +205,7 @@ function calculate(inputId,outputId,format) {
 		  	  str = str.replace(/(x|X|\u00D7)/,"*");
 		  }
 		  if (format.indexOf('mixed')!=-1) {
-		  	  str = str.replace(/_/,' ');
+		  	  str = str.replace(/_/g,' ');
 		  } else if (format.indexOf('scinot')!=-1) {
 			  str = str.replace(/(x|X|\u00D7)/,"xx");
 		  } else {
@@ -219,7 +220,7 @@ function calculate(inputId,outputId,format) {
 			  	evalstr = evalstr.replace(/%/,'') + '/100';
 			  }
 			  if (format.indexOf('mixed')!=-1) {
-				  evalstr = evalstr.replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+				  evalstr = evalstr.replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 			  }
 			  if (format.indexOf('scinot')!=-1) {
 			  	  evalstr = evalstr.replace("xx","*");
@@ -303,7 +304,7 @@ function ineqtointerval(strw) {
 function intcalculate(inputId,outputId,format) {
   var fullstr = document.getElementById(inputId).value;
   if (format.indexOf('mixed')!=-1) {
-	  fullstr = fullstr.replace(/_/,' ').replace(/^\s+/,'').replace(/\s+$/,'');
+	  fullstr = fullstr.replace(/_/g,' ').replace(/^\s+/,'').replace(/\s+$/,'');
   } else {
 	  fullstr = fullstr.replace(/\s+/g,'');
   }
@@ -365,7 +366,7 @@ function intcalculate(inputId,outputId,format) {
 				  res = NaN;
 				  err += singlevalsyntaxcheck(vals[j], format);
 				  if (format.indexOf('mixed')!=-1) {
-					  vals[j] = vals[j].replace(/_/,' ');
+					  vals[j] = vals[j].replace(/_/g,' ');
 				  } else {
 					  vals[j] = vals[j].replace(/\s/g,'');
 				  }
@@ -375,7 +376,7 @@ function intcalculate(inputId,outputId,format) {
 					  try {
 					  	toeval = vals[j];
 					  	if (format.indexOf('mixed')!=-1) {
-					  		toeval = toeval.replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+					  		toeval = toeval.replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 					  	}
 					  	var res = eval(prepWithMath(mathjs(toeval)));
 					  } catch(e) {
@@ -468,7 +469,7 @@ function ntuplecalc(inputId,outputId,format) {
 	var fullstr = document.getElementById(inputId).value;
 	fullstr = normalizemathunicode(fullstr);
 	if (format.indexOf('mixed')!=-1) {
-		fullstr = fullstr.replace(/_/,' ').replace(/^\s+/,'').replace(/\s+$/,'');
+		fullstr = fullstr.replace(/_/g,' ').replace(/^\s+/,'').replace(/\s+$/,'');
 	} else {
 		fullstr = fullstr.replace(/\s+/g,'');
 	}
@@ -510,7 +511,7 @@ function ntuplecalc(inputId,outputId,format) {
 				err += syntaxcheckexpr(sub, format);
 				try {
 					if (format.indexOf('mixed')!=-1) {
-						sub = sub.replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+						sub = sub.replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 					}
 					var res = eval(prepWithMath(mathjs(sub)));
 				} catch(e) {
@@ -561,7 +562,7 @@ function complexcalc(inputId,outputId,format) {
 	var outcalced, outstr, err;
 	fullstr = normalizemathunicode(fullstr);
 	if (format.indexOf('mixed')!=-1) {
-		fullstr = fullstr.replace(/_/,' ').replace(/^\s+/,'').replace(/\s+$/,'');
+		fullstr = fullstr.replace(/_/g,' ').replace(/^\s+/,'').replace(/\s+$/,'');
 	} else {
 		fullstr = fullstr.replace(/\s+/g,'');
 	}
@@ -575,26 +576,33 @@ function complexcalc(inputId,outputId,format) {
 		for (var cnt=0; cnt<arr.length; cnt++) {
 			var prep = arr[cnt];
 			if (format.indexOf('mixed')!=-1) {
-				prep = prep.replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+				prep = prep.replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 			}
 			var prep = mathjs(prep,'i');
 			if (format.indexOf("sloppycomplex")==-1) {
 				var cparts = parsecomplex(arr[cnt]);
-				err += singlevalsyntaxcheck(cparts[0], format);
-				err += singlevalsyntaxcheck(cparts[1], format);
+				if (typeof cparts == 'string') {
+					err += cparts;
+				} else {
+					err += singlevalsyntaxcheck(cparts[0], format);
+					err += singlevalsyntaxcheck(cparts[1], format);
+				}
 			}
 			err += syntaxcheckexpr(arr[cnt], format);
-			try {
-			    var real = scopedeval('var i=0;'+prepWithMath(prep));
-			    var imag = scopedeval('var i=1;'+prepWithMath(prep));
-			} catch(e) {
-			    err += _("syntax incomplete");
+			if (err == '') {
+				try {
+				    var real = scopedeval('var i=0;'+prepWithMath(prep));
+				    var imag = scopedeval('var i=1;'+prepWithMath(prep));
+						var imag2 = scopedeval('var i=-1;'+prepWithMath(prep));
+				} catch(e) {
+				    err += _("syntax incomplete");
+				}
 			}
 			if (real=="synerr" || imag=="synerr") {
 			    err += _("syntax incomplete");
 			    real = NaN;
 			}
-			if (!isNaN(real) && real!="Infinity" && !isNaN(imag) && imag!="Infinity") {
+			if (!isNaN(real) && real!="Infinity" && !isNaN(imag) && !isNaN(imag2) && imag!="Infinity") {
 				imag -= real;
 				if (cnt!=0) {
 					outcalced += ',';
@@ -658,6 +666,9 @@ function parsecomplex(v) {
 				}
 			}
 			if (L<0) {L=0;}
+			if (nd != 0) {
+				return _('error - invalid form');
+			}
 			//look right
 			nd = 0;
 
@@ -670,6 +681,9 @@ function parsecomplex(v) {
 				} else if ((c=='+' || c=='-') && nd==0) {
 					break;
 				}
+			}
+			if (nd != 0) {
+				return _('error - invalid form');
 			}
 			//which is bigger?
 			if (p-L>0 && R-p>0 && (R==len || L==0)) {
@@ -845,8 +859,9 @@ function AMnumfuncPrepVar(qn,str) {
   var vl = vlist[qn];
   var fl = flist[qn];
   var vars = vl.split("|");
+  vars.push("DNE");
 
-  str = str.replace(/,/g,"");
+  str = str.replace(/,/g,"").replace(/^\s+/,'').replace(/\s+$/,'');
   str = normalizemathunicode(str);
   var foundaltcap = [];
   var dispstr = str;
@@ -863,13 +878,27 @@ function AMnumfuncPrepVar(qn,str) {
 	  			break;
 	  		}
 	  	}
-	  	if (!foundaltcap[i]) {
-			str = str.replace(new RegExp(vars[i],"gi"),vars[i]);
-			dispstr = dispstr.replace(new RegExp(vars[i],"gi"),vars[i]);
-		}
 	  }
   }
-
+  //sequentially escape variables from longest to shortest, then unescape
+  str = str.replace(new RegExp("("+vl+")","gi"), function(match,p1) {
+	 for (var i=0; i<vars.length;i++) {
+		if (vars[i]==p1 || (!foundaltcap[i] && vars[i].toLowerCase()==p1.toLowerCase())) { 
+			return '@v'+i+'@';
+		}
+	 }});
+  str = str.replace(/@v(\d+)@/g, function(match,contents) {
+  	  return vars[contents];
+       });
+  dispstr = dispstr.replace(new RegExp("("+vl+")","gi"), function(match,p1) {
+	 for (var i=0; i<vars.length;i++) {
+		if (vars[i]==p1 || (!foundaltcap[i] && vars[i].toLowerCase()==p1.toLowerCase())) {  
+			return '@v'+i+'@';
+		}
+	 }});
+  dispstr = dispstr.replace(/@v(\d+)@/g, function(match,contents) {
+  	  return vars[contents];
+       });
 
   //quote out multiletter variables
   var varstoquote = new Array(); var regmod;
@@ -997,6 +1026,9 @@ function AMpreview(inputId,outputId) {
   else if ((typeof iseqn[qn] === 'undefined') && !isnoteqn) { err = _("syntax error: you gave an equation, not an expression");}
   //outnode.appendChild(document.createTextNode(" " + err));
 
+  if (dispstr=='"DNE"' || dispstr=="oo") {
+  	  err = _("syntax ok");
+  }
   var qn = outputId.substr(1);
   setupLivePreview(qn);
   LivePreviews[qn].RenderNow('`'+dispstr+'` '+wrapAMnotice(err));
@@ -1037,7 +1069,7 @@ function singlevalsyntaxcheck(str,format) {
 			return (_("not a valid fraction")+". ");
 		  }
 	} else if (format.indexOf('mixednumber')!=-1) {
-		  if (!str.match(/^\s*\-?\s*\d+\s*(_|\s)\s*\d+\s*\/\s*\d+\s*$/) && !str.match(/^\s*?\-?\d+\s*$/) && !str.match(/^\s*\-?\d+\s*\/\s*\-?\d+\s*$/)) {
+		  if (!str.match(/^\(?\-?\s*\(?\d+\)?\/\(?\d+\)?$/) && !str.match(/^\(?\d+\)?\/\(?\-?\d+\)?$/) && !str.match(/^\s*\-?\s*\d+\s*(_|\s)\s*(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))\s*$/) && !str.match(/^\s*\-?\s*\d+\s*$/)) {
 			return (_("not a valid mixed number")+". ");
 		  }
 		  str = str.replace(/_/,' ');
@@ -1058,7 +1090,7 @@ function syntaxcheckexpr(str,format,vl) {
 	  } else if (format.indexOf('nodecimal')!=-1 && str.indexOf('.')!=-1) {
 		  err += _("no decimals allowed")+". ";
 	  }
-	  var Pdepth = 0; var Bdepth = 0;
+	  var Pdepth = 0; var Bdepth = 0; var Adepth = 0;
 	  for (var i=0; i<str.length; i++) {
 		if (str.charAt(i)=='(') {
 			Pdepth++;
@@ -1068,10 +1100,15 @@ function syntaxcheckexpr(str,format,vl) {
 			Bdepth++;
 		} else if (str.charAt(i)==']') {
 			Bdepth--;
+		} else if (str.charAt(i)=='|') {
+			Adepth = 1-Adepth;
 		}
 	  }
 	  if (Pdepth!=0 || Bdepth!=0) {
 		  err += " ("+_("unmatched parens")+"). ";
+	  }
+	  if (Adepth!=0) {
+	  	  err += " ("+_("unmatched absolute value bars")+"). ";
 	  }
 	  if (vl) {
 	  	  reg = new RegExp("(sqrt|ln|log|sinh|cosh|tanh|sech|csch|coth|sin|cos|tan|sec|csc|cot|abs)\s*("+vl+"|\\d+)", "i");
@@ -1088,8 +1125,14 @@ function syntaxcheckexpr(str,format,vl) {
 	  	  	err += _(" Check your variables - you might be using an incorrect one")+". ";
 	  	  }
 	  }
-	  if (str.match(/\|/)) {
-		  err += _(" Use abs(x) instead of |x| for absolute values")+". ";
+	  if ((str.match(/\|/g)||[]).length>2) {
+	  	  var regex = /\|.*?\|\s*(.|$)/g;
+	  	  while (match = regex.exec(str)) {
+	  	  	if (match[1]!="" && match[1].match(/[^+\-\*\/\^\)]/)) {
+	  	  		err += _(" You may want to use abs(x) instead of |x| for absolute values to avoid ambiguity")+". ";
+	  	  		break;
+	  	  	}
+	  	  }
 	  }
 	  if (str.match(/%/) && !str.match(/^\s*[+-]?\s*((\d+(\.\d*)?)|(\.\d+))\s*%\s*$/)) {
 	  	  err += _(" Do not use the percent symbol, %")+". ";
@@ -1127,8 +1170,10 @@ function doonsubmit(form,type2,skipconfirm) {
 			form.className = 'submitted';
 		}
 		if (!skipconfirm) {
-			if (type2) {
-				var reallysubmit = confirmSubmit2(form);
+			if (type2 && $("input[name=saveforlater]").attr("data-clicked")==1) {
+				//var reallysubmit = confirmSubmit2(form);
+				var reallysubmit = true;
+				$("input[name=saveforlater]").attr("data-clicked",0);
 			} else {
 				var reallysubmit = confirmSubmit(form);
 			}
@@ -1137,6 +1182,7 @@ function doonsubmit(form,type2,skipconfirm) {
 				return false;
 			}
 		}
+		
 	}
 	imathasDraw.encodea11ydraw();
 
@@ -1146,7 +1192,7 @@ function doonsubmit(form,type2,skipconfirm) {
 		fullstr = document.getElementById("tc"+qn).value;
 		//fullstr = fullstr.replace(/^\s+/g,'').replace(/\s+$/,'');
 		if (calcformat[qn].indexOf('mixed')!=-1) {
-			fullstr = fullstr.replace(/_/,' ').replace(/^\s+/,'').replace(/\s+$/,'');
+			fullstr = fullstr.replace(/_/g,' ').replace(/^\s+/,'').replace(/\s+$/,'');
 		} else {
 			fullstr = fullstr.replace(/\s+/g,'');
 		}
@@ -1185,7 +1231,7 @@ function doonsubmit(form,type2,skipconfirm) {
 
 							  try {
 							  	  if (calcformat[qn].indexOf('mixed')!=-1) {
-							  	  	  vals[j] = vals[j].replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+							  	  	  vals[j] = vals[j].replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 							  	  }
 							  	  var res = eval(prepWithMath(mathjs(vals[j])));
 							  } catch(e) {
@@ -1237,9 +1283,9 @@ function doonsubmit(form,type2,skipconfirm) {
 			if (str.match(/^\s*[+-]?\s*((\d+(\.\d*)?)|(\.\d+))\s*%\s*$/)) {//single percent
 				str = str.replace(/%/,'') + '/100';
 			}
-			str = str.replace(/(\d+)\s*_\s*(\d+\s*\/\s*\d+)/,"($1+$2)");
+			str = str.replace(/(\d+)\s*_\s*(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 			if (calcformat[qn].indexOf('mixed')!=-1) {
-				str = str.replace(/(\d+)\s+(\d+\s*\/\s*\d+)/,"($1+$2)");
+				str = str.replace(/(\d+)\s+(\d+|\(\d+\))\s*\/\s*(\d+|\(\d+\))/g,"($1+$2/$3)");
 			}
 			if (str.match(/^\s*$/)) {
 				var res = '';
@@ -1367,9 +1413,56 @@ function toggleinlinebtn(n,p){ //n: target, p: click el
 	}
 	var k=btn.innerHTML;
 	btn.innerHTML = k.match(/\[\+\]/)?k.replace(/\[\+\]/,'[-]'):k.replace(/\[\-\]/,'[+]');
-	
+
 }
+//triggered by blur, this saves the one question without scoring
+function assessbackgsave() {
+	var m = $(this).attr("name").match(/^(qs|qn|tc)(\d+)/);
+	if (m !== null && !!window.FormData) {
+		var qn = m[2]*1;
+		if (qn>1000) {
+			qn = Math.floor(qn/1000 + .001)-1;
+		}
+		if (typeof tinyMCE != "undefined") {tinyMCE.triggerSave();}
+		doonsubmit();
+		var tosubFormData = new FormData();
+		var regex = new RegExp("^(qn|tc|qs)("+qn+"\\b|"+(qn+1)+"\\d{3})");
+		$("input,select,textarea").each(function(i,el) {
+			if (el.name.match(regex)) {
+				if ((el.type!='radio' && el.type!='checkbox') || el.checked) {
+					if (el.type=='file') {
+						tosubFormData.append(el.name, el.files[0]);
+					} else {
+						tosubFormData.append(el.name, el.value);
+					}
+				}
+			}
+		});
+		tosubFormData.append("backgroundsaveforlater",1);
+		tosubFormData.append("tosaveqn",qn);
+		tosubFormData.append("asidverify", document.getElementById("asidverify").value);
+		tosubFormData.append("disptime", document.getElementById("disptime").value);
+		tosubFormData.append("isreview", document.getElementById("isreview").value);
+		$.ajax({
+			type:"POST", 
+			url: window.location.origin+window.location.pathname, 
+			data: tosubFormData, 
+			contentType: false, 
+			processData: false,
+			qn: qn
+		}).done(function(msg){
+			if (assessFormIsDirty.indexOf(this.qn*1)!=-1) {
+		    	    assessFormIsDirty.splice(assessFormIsDirty.indexOf(this.qn*1),1);
+		    	}
+			//console.log(msg);
+		});
+	}
+}
+//this submits one question for grading, in Embedded display
 function assessbackgsubmit(qn,noticetgt) {
+	if (!confirmSubmit($("#embedqwrapper"+qn)[0])) {
+		return false;	
+	}
 	if (typeof tinyMCE != 'undefined') {tinyMCE.triggerSave();}
 	doonsubmit();
 	var params = {};
@@ -1377,7 +1470,7 @@ function assessbackgsubmit(qn,noticetgt) {
 	if (useFormData) {
 		var tosubFormData = new FormData();
 	}
-	
+
 	var els = new Array();
 	var tags = document.getElementsByTagName("input");
 	for (var i=0;i<tags.length;i++) {
@@ -1416,7 +1509,7 @@ function assessbackgsubmit(qn,noticetgt) {
 		}
 	}
 	if (qn !== null) {
-		if (useFormData) { 
+		if (useFormData) {
 			tosubFormData.append('toscore', qn);
 			tosubFormData.append('verattempts', document.getElementById("verattempts"+qn).value);
 		} else {
@@ -1424,7 +1517,7 @@ function assessbackgsubmit(qn,noticetgt) {
 			params['verattempts'] = document.getElementById("verattempts"+qn).value;
 		}
 	} else {
-		if (useFormData) { 
+		if (useFormData) {
 			tosubFormData.append('verattempts', document.getElementById("verattempts").value);
 		} else {
 			params['verattempts'] = document.getElementById("verattempts").value;
@@ -1483,6 +1576,7 @@ function assessbackgsubmit(qn,noticetgt) {
 		    if (usingTinymceEditor) {
 			    initeditor("textareas","mceEditor");
 		    }
+		   
 		    // Loop through every script collected and eval it
 		    initstack.length = 0;
 		    for(var i=0; i<scripts.length; i++) {
@@ -1514,8 +1608,12 @@ function assessbackgsubmit(qn,noticetgt) {
 		    	 LivePreviews[qn].Init();
 		    }
 				*/
-		    $(window).trigger("ImathasEmbedReload");
-
+		    $(window).trigger("ImathasEmbedReload", [qn]);
+		    if (assessFormIsDirty.indexOf(qn*1)!=-1) {
+		    	    assessFormIsDirty.splice(assessFormIsDirty.indexOf(qn*1),1);
+		    }
+		    $("#embedqwrapper"+qn).find("input,textarea").on("change", trackDirty);
+		    
 		    var pagescroll = 0;
 		    if(typeof window.pageYOffset!= 'undefined'){
 			//most browsers
@@ -1537,10 +1635,23 @@ function assessbackgsubmit(qn,noticetgt) {
 		    document.getElementById(this.noticetgt).innerHTML = _("Submission Error");
 		}
 	});
-		
-	
+
+
 }
 
+function embedEnterHandler(el) {
+	$("#"+el+" input[type=text][name^=qn]").off("keydown.embedenterhandler")
+	  .on("keydown.embedenterhandler", function(e) {
+		if (e.which==13) {
+			e.preventDefault();
+			var id = $(this).closest(".embedqwrapper").attr("id").substr(13);
+			assessbackgsubmit(id, "submitnotice"+id);
+		}
+	});
+}
+$(window).on("ImathasEmbedReload", function(e, qn) {
+	embedEnterHandler("embedqwrapper"+qn);	
+});
 
 /*******************************************************
 
@@ -2098,7 +2209,31 @@ function togglemainintroshow(el) {
 
 function prepWithMath(str) {
 	str = str.replace(/\b(abs|acos|asin|atan|ceil|floor|cos|sin|tan|sqrt|exp|max|min|pow)\(/g, 'Math.$1(');
-	str = str.replace(/\((E|PI)\)/g,'(Math.$1)');
+	str = str.replace(/\(E\)/g,'(Math.E)');
+	str = str.replace(/\((PI|pi)\)/g,'(Math.PI)');
 	return str;
 }
+
+var assessFormIsDirty = [];
+function trackDirty() {
+	var name = $(this).attr("name");
+	var m = name.match(/^(qs|qn|tc)(\d+)/);
+	if (m !== null) {
+		var qn = m[2]*1;
+		if (qn>1000) {
+			qn = Math.floor(qn/1000 + .001)-1;
+		}
+		if (assessFormIsDirty.indexOf(qn)==-1) {
+			assessFormIsDirty.push(qn);
+		}
+	}
+}
+$(function() {
+	$("div.question").find("input,select,textarea").on("change", trackDirty);
+	$(window).on("beforeunload",function() {
+		if ($("form.submitted,form.submitted2").length==0 && assessFormIsDirty.length>0) {
+			return _('Are you sure you want to leave this assessment? You may have unsubmitted work');
+		}
+	});
+});
 

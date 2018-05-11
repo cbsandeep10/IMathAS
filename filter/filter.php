@@ -9,9 +9,6 @@
 	if ((isset($sessiondata['mathdisp']) && $sessiondata['mathdisp']==2 ) || isset($loadmathfilter)) { //use image fallback for math
 		include("$filterdir/math/ASCIIMath2TeX.php");
 		$AMT = new AMtoTeX;
-		if (isset($sessiondata['texalignformatrix'])) {
-			$AMT->setAlignForMatrix($sessiondata['texalignformatrix']);
-		}
 	}
 	if ((isset($sessiondata['graphdisp']) && $sessiondata['graphdisp']==2) || isset($loadgraphfilter)) { //use image fallback for graphs
 		include("$filterdir/graph/asciisvgimg.php");
@@ -49,6 +46,12 @@
 	function svgfiltersscrcallback($arr) {
 		global $filterdir, $AS, $imasroot;
 		if (trim($arr[2])=='') {return $arr[0];}
+
+		if (!isset($AS) || $AS===null) {
+			include("$filterdir/graph/asciisvgimg.php");
+			$AS = new AStoIMG;
+		}
+
 		if (strpos($arr[0],'style')!==FALSE) {
 			$sty = preg_replace('/.*style\s*=\s*(.)(.+?)\1.*/',"$2",$arr[0]);
 		} else {
@@ -65,6 +68,11 @@
 	function svgfilterscriptcallback($arr) {
 		global $filterdir, $AS, $imasroot;
 		if (trim($arr[2])=='') {return $arr[0];}
+
+		if (!isset($AS) || $AS===null) {
+			include("$filterdir/graph/asciisvgimg.php");
+			$AS = new AStoIMG;
+		}
 
 		$w = preg_replace('/.*\bwidth\s*=\s*.?(\d+).*/',"$1",$arr[0]);
 		$h = preg_replace('/.*\bheight\s*=\s*.?(\d+).*/',"$1",$arr[0]);

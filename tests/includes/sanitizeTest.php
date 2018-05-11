@@ -68,32 +68,133 @@ final class SanitizeTest extends TestCase
 	}
 
 	/*
+	 * encodeStringForJavascript
+	 */
+
+	public function testEncodeStringForJavascript()
+	{
+		$result = Sanitize::encodeStringForJavascript("<h1 style='color: red;'>Hello, world!</h1>");
+		$this->assertEquals(
+			'\x3ch1\x20style\x3d\x27color\x3a\x20red\x3b\x27\x3eHello\x2c\x20world\x21\x3c\x2fh1\x3e', $result);
+	}
+
+	/*
+	 * encodeStringForCSS
+	 */
+
+	public function testEncodeStringForCSS_Colors()
+	{
+		$result = Sanitize::encodeStringForCSS("#fff;");
+		$this->assertEquals('#fff;', $result);
+	}
+
+	public function testEncodeStringForCSS_LotsOfStuff()
+	{
+		$result = Sanitize::encodeStringForCSS("<h1 style='color: red; background-color: #fff;'>Hello, world!</h1>");
+		$this->assertEquals('\3ch1\20style\3d\27color\3a\20red;\20background\2dcolor\3a\20#fff;\27\3eHello\2c\20world\21\3c\2fh1\3e', $result);
+	}
+
+	/*
 	 * encodeUrlParam
 	 */
 
 	public function testEncodeUrlParam()
 	{
 		$result = Sanitize::encodeUrlParam("<h1>Hello, world!</h1>");
-		$this->assertEquals("%3Ch1%3EHello%2C+world%21%3C%2Fh1%3E", $result);
+		$this->assertEquals("%3Ch1%3EHello%2C%20world%21%3C%2Fh1%3E", $result);
 	}
 
 	/*
-	 * fullUrl
+	 * rawurlencodePath
 	 */
 
-	public function testFullUrlValid()
+	public function testRawurlencodePath()
 	{
-		$testUrl = 'https://www.test.example.com/index.html?page-id=123&validchars=a-_~:;/?#[321]@!$(\'z\')*+,%b';
-		$result = Sanitize::fullUrl($testUrl);
-		$this->assertEquals($testUrl, $result);
+		$result = Sanitize::rawurlencodePath('one/two three%$four,^*(five');
+		$this->assertEquals('one/two%20three%25%24four%2C%5E%2A%28five', $result);
 	}
 
-	public function testFullUrlWithInvalid()
+	/*
+	 * url
+	 */
+
+	public function testUrl_Complete()
 	{
-		$testUrl = "https://www.test.example.com/index.html?page-id=123&invalid=<h1>\"^Hello, world!\"</h1>";
-		$expectedUrl = "https://www.test.example.com/index.html?page-id=123&invalid=h1Hello,world!/h1";
-		$result = Sanitize::fullUrl($testUrl);
+		$testUrl = 'https://user:pass@www.test.example.com:8080/index.html?page-id=123&validchars=a-_~:;/?#<h1>Hi!</h1>[321]@!$(\'z\')*+,%b#fragmentName';
+		$expectedUrl = 'https://user:pass@www.test.example.com:8080/index.html?page-id=123&validchars=a-_%7E%3A%3B%2F%3F#%3Ch1%3EHi%21%3C%2Fh1%3E%5B321%5D%40%21%24%28%27z%27%29%2A%2B%2C%25b%23fragmentName';
+
+		$result = Sanitize::url($testUrl);
+
 		$this->assertEquals($expectedUrl, $result);
+	}
+
+	public function testUrl_MissingPortAuthFragment()
+	{
+		$testUrl = 'https://www.test.example.com/index.html?page-id=123&validchars=a-_~:;/?<h1>Hi!</h1>[321]@!$(\'z\')*,%b';
+		$expectedUrl = 'https://www.test.example.com/index.html?page-id=123&validchars=a-_%7E%3A%3B%2F%3F%3Ch1%3EHi%21%3C%2Fh1%3E%5B321%5D%40%21%24%28%27z%27%29%2A%2C%25b';
+
+		$result = Sanitize::url($testUrl);
+
+		$this->assertEquals($expectedUrl, $result);
+	}
+
+	public function testUrl_MissingProtocolAuth()
+	{
+		// If the protocol (http/https) is missing, credentials are not passed in the URL even if provided.
+		$testUrl = '//www.test.example.com:8080/index.html?page-id=123&validchars=a-_~:;/?#<h1>Hi!</h1>[321]@!$(\'z\')*+,%b#fragmentName';
+		$expectedUrl = '//www.test.example.com:8080/index.html?page-id=123&validchars=a-_%7E%3A%3B%2F%3F#%3Ch1%3EHi%21%3C%2Fh1%3E%5B321%5D%40%21%24%28%27z%27%29%2A%2B%2C%25b%23fragmentName';
+
+		$result = Sanitize::url($testUrl);
+
+		$this->assertEquals($expectedUrl, $result);
+	}
+
+	public function testUrl_MissingProtocolAuthHostPort()
+	{
+		$testUrl = '/index.html?page-id=123&validchars=a-_~:;/?#<h1>Hi!</h1>[321]@!$(\'z\')*+,%b#fragmentName';
+		$expectedUrl = '/index.html?page-id=123&validchars=a-_%7E%3A%3B%2F%3F#%3Ch1%3EHi%21%3C%2Fh1%3E%5B321%5D%40%21%24%28%27z%27%29%2A%2B%2C%25b%23fragmentName';
+
+		$result = Sanitize::url($testUrl);
+
+		$this->assertEquals($expectedUrl, $result);
+	}
+
+	public function testUrl_ContainsHTML()
+	{
+		$testUrl = "https://user:pass@www.test.example.com:8080/index.html?page-id=123&invalid=<h1>\"^Hello, world!\"</h1>#fragmentName";
+		$expectedUrl = "https://user:pass@www.test.example.com:8080/index.html?page-id=123&invalid=%3Ch1%3E%22%5EHello%2C+world%21%22%3C%2Fh1%3E#fragmentName";
+
+		$result = Sanitize::url($testUrl);
+
+		$this->assertEquals($expectedUrl, $result);
+	}
+
+	/*
+	 * fullQuery
+	 */
+
+	public function testGenerateQueryStringFromMap()
+	{
+		$testQuery = array( 'name' => 'MyName&inject=badStuff', 'cid' => 994 );
+		$expectedQuery = "name=MyName%26inject%3DbadStuff&cid=994";
+
+		$result = Sanitize::generateQueryStringFromMap($testQuery);
+
+		$this->assertEquals($expectedQuery, $result);
+	}
+
+	/*
+	 * fullQueryString
+	 */
+
+	public function testFullQueryString()
+	{
+		$testQuery = "name=My%Name&cid=994";
+		$expectedQuery = "name=My%25Name&cid=994";
+
+		$result = Sanitize::fullQueryString($testQuery);
+
+		$this->assertEquals($expectedQuery, $result);
 	}
 
 	/*
@@ -321,5 +422,6 @@ final class SanitizeTest extends TestCase
 		$result = Sanitize::generateQueryPlaceholdersGrouped($array, 4);
 		$this->assertNull($result);
 	}
+
 
 }

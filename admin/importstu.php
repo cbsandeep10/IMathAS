@@ -3,12 +3,20 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
-
+require("../includes/newusercommon.php");
 
 /*** pre-html data manipulation, including function code *******/
-
+// Reads past the UTF-8 bom if it is there.
+function fopen_utf8 ($filename, $mode) {
+    $file = @fopen($filename, $mode);
+    $bom = fread($file, 3);
+    if ($bom != b"\xEF\xBB\xBF") {
+        rewind($file);
+    }
+    return $file;
+}
 function parsecsv($data) {
 	$fn = $data[$_POST['fncol']-1];
 	if ($_POST['fnloc']!=0) {
@@ -30,15 +38,14 @@ function parsecsv($data) {
 			$ln = $fncol[count($fncol)-1];
 		}
 	}
-	$fn = preg_replace('/\W/','',$fn);
-	$ln = preg_replace('/\W/','',$ln);
+	$fn = preg_replace('/[^\w\'-]/','',$fn);
+	$ln = preg_replace('/[^\w\'-]/','',$ln);
 	$fn = ucfirst(strtolower($fn));
 	$ln = ucfirst(strtolower($ln));
-	if ($_POST['unusecol']==0) {
-		$un = strtolower($fn.'_'.$ln);
+	if (empty($_POST['unloc'])) {
+		$un = '';
 	} else {
 		$un = $data[$_POST['unloc']-1];
-		$un = preg_replace('/\W/','',$un);
 	}
 	if ($_POST['emailloc']>0) {
 		$email = $data[$_POST['emailloc']-1];
@@ -60,7 +67,7 @@ function parsecsv($data) {
 	} else {
 		$sec = 0;
 	}
-	if ($_POST['pwtype']==3) {
+	if (!empty($_POST['pwcol'])) {
 		$pw = $data[$_POST['pwcol']-1];
 	} else {
 		$pw = 0;
@@ -91,7 +98,7 @@ if (!(isset($teacherid)) && $myrights<100) {
 	$cid = Sanitize::courseId($_GET['cid']);
 	$isadmin = ($myrights==100 && $cid=="admin") ? true : false ;
 	if ($isadmin) {
-		$curBreadcrumb = "<div class=breadcrumb>$breadcrumbbase <a href=\"admin.php\">Admin</a> &gt; Import Students</div>\n";
+		$curBreadcrumb = "<div class=breadcrumb>$breadcrumbbase <a href=\"admin2.php\">Admin</a> &gt; Import Students</div>\n";
 	} else {
 		$curBreadcrumb = "<div class=breadcrumb>$breadcrumbbase <a href=\"../course/course.php?cid=$cid\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; Import Students</div>\n";
 	}
@@ -101,8 +108,17 @@ if (!(isset($teacherid)) && $myrights<100) {
 		if (isset($CFG['GEN']['newpasswords'])) {
 			require_once("../includes/password.php");
 		}
+		if ($isadmin) {
+			$ncid = Sanitize::onlyInt($_POST['enrollcid']);
+		} else {
+			$ncid = $cid;
+		}
+		$stm = $DBH->prepare("SELECT deflatepass FROM imas_courses WHERE id=:cid");
+		$stm->execute(array(':cid'=>$ncid));
+		$deflatepass = $stm->fetchColumn(0);
+		
 		$filename = rtrim(dirname(__FILE__), '/\\') .'/import/' . Sanitize::sanitizeFilenameAndCheckBlacklist($_POST['filename']);
-		$handle = fopen($filename,'r');
+		$handle = fopen_utf8($filename,'r');
 		if ($_POST['hdr']==1) {
 			$data = fgetcsv($handle,2096);
 		}
@@ -112,10 +128,34 @@ if (!(isset($teacherid)) && $myrights<100) {
 			for ($i=0;$i<count($arr);$i++) {
 				$arr[$i] = trim($arr[$i]);
 			}
+
 			//DB addslashes_deep($arr);
 			if (trim($arr[0])=='' || trim($arr[0])=='_') {
 				continue;
 			}
+			if (isset($CFG['acct']['importLoginformat'])) {
+				if (!checkFormatAgainstRegex($arr[0], $CFG['acct']['importLoginformat'])) {
+					echo "Username ".Sanitize::encodeStringForDisplay($arr[0])." is invalid; skipping<br/>\n";
+					continue;
+				}
+			} else if (isset($loginformat) && !checkFormatAgainstRegex($arr[0], $loginformat)) {
+				echo "Username ".Sanitize::encodeStringForDisplay($arr[0])." is invalid; skipping<br/>\n";
+				continue;
+			}
+			if (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/',$arr[3]) ||
+					(isset($CFG['acct']['emailFormat']) && !checkFormatAgainstRegex($arr[3], $CFG['acct']['emailFormat']))) {
+				echo "Email ".Sanitize::encodeStringForDisplay($arr[3])." is invalid; skipping<br/>\n";
+				continue;
+			}
+			if (strlen($arr[6]) < (isset($CFG['acct']['passwordMinlength'])?$CFG['acct']['passwordMinlength']:6)) {
+				echo "Password for username ".Sanitize::encodeStringForDisplay($arr[0])." is too short; skipping<br/>\n";
+				continue;
+			}
+			if (isset($CFG['acct']['passwordFormat']) && !checkFormatAgainstRegex($arr[6], $CFG['acct']['passwordFormat'])) {
+				echo "Password for username ".Sanitize::encodeStringForDisplay($arr[0])." is invalid format; skipping<br/>\n";
+				continue;
+			}
+
 			//DB $query = "SELECT id FROM imas_users WHERE SID='$arr[0]'";
 			//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 			//DB if (mysql_num_rows($result)>0) {
@@ -124,58 +164,23 @@ if (!(isset($teacherid)) && $myrights<100) {
 			$stm->execute(array(':SID'=>$arr[0]));
 			if ($stm->rowCount()>0) {
 				$id = $stm->fetchColumn(0);
-				echo "Username {$arr[0]} already existed in system; using existing<br/>\n";
+				echo "Username ".Sanitize::encodeStringForDisplay($arr[0])." already existed in system; using existing<br/>\n";
 			} else {
-				if (($_POST['pwtype']==0 || $_POST['pwtype']==1) && strlen($arr[0])<4) {
-					if (isset($CFG['GEN']['newpasswords'])) {
-						$pw = password_hash($arr[0], PASSWORD_DEFAULT);
-					} else {
-						$pw = md5($arr[0]);
-					}
+				if (isset($CFG['GEN']['newpasswords'])) {
+					$pw = password_hash($arr[6], PASSWORD_DEFAULT);
 				} else {
-					if ($_POST['pwtype']==0) {
-						if (isset($CFG['GEN']['newpasswords'])) {
-							$pw = password_hash(substr($arr[0],0,4), PASSWORD_DEFAULT);
-						} else {
-							$pw = md5(substr($arr[0],0,4));
-						}
-					} else if ($_POST['pwtype']==1) {
-						if (isset($CFG['GEN']['newpasswords'])) {
-							$pw = password_hash(substr($arr[0],-4), PASSWORD_DEFAULT);
-						} else {
-							$pw = md5(substr($arr[0],-4));
-						}
-					} else if ($_POST['pwtype']==2) {
-						if (isset($CFG['GEN']['newpasswords'])) {
-							$pw = password_hash($_POST['defpw'], PASSWORD_DEFAULT);
-						} else {
-							$pw = md5($_POST['defpw']);
-						}
-					} else if ($_POST['pwtype']==3) {
-						if (trim($arr[6])=='') {
-							echo "Password for {$arr[0]} is blank; skipping import<br/>";
-							continue;
-						}
-						if (isset($CFG['GEN']['newpasswords'])) {
-							$pw = password_hash($arr[6], PASSWORD_DEFAULT);
-						} else {
-							$pw = md5($arr[6]);
-						}
-					}
+					$pw = md5($arr[6]);
 				}
+				
 				//DB $query = "INSERT INTO imas_users (SID,FirstName,LastName,email,rights,password) VALUES ('$arr[0]','$arr[1]','$arr[2]','$arr[3]',10,'$pw')";
 				//DB mysql_query($query) or die("Query failed : " . mysql_error());
 				//DB $id = mysql_insert_id();
-				$stm = $DBH->prepare("INSERT INTO imas_users (SID,FirstName,LastName,email,rights,password) VALUES (:SID, :FirstName, :LastName, :email, :rights, :password)");
+				$stm = $DBH->prepare("INSERT INTO imas_users (SID,FirstName,LastName,email,rights,password,forcepwreset) VALUES (:SID, :FirstName, :LastName, :email, :rights, :password, 1)");
 				$stm->execute(array(':SID'=>$arr[0], ':FirstName'=>$arr[1], ':LastName'=>$arr[2], ':email'=>$arr[3], ':rights'=>10, ':password'=>$pw));
 				$id = $DBH->lastInsertId();
 			}
 			if ($_POST['enrollcid']!=0 || !$isadmin) {
-				if ($isadmin) {
-					$ncid = Sanitize::onlyInt($_POST['enrollcid']);
-				} else {
-					$ncid = $cid;
-				}
+
 				//DB $vals = "'$id','$ncid'";
 				//DB $query = "SELECT id FROM imas_students WHERE userid='$id' AND courseid='$ncid'";
 				//DB $result = mysql_query($query) or die("Query failed : $query" . mysql_error());
@@ -183,7 +188,7 @@ if (!(isset($teacherid)) && $myrights<100) {
 				$stm = $DBH->prepare("SELECT id FROM imas_students WHERE userid=:userid AND courseid=:courseid");
 				$stm->execute(array(':userid'=>$id, ':courseid'=>$ncid));
 				if ($stm->rowCount()>0) {
-					echo "Username {$arr[0]} already enrolled in course.  Skipping<br/>";
+					echo "Username ".Sanitize::encodeStringForDisplay($arr[0])." already enrolled in course.  Skipping<br/>";
 					continue;
 				}
 
@@ -198,10 +203,11 @@ if (!(isset($teacherid)) && $myrights<100) {
 				//DB }
 				//DB $query .= ") VALUES ($vals)";
 
-				$stm = $DBH->prepare("INSERT INTO imas_students (userid,courseid,code,section) VALUES (:userid, :courseid, :code, :section)");
+				$stm = $DBH->prepare("INSERT INTO imas_students (userid,courseid,code,section,latepass) VALUES (:userid, :courseid, :code, :section, :latepass)");
 				$stm->execute(array(':userid'=>$id, ':courseid'=>$ncid,
 					':code'=>($_POST['codetype']==1)?$arr[4]:null,
-					':section'=>($_POST['sectype']>0)?$arr[5]:null));
+					':section'=>($_POST['sectype']>0)?$arr[5]:null,
+					':latepass'=>$deflatepass));
 			}
 
 		}
@@ -212,7 +218,7 @@ if (!(isset($teacherid)) && $myrights<100) {
 		$body = "Import Successful<br/>\n";
 		$body .= "<p>";
 		if ($isadmin) {
-			$body .= "<a href=\"". $GLOBALS['basesiteurl'] . "/admin/admin.php\">Back to Admin Page";
+			$body .= "<a href=\"". $GLOBALS['basesiteurl'] . "/admin/admin2.php\">Back to Admin Page";
 		} else {
 			$body .= "<a href=\"". $GLOBALS['basesiteurl'] . "/course/course.php?cid=$cid\">Back to Course Page";
 		}
@@ -222,13 +228,13 @@ if (!(isset($teacherid)) && $myrights<100) {
 		$uploaddir = rtrim(dirname(__FILE__), '/\\') .'/import/';
 		$uploadfile = $uploaddir . Sanitize::sanitizeFilenameAndCheckBlacklist($_FILES['userfile']['name']);
 		if (move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)) {
-			$$uploadfilename = basename($uploadfile);
-			$page_fileHiddenInput = "<input type=hidden name=\"filename\" value=\"".Sanitize::sanitizeFilenameAndCheckBlacklist($$uploadfilename)."\" />\n";
+			$uploadfilename = basename($uploadfile);
+			$page_fileHiddenInput = "<input type=hidden name=\"filename\" value=\"".Sanitize::encodeStringForDisplay($uploadfilename)."\" />\n";
 		} else {
 			$overwriteBody = 1;
 			$body = "<p>Error uploading file!</p>\n";
 		}
-		$handle = fopen($uploadfile,'r');
+		$handle = fopen_utf8($uploadfile,'r');
 		if ($_POST['hdr']==1) {
 			$data = fgetcsv($handle,2096);
 		}
@@ -301,7 +307,7 @@ if ($overwriteBody==1) {
 			<thead>
 				<tr>
 					<th>Username</th><th>Firstname</th><th>Lastname</th><th>e-mail</th>
-					<th><?php echo $page_columnFiveLabel ?></th>
+					<th><?php echo Sanitize::encodeStringForDisplay($page_columnFiveLabel); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -310,11 +316,11 @@ if ($overwriteBody==1) {
 		for ($i=0; $i<count($page_sampleImport); $i++) {
 ?>
 				<tr>
-					<td><?php echo $page_sampleImport[$i]['col1'] ?></td>
-					<td><?php echo $page_sampleImport[$i]['col2'] ?></td>
-					<td><?php echo $page_sampleImport[$i]['col3'] ?></td>
-					<td><?php echo $page_sampleImport[$i]['col4'] ?></td>
-					<td><?php echo $page_sampleImport[$i]['col5'] ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_sampleImport[$i]['col1']); ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_sampleImport[$i]['col2']); ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_sampleImport[$i]['col3']); ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_sampleImport[$i]['col4']); ?></td>
+					<td><?php echo Sanitize::encodeStringForDisplay($page_sampleImport[$i]['col5']); ?></td>
 				</tr>
 
 <?php
@@ -322,10 +328,10 @@ if ($overwriteBody==1) {
 ?>
 			</tbody>
 			</table>
-
+ 
 <?php
 		foreach($_POST as $k=>$v) {
-			echo "<input type=hidden name=\"$k\" value=\"$v\">\n";
+			echo "<input type=hidden name=\"" . Sanitize::encodeStringForDisplay($k) . "\" value=\"".Sanitize::encodeStringForDisplay($v)."\">\n";
 		}
 		echo "<p><input type=submit name=\"process\" value=\"Accept and Enroll\"></p>\n";
 	} else { //STEP 1 DISPLAY
@@ -372,35 +378,15 @@ if ($overwriteBody==1) {
 
 		<span class=form>Email address is in column:<br/>Enter 0 if no email column</span>
 		<span class=formright><input type=text name=emailloc size=4 value="7"></span><br class=form>
-<?php
-if (isset($CFG['GEN']['allowInstrImportStuByName']) && $CFG['GEN']['allowInstrImportStuByName']==false) {
-?>
 
 		<span class=form>Unique username is in column:</span>
 		<span class=formright>
-			<input type=hidden name=unusecol value="1"/><input type=text name=unloc size=4 value="2"/>
+			<input type=text name=unloc size=4 value="2"/>
 		</span><br class=form>
-<?php
-} else {
-	?>
 
-		<span class=form>Does a column contain a desired username:</span>
+		<span class=form>Temporary password is in column:</span>
 		<span class=formright>
-			<input type=radio name=unusecol value="1" CHECKED>Yes, Column
-			<input type=text name=unloc size=4 value="2"/><br/>
-			<input type=radio name=unusecol value="0">No, Use as username: firstname_lastname
-		</span><br class=form>
-<?php
-}
-?>
-		<span class=form>Set password to:</span>
-		<span class=formright>
-			<input type=radio name=pwtype value="0">First 4 characters of username<br/>
-			<input type=radio name=pwtype value="1" CHECKED>Last 4 characters of username<br/>
-			<input type=radio name=pwtype value="3">Use value in column
-			<input type=text name="pwcol" size=4 value="1"/><br/>
-			<input type=radio name=pwtype value="2">Set to:
-			<input type=text name="defpw" value="password"/>
+			<input type=text name="pwcol" size=4 value="1"/>
 		</span><br class=form>
 
 		<span class=form>Assign code number?</span>

@@ -4,8 +4,6 @@
 	//created automatically by install.php
   //(c) 2006 David Lippman
 
-  require_once(__DIR__ . "/includes/security.php");
-
   //these settings must be editted before running dbsetup.php
   $dbserver = "localhost";  		//database server
   $dbname = "imathasdb";			//database name
@@ -26,10 +24,25 @@
 
   //Require the username to meet a specific format.  Choose one of the following,
   //or write your own.
-  $loginformat = '/^\w+$/';  //A-Z, a-z, 0-9, _ are the only allowed characters
-  //$loginformat = '/^\d{9}$/';  //Requires a 9 digit number
-  //$loginformat = '/^\d{3}-\d{2}-\d{4}$/';  //SSN type format: 555-55-5555
+  $loginformat = '/^[\w\-]+$/';  //A-Z, a-z, 0-9, _ are the only allowed characters
+  //$loginformat = '/^(\d{9}|lti-\d+)$/';  //Requires a 9 digit number
+  //$loginformat = '/^(\d{3}-\d{2}-\d{4}|lti-\d+)$/';  //SSN type format: 555-55-5555
 
+	/* Additional options available for restricting login format and related:
+	$loginformat can be an array of regexs instead of a single one to impose
+	  multiple restrictions
+	$CFG['acct']['SIDformaterror'] = a custom error message to display if the username
+	  does not match the $loginformat requirement.
+	$CFG['acct']['passwordMinlength'] = min length for passwords (default 6)
+	$CFG['acct']['passwordFormat'] = a single regex string or array of regexs
+	  as requirements for the password
+	$CFG['acct']['passwordFormaterror'] = a custom error message to display if the
+		password does not match the requirement.
+	$CFG['acct']['emailFormat'] = a single regex string or array of regexs
+	  as requirements for the email
+	$CFG['acct']['emailFormaterror'] = a custom error message to display if the
+		email does not match the requirement.
+	*/
   //If set to true, the system will send an email to newusers when they try
   //to enroll.  They have to respond to the email before they are allowed to
   //log in.

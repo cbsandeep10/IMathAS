@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("../includes/htmlutil.php");
 require_once("../includes/parsedatetime.php");
 
@@ -34,20 +34,20 @@ if (!isset($sessiondata['ltiitemtype']) || $sessiondata['ltiitemtype']!=0) {
 	$curBreadcrumb .= "<a href=\"course.php?cid=". Sanitize::courseId($_GET['cid'])."\">".Sanitize::encodeStringForDisplay($coursename)."</a> &gt; ";
 	if ($stu>0) {
 		$curBreadcrumb .= "<a href=\"gradebook.php?stu=0&cid=$cid\">Gradebook</a> ";
-		$curBreadcrumb .= "&gt; <a href=\"gradebook.php?stu=$stu&cid=$cid\">Student Detail</a> &gt; ";
+		$curBreadcrumb .= "&gt; <a href=\"gradebook.php?stu=" . Sanitize::encodeUrlParam($stu) . "&cid=$cid\">Student Detail</a> &gt; ";
 	} else if ($_GET['from']=="isolate") {
 		$curBreadcrumb .= " <a href=\"gradebook.php?stu=0&cid=$cid\">Gradebook</a> ";
-		$curBreadcrumb .= "&gt; <a href=\"isolateassessgrade.php?cid=$cid&aid=$aid\">View Scores</a> &gt; ";
+		$curBreadcrumb .= "&gt; <a href=\"isolateassessgrade.php?cid=$cid&aid=" . Sanitize::onlyInt($aid) . "\">View Scores</a> &gt; ";
 	} else if ($_GET['from']=="gisolate") {
 		$curBreadcrumb .= "<a href=\"gradebook.php?stu=0&cid=$cid\">Gradebook</a> ";
-		$curBreadcrumb .= "&gt; <a href=\"isolateassessbygroup.php?cid=$cid&aid=$aid\">View Group Scores</a> &gt; ";
+		$curBreadcrumb .= "&gt; <a href=\"isolateassessbygroup.php?cid=$cid&aid=" . Sanitize::onlyInt($aid) . "\">View Group Scores</a> &gt; ";
 	}else if ($_GET['from']=='stugrp') {
-		$curBreadcrumb .= "<a href=\"managestugrps.php?cid=$cid&aid=$aid\">Student Groups</a> &gt; ";
+		$curBreadcrumb .= "<a href=\"managestugrps.php?cid=$cid&aid=" . Sanitize::onlyInt($aid) . "\">Student Groups</a> &gt; ";
 	} else {
 		$curBreadcrumb .= "<a href=\"gradebook.php?stu=0&cid=$cid\">Gradebook</a> &gt; ";
 	}
 }
-$curBreadcrumb .= "<a href=\"gb-viewasid.php?cid=$cid&asid=$asid&uid=$uid\">Assessment Detail</a> &gt Make Exception\n";
+$curBreadcrumb .= "<a href=\"gb-viewasid.php?cid=$cid&asid=" . Sanitize::onlyInt($asid) . "&uid=" . Sanitize::onlyInt($uid) . "\">Assessment Detail</a> &gt Make Exception\n";
 
 if (!(isset($teacherid))) { // loaded by a NON-teacher
 	$overwriteBody=1;
@@ -58,7 +58,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 } else { // PERMISSIONS ARE OK, PROCEED WITH PROCESSING
 	$cid = Sanitize::courseId($_GET['cid']);
 	$waivereqscore = (isset($_POST['waivereqscore']))?1:0;
-	$epenalty = (isset($_POST['overridepenalty']))?intval($_POST['newpenalty']):'NULL';
+	$epenalty = (isset($_POST['overridepenalty']))?intval($_POST['newpenalty']):null;
 
 	if (isset($_POST['sdate'])) {
 		$startdate = parsedatetime($_POST['sdate'],$_POST['stime']);
@@ -167,14 +167,16 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 
 		}
 
-		header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gb-viewasid.php?cid=$cid&asid=$asid&uid=$uid&stu=$stu&from=$from");
+		header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gb-viewasid.php?cid=$cid&asid=" . Sanitize::onlyInt($asid) . "&uid=" . Sanitize::onlyInt($uid) . "&stu=" . Sanitize::onlyInt($stu) . "&from=" . Sanitize::encodeUrlParam($from));
 
 	} else if (isset($_GET['clear'])) {
 		//DB $query = "DELETE FROM imas_exceptions WHERE id='{$_GET['clear']}'";
 		//DB mysql_query($query) or die("Query failed :$query " . mysql_error());
 		$stm = $DBH->prepare("DELETE FROM imas_exceptions WHERE id=:id");
 		$stm->execute(array(':id'=>$_GET['clear']));
-		header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gb-viewasid.php?cid=$cid&asid=$asid&uid=$uid&stu=$stu&from=$from");
+		header('Location: ' . $GLOBALS['basesiteurl'] . "/course/gb-viewasid.php?"
+			. Sanitize::generateQueryStringFromMap(array('cid' => $cid, 'asid' => $asid, 'uid' => $uid,
+				'stu' => $stu, 'from' => $from,)));
 	} elseif (isset($_GET['aid']) && $_GET['aid']!='') {
 		//DB $query = "SELECT LastName,FirstName FROM imas_users WHERE id='{$_GET['uid']}'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -186,13 +188,14 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 		//DB $query = "SELECT startdate,enddate FROM imas_assessments WHERE id='{$_GET['aid']}'";
 		//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		//DB $row = mysql_fetch_row($result);
-		$stm = $DBH->prepare("SELECT startdate,enddate FROM imas_assessments WHERE id=:id");
+		$stm = $DBH->prepare("SELECT startdate,enddate,date_by_lti FROM imas_assessments WHERE id=:id");
 		$stm->execute(array(':id'=>Sanitize::onlyInt($_GET['aid'])));
 		$row = $stm->fetch(PDO::FETCH_NUM);
 		$sdate = tzdate("m/d/Y",$row[0]);
 		$edate = tzdate("m/d/Y",$row[1]);
 		$stime = tzdate("g:i a",$row[0]);
 		$etime = tzdate("g:i a",$row[1]);
+		$isDateByLTI = ($row[2]>0);
 
 		//check if exception already exists
 		//DB $query = "SELECT id,startdate,enddate,waivereqscore,exceptionpenalty FROM imas_exceptions WHERE userid='{$_GET['uid']}' AND assessmentid='{$_GET['aid']}'";
@@ -205,7 +208,7 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 		$savetitle = _('Create Exception');
 		if ($erow != null) {
 			$savetitle = _('Save Changes');
-			$page_isExceptionMsg = "<p>An exception already exists.  <button type=\"button\" onclick=\"window.location.href='exception.php?cid=$cid&aid=".Sanitize::onlyInt($_GET['aid'])."&uid={$_GET['uid']}&clear={$erow[0]}&asid=$asid&stu=$stu&from=$from'\">"._("Clear Exception").'</button> or modify below.</p>';
+			$page_isExceptionMsg = "<p>An exception already exists.  <button type=\"button\" onclick=\"window.location.href='exception.php?cid=$cid&aid=" . Sanitize::onlyInt($_GET['aid']) . "&uid=" . Sanitize::onlyInt($_GET['uid']) . "&clear=" . Sanitize::encodeUrlParam($erow[0]) . "&asid=" . Sanitize::onlyInt($asid) . "&stu=" . Sanitize::encodeUrlParam($stu) . "&from=" . Sanitize::encodeUrlParam($from) . "'\">"._("Clear Exception").'</button> or modify below.</p>';
 			$sdate = tzdate("m/d/Y",$erow[1]);
 			$edate = tzdate("m/d/Y",$erow[2]);
 			$stime = tzdate("g:i a",$erow[1]);
@@ -213,9 +216,15 @@ if (!(isset($teacherid))) { // loaded by a NON-teacher
 			$curwaive = $erow[3];
 			$curepenalty = $erow[4];
 		}
+		if ($isDateByLTI) {
+			$page_isExceptionMsg .= '<p class="noticetext">Note: You have opted to allow your LMS to set assessment dates.  If you need to give individual ';
+			$page_isExceptionMsg .=  'students different due dates, you should do so in your LMS, not here, as the date from the LMS will be given ';
+			$page_isExceptionMsg .= 'priority.  Only create a manual exception here if it is for a special purpose, like waiving a prerequisite.</p>';
+		}
 	}
 	//DEFAULT LOAD DATA MANIPULATION
-	$address = $GLOBALS['basesiteurl'] . "/course/exception.php?cid=" . Sanitize::courseId($_GET['cid']) . "&uid={$_GET['uid']}&asid=$asid&stu=$stu&from=$from";
+	$address = $GLOBALS['basesiteurl'] . "/course/exception.php?" . Sanitize::generateQueryStringFromMap(array(
+			'cid' => $_GET['cid'], 'uid' => $_GET['uid'], 'asid' => $asid, 'stu' => $stu, 'from' => $from));
 
 	//DB $query = "SELECT id,name from imas_assessments WHERE courseid='$cid' ORDER BY name";
 	//DB $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -250,7 +259,7 @@ if ($overwriteBody==1) {
 	<script type="text/javascript">
 	function nextpage() {
 	   var aid = document.getElementById('aidselect').value;
-	   var togo = '<?php echo $address; ?>&aid='+aid;
+	   var togo = '<?php echo Sanitize::url($address); ?>&aid=' + aid;
 	   window.location = togo;
 	}
 	</script>
@@ -260,15 +269,18 @@ if ($overwriteBody==1) {
 	<div id="headerexception" class="pagetitle"><h2>Make Start/Due Date Exception</h2></div>
 
 <?php
-	echo '<h3>'.$stuname.'</h3>';
+	echo '<h3>'.Sanitize::encodeStringForDisplay($stuname).'</h3>';
 	echo $page_isExceptionMsg;
 	echo '<p><span class="form">Assessment:</span><span class="formright">';
 	writeHtmlSelect ("aidselect",$page_courseSelect['val'],$page_courseSelect['label'],Sanitize::onlyInt($_GET['aid']),"Select an assessment","", " onchange='nextpage()'");
 	echo '</span><br class="form"/></p>';
 
 	if (isset($_GET['aid']) && $_GET['aid']!='') {
+		$exceptionUrl = "exception.php?" . Sanitize::generateQueryStringFromMap(array('cid' => $cid,
+				'aid' => $_GET['aid'], 'uid' => $_GET['uid'], 'asid' => $asid, 'from' => $from,
+            ));
 ?>
-	<form method=post action="exception.php?cid=<?php echo $cid ?>&aid=<?php echo Sanitize::onlyInt($_GET['aid']) ?>&uid=<?php echo $_GET['uid'] ?>&asid=<?php echo $asid;?>&from=<?php echo $from;?>">
+	<form method=post action="<?php echo $exceptionUrl; ?>">
 		<span class=form>Available After:</span>
 		<span class=formright>
 			<input type=text size=10 name=sdate value="<?php echo $sdate ?>">
@@ -288,11 +300,11 @@ if ($overwriteBody==1) {
 		   will keep any scores earned, but must work new versions of questions to improve score. <i>Do not use with group assessments</i>.</span><br class="form"/>
 		<span class="form"><input type="checkbox" name="eatlatepass"/></span>
 		<span class="formright">Deduct <input type="input" name="latepassn" size="1" value="1"/> LatePass(es).
-		   Student currently has <?php echo $latepasses;?> latepasses.</span><br class="form"/>
+		   Student currently has <?php echo Sanitize::onlyInt($latepasses);?> latepasses.</span><br class="form"/>
 		<span class="form"><input type="checkbox" name="waivereqscore" <?php if ($curwaive==1) echo 'checked="checked"';?>/></span>
 		<span class="formright">Waive "show based on an another assessment" requirements, if applicable.</span><br class="form"/>
 		<span class="form"><input type="checkbox" name="overridepenalty" <?php if ($curepenalty!==null) echo 'checked="checked"';?>/></span>
-		<span class="formright">Override default exception/LatePass penalty.  Deduct <input type="input" name="newpenalty" size="2" value="<?php echo ($curepenalty===null)?0:$curepenalty?>"/>% for questions done while in exception.
+		<span class="formright">Override default exception/LatePass penalty.  Deduct <input type="input" name="newpenalty" size="2" value="<?php echo ($curepenalty===null)?0:Sanitize::onlyFloat($curepenalty);?>"/>% for questions done while in exception.
 		<div class=submit><input type=submit value="<?php echo $savetitle;?>"></div>
 	</form>
 

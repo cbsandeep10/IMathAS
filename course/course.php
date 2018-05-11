@@ -3,7 +3,7 @@
 //(c) 2006 David Lippman
 
 /*** master php includes *******/
-require("../validate.php");
+require("../init.php");
 require("courseshowitems.php");
 require("../includes/htmlutil.php");
 require("../includes/calendardisp.php");
@@ -220,29 +220,10 @@ if (!isset($teacherid) && !isset($tutorid) && !isset($studentid) && !isset($inst
 					$sendcrumb .= " &gt; ";
 				}
 				if ($i!=count($backtrack)-1) {
-					$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder={$backtrack[$i][1]}\">";
+					$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder=" . Sanitize::encodeUrlParam($backtrack[$i][1]) . "\">";
 				}
 				//DB $sendcrumb .= "<a href=\"course.php?cid=$cid&folder={$backtrack[$i][1]}\">".stripslashes($backtrack[$i][0]).'</a>';
-				$sendcrumb .= "<a href=\"course.php?cid=$cid&folder={$backtrack[$i][1]}\">".Sanitize::encodeStringForDisplay($backtrack[$i][0]).'</a>';
-				//DB $curBreadcrumb .= stripslashes($backtrack[$i][0]);
-				$curBreadcrumb .= $backtrack[$i][0];
-				if ($i!=count($backtrack)-1) {
-					$curBreadcrumb .= "</a>";
-				}
-			}
-			$curname = $backtrack[count($backtrack)-1][0];
-			if (count($backtrack)>$depth) {
-				$backlink = "<span class=right><a href=\"course.php?cid=$cid&folder=".$backtrack[count($backtrack)-2][1]."\">" . _('Back') . "</a></span><br class=\"form\" />";
-			}
-			$_SESSION['backtrack'] = array($sendcrumb,$backtrack[count($backtrack)-1][1]);
-
-		} else {
-			$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder=0\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
-			for ($i=0;$i<count($backtrack);$i++) {
-				$curBreadcrumb .= " &gt; ";
-				if ($i!=count($backtrack)-1) {
-					$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder={$backtrack[$i][1]}\">";
-				}
+				$sendcrumb .= "<a href=\"course.php?cid=$cid&folder=" . Sanitize::encodeUrlParam($backtrack[$i][1]) . "\">".Sanitize::encodeStringForDisplay($backtrack[$i][0]).'</a>';
 				//DB $curBreadcrumb .= stripslashes($backtrack[$i][0]);
 				$curBreadcrumb .= Sanitize::encodeStringForDisplay($backtrack[$i][0]);
 				if ($i!=count($backtrack)-1) {
@@ -250,11 +231,30 @@ if (!isset($teacherid) && !isset($tutorid) && !isset($studentid) && !isset($inst
 				}
 			}
 			$curname = $backtrack[count($backtrack)-1][0];
-			if (count($backtrack)==1) {
-				$backlink =  "<span class=right><a href=\"course.php?cid=$cid&folder=0\">" . _('Back') . "</a></span><br class=\"form\" />";
-			} else {
-				$backlink = "<span class=right><a href=\"course.php?cid=$cid&folder=".$backtrack[count($backtrack)-2][1]."\">" . _('Back') . "</a></span><br class=\"form\" />";
+			if (count($backtrack)>$depth) {
+				$backlink = "<span class=right><a href=\"course.php?cid=$cid&folder=".Sanitize::encodeUrlParam($backtrack[count($backtrack)-2][1])."\">" . _('Back') . "</a></span><br class=\"form\" />";
 			}
+			$_SESSION['backtrack'] = array($sendcrumb,$backtrack[count($backtrack)-1][1]);
+
+		} else {
+			$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder=0\">".Sanitize::encodeStringForDisplay($coursename)."</a> ";
+			for ($i=0;$i<count($backtrack);$i++) {
+				$curBreadcrumb .= " &gt; ";
+			if ($i!=count($backtrack)-1) {
+				$curBreadcrumb .= "<a href=\"course.php?cid=$cid&folder=" . Sanitize::encodeUrlParam($backtrack[$i][1]) . "\">";
+			}
+				//DB $curBreadcrumb .= stripslashes($backtrack[$i][0]);
+				$curBreadcrumb .= Sanitize::encodeStringForDisplay($backtrack[$i][0]);
+				if ($i!=count($backtrack)-1) {
+					$curBreadcrumb .= "</a>";
+				}
+            }
+            $curname = $backtrack[count($backtrack)-1][0];
+            if (count($backtrack)==1) {
+                $backlink =  "<span class=right><a href=\"course.php?cid=$cid&folder=0\">" . _('Back') . "</a></span><br class=\"form\" />";
+            } else {
+                $backlink = "<span class=right><a href=\"course.php?cid=$cid&folder=".Sanitize::encodeUrlParam($backtrack[count($backtrack)-2][1])."\">" . _('Back') . "</a></span><br class=\"form\" />";
+            }
 		}
 	} else {
 		$curBreadcrumb .= Sanitize::encodeStringForDisplay($coursename);
@@ -270,7 +270,7 @@ if (!isset($teacherid) && !isset($tutorid) && !isset($studentid) && !isset($inst
 	   $stm->execute(array(':msgto'=>$userid, ':courseid'=>$cid));
 	   $msgcnt = $stm->fetchColumn(0);
 	   if ($msgcnt>0) {
-		   $newmsgs = " <a href=\"$imasroot/msgs/newmsglist.php?cid=$cid\" class=noticetext>" . sprintf(_('New (%d)'), $msgcnt) . "</a>";
+		   $newmsgs = " <a href=\"$imasroot/msgs/msglist.php?page=-1&cid=$cid\" class=noticetext>" . sprintf(_('New (%d)'), $msgcnt) . "</a>";
 	   } else {
 		   $newmsgs = '';
 	   }
@@ -307,16 +307,16 @@ if (!isset($teacherid) && !isset($tutorid) && !isset($studentid) && !isset($inst
 		$query .= "AND (imas_forums.avail=2 OR (imas_forums.avail=1 AND imas_forums.startdate<$now && imas_forums.enddate>$now)) ";
 	}
 	$query .= "LEFT JOIN imas_forum_views as mfv ON mfv.threadid=imas_forum_threads.id AND mfv.userid=:userid ";
-	$query .= "WHERE (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
+	$query .= "WHERE imas_forum_threads.lastposttime<:now AND (imas_forum_threads.lastposttime>mfv.lastview OR (mfv.lastview IS NULL)) ";
 	if (!isset($teacherid)) {
 		$query .= "AND (imas_forum_threads.stugroupid=0 OR imas_forum_threads.stugroupid IN (SELECT stugroupid FROM imas_stugroupmembers WHERE userid=:userid2)) ";
 	}
 	$query .= "GROUP BY imas_forum_threads.forumid";
 	$stm = $DBH->prepare($query);
 	if (!isset($teacherid)) {
-		$stm->execute(array(':courseid'=>$cid, ':userid'=>$userid, ':userid2'=>$userid));
+		$stm->execute(array(':now'=>$now, ':courseid'=>$cid, ':userid'=>$userid, ':userid2'=>$userid));
 	} else {
-		$stm->execute(array(':courseid'=>$cid, ':userid'=>$userid));
+		$stm->execute(array(':now'=>$now, ':courseid'=>$cid, ':userid'=>$userid));
 	}
 
 
@@ -378,7 +378,7 @@ if (!isset($teacherid) && !isset($tutorid) && !isset($studentid) && !isset($inst
 	}
 }
 
-$placeinhead = "<script type=\"text/javascript\" src=\"$imasroot/javascript/course.js?v=120516\"></script>";
+$placeinhead = "<script type=\"text/javascript\" src=\"$imasroot/javascript/course.js?v=072917\"></script>";
 if (isset($tutorid) && isset($sessiondata['ltiitemtype']) && $sessiondata['ltiitemtype']==3) {
 	$placeinhead .= '<script type="text/javascript">$(function(){$(".instrdates").hide();});</script>';
 }
@@ -425,8 +425,8 @@ if ($overwriteBody==1) {
 ?>
 	<script type="text/javascript">
 		var getbiaddr = 'getblockitems.php?cid=<?php echo $cid ?>&folder=';
-		var oblist = '<?php echo $oblist ?>';
-		var plblist = '<?php echo $plblist ?>';
+		var oblist = '<?php echo Sanitize::encodeStringForJavascript($oblist); ?>';
+		var plblist = '<?php echo Sanitize::encodeStringForJavascript($plblist); ?>';
 		var cid = '<?php echo $cid ?>';
 	</script>
 
@@ -471,7 +471,7 @@ if ($overwriteBody==1) {
 			}
 			echo '<span id="leftcontenttoggle" '.$incclass.' aria-hidden="true"><img alt="menu" style="cursor:pointer" src="'.$imasroot.'/img/menu.png"></span> ';
 		}
-		echo $curBreadcrumb
+		echo $curBreadcrumb;
 		?>
 		<div class=clear></div>
 	</div>
@@ -487,10 +487,10 @@ if ($overwriteBody==1) {
 
 		<p>
 		<b><?php echo _('Communication'); ?></b><br/>
-			<a href="<?php echo $imasroot ?>/msgs/msglist.php?cid=<?php echo $cid ?>&folder=<?php echo $_GET['folder'] ?>" class="essen">
-			<?php echo _('Messages'); ?></a> <?php echo $newmsgs ?> <br/>
-			<a href="<?php echo $imasroot ?>/forums/forums.php?cid=<?php echo $cid ?>&folder=<?php echo $_GET['folder'] ?>" class="essen">
-			<?php echo _('Forums'); ?></a> <?php echo $newpostscnt ?>
+			<a href="<?php echo $imasroot ?>/msgs/msglist.php?cid=<?php echo $cid ?>&folder=<?php echo Sanitize::encodeUrlParam($_GET['folder']); ?>" class="essen">
+			<?php echo _('Messages'); ?></a> <?php echo $newmsgs; ?> <br/>
+			<a href="<?php echo $imasroot ?>/forums/forums.php?cid=<?php echo $cid ?>&folder=<?php echo Sanitize::encodeUrlParam($_GET['folder']); ?>" class="essen">
+			<?php echo _('Forums'); ?></a> <?php echo $newpostscnt; ?>
 		</p>
 	<?php
 	if (isset($CFG['CPS']['leftnavtools']) && $CFG['CPS']['leftnavtools']=='limited') {
@@ -535,7 +535,7 @@ if ($overwriteBody==1) {
 			<a href="copyitems.php?cid=<?php echo $cid ?>"><?php echo _('Copy'); ?></a><br/>
 			<a href="../admin/ccexport.php?cid=<?php echo $cid ?>"><?php echo _('Export'); ?></a>
 		<?php if (!isset($CFG['GEN']['noimathasimportfornonadmins']) || $myrights>=75) { ?>
-			<br/><a href="../admin/importitems.php?cid=<?php echo $cid ?>"><?php echo _('Import'); ?></a>
+			<br/><a href="../admin/importitems2.php?cid=<?php echo $cid ?>"><?php echo _('Import'); ?></a>
 		<?php } ?>
 		</p>
 
@@ -570,13 +570,13 @@ if ($overwriteBody==1) {
 
 		echo '<p>';
 		if ($msgset<4) {
-			echo '<a href="'.$imasroot.'/msgs/msglist.php?cid='.$cid.'&amp;folder='.$_GET['folder'].'" class="essen"> ';
-			echo _('Messages').'</a> '.$newmsgs .' <br/>';
-		}
-		if (($toolset&2)==0) {
-			echo '<a href="'.$imasroot.'/forums/forums.php?cid='.$cid.'&amp;folder='.$_GET['folder'].'" class="essen">';
-			echo _('Forums').'</a> '.$newpostscnt.'<br/>';
-		}
+				echo '<a href="'.$imasroot.'/msgs/msglist.php?cid='.$cid.'&amp;folder=' . Sanitize::encodeUrlParam($_GET['folder']) . '" class="essen"> ';
+				echo _('Messages').'</a> '.$newmsgs .' <br/>';
+			}
+			if (($toolset&2)==0) {
+				echo '<a href="'.$imasroot.'/forums/forums.php?cid='.$cid.'&amp;folder=' . Sanitize::encodeUrlParam($_GET['folder']) . '" class="essen">';
+				echo _('Forums').'</a> '.$newpostscnt.'<br/>';
+			}
 		if (($toolset&1)==0) {
 			echo '<a href="showcalendar.php?cid='.$cid.'" class="essen">'._('Calendar').'</a><br/>';
 		}
@@ -637,6 +637,7 @@ if ($overwriteBody==1) {
 			echo '<p>To start by copying from another course, use the <a href="copyitems.php?cid='.$cid.'">Course Items: Copy</a> ';
 			echo 'link along the left side of the screen.</p><p>If you want to build from scratch, use the "Add An Item" pulldown below to get started.</p><p>&nbsp;</p>';
 	   	   }
+	   	// $_GET['folder'] is sanitized in generateadditem()
 	   	echo generateadditem($_GET['folder'],'t');
 	   }
    }
