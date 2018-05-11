@@ -36,7 +36,8 @@ function storecontenttofile($content,$key,$sec="private") {
 		if (!is_dir($dir)) {
 			mkdir_recursive($dir);
 		}
-		$fh = @fopen($dir.'/'.$fn,'wb');
+		#$fh = @fopen($dir.'/'.$fn,'wb');
+                $fh = @fopen($fn,'wb');
 		if ($fh) {
 			fwrite($fh,$content);
 			fclose($fh);
@@ -106,6 +107,7 @@ function storeuploadedfile($id,$key,$sec="private") {
 			$base = rtrim(dirname(dirname(__FILE__)), '/\\').'/filestore/';
 			$dir = $base.dirname($key);
 			$fn = Sanitize::sanitizeFilenameAndCheckBlacklist($key);
+                        #vardump($fn);
 			if (!is_dir($dir)) {
 				mkdir_recursive($dir);
 			}
