@@ -7,7 +7,7 @@
 	$placeinhead .= '<script type="text/javascript" src="'.$imasroot.'/javascript/jquery.validate.min.js"></script>';
 	$nologo = true;
 	require("header.php");
-	$pagetitle = "Instructor Account Request";
+	$pagetitle = "ASU Instructor Account Request";
 	require("infoheader.php");
 	$extrarequired = array('school','phone','agree');
 

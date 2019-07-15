@@ -166,12 +166,11 @@ function storeuploadedfile($id,$key,$sec="private") {
 			$base = rtrim(dirname(dirname(__FILE__)), '/\\').'/filestore/';
 			$key = Sanitize::sanitizeFilePathAndCheckBlacklist($key);
 			$dir = $base.dirname($key);
-<<<<<<< HEAD
+/*<<<<<<< HEAD
 			$fn = Sanitize::sanitizeFilenameAndCheckBlacklist($key);
                         #vardump($fn);
-=======
+=======*/
 			$fn = basename($key);
->>>>>>> 3ea18c189f686f11f3354d8b12b08ed219ec23c5
 			if (!is_dir($dir)) {
 				mkdir_recursive($dir);
 			}

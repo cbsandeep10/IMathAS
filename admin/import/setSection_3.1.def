@@ -1,0 +1,68 @@
+assignmentType      = default
+openDate          = 05/12/2018 at 11:59pm MST
+reducedScoringDate = 04/11/2016 at 11:59pm MST
+dueDate           = 06/03/2018 at 11:59pm MST
+answerDate        = 06/03/2018 at 11:59pm MST
+enableReducedScoring = N
+paperHeaderFile   = 
+screenHeaderFile  = 
+description       = 
+restrictProbProgression = 0
+emailInstructor   = 0
+
+problemListV2 
+problem_start
+problem_id = 1
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p2.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 2
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p1.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 3
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p8.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 4
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p3.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 5
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p4.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 6
+source_file = Local/ASU-topics/setCalculus-new/setMAT265_Section_3-1/stefi3_1p5.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+

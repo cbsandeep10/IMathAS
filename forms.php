@@ -35,9 +35,9 @@ require("header.php");
 switch($_GET['action']) {
 	case "newuser":
 		if ($gb == '') {
-			echo "<div class=breadcrumb><a href=\"index.php\">Home</a> &gt; New Student Signup</div>\n";
+			echo "<div class=breadcrumb><a href=\"index.php\">Home</a> &gt; New ASU Student Signup</div>\n";
 		}
-		echo '<div id="headerforms" class="pagetitle"><h2>New Student Signup</h2></div>';
+		echo '<div id="headerforms" class="pagetitle"><h2>New ASU Student Signup</h2></div>';
 		echo "<form id=\"newuserform\" class=limitaftervalidate method=post action=\"actions.php?action=newuser$gb\">\n";
 		echo "<span class=form><label for=\"SID\">$longloginprompt:</label></span> <input class=\"form\" type=\"text\" size=12 id=SID name=SID><BR class=\"form\">\n";
 		echo "<span class=\"form\"><label for=\"pw1\">Choose a password:</label></span><input class=\"form\" type=\"password\" size=20 id=pw1 name=pw1><BR class=\"form\">\n";

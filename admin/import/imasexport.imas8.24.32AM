@@ -1,0 +1,10850 @@
+PACKAGE DESCRIPTION
+MAT265 library and other problems used for application of rate of change functions that we have used are included. I also included another folder of derivatives (easy-medium difficulty) if you wanted. 
+INSTALLNAME
+IMathAS
+
+START LIBRARY
+ID
+1
+UID
+1521948680223423
+LASTMODDATE
+1530132105
+OWNERID
+13
+USERIGHTS
+5
+NAME
+Julia
+PARENT
+0
+
+START LIBRARY
+ID
+2
+UID
+1531107994161555
+LASTMODDATE
+1532552810
+OWNERID
+13
+USERIGHTS
+2
+NAME
+Derivatives
+PARENT
+0
+
+START LIBRARY
+ID
+3
+UID
+1521948706620081
+LASTMODDATE
+1522348693
+OWNERID
+
+USERIGHTS
+
+NAME
+Coordinating Acc and ROC
+PARENT
+1
+
+START LIBRARY
+ID
+4
+UID
+1522294294029182
+LASTMODDATE
+1522348704
+OWNERID
+
+USERIGHTS
+
+NAME
+Critical Values
+PARENT
+1
+
+START LIBRARY
+ID
+5
+UID
+1522297602955664
+LASTMODDATE
+1523385877
+OWNERID
+
+USERIGHTS
+
+NAME
+Optimization
+PARENT
+1
+
+START LIBRARY
+ID
+6
+UID
+1522949640839677
+LASTMODDATE
+1523385869
+OWNERID
+
+USERIGHTS
+
+NAME
+Implicit Differentiation
+PARENT
+1
+
+START LIBRARY
+ID
+7
+UID
+1523385913154667
+LASTMODDATE
+1523812364
+OWNERID
+
+USERIGHTS
+
+NAME
+Related Rates
+PARENT
+1
+
+START LIBRARY
+ID
+8
+UID
+1523813900785089
+LASTMODDATE
+1523918396
+OWNERID
+
+USERIGHTS
+
+NAME
+Fundamental Thm P1
+PARENT
+1
+
+START LIBRARY
+ID
+9
+UID
+1523918532206779
+LASTMODDATE
+1523998545
+OWNERID
+
+USERIGHTS
+
+NAME
+Fundamental Thm P2
+PARENT
+1
+
+START LIBRARY
+ID
+10
+UID
+1524850603701932
+LASTMODDATE
+1533913692
+OWNERID
+
+USERIGHTS
+
+NAME
+Other
+PARENT
+1
+
+START LIBRARY ITEMS
+LIBID
+2
+QSETIDS
+74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163
+
+START LIBRARY ITEMS
+LIBID
+3
+QSETIDS
+0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+
+START LIBRARY ITEMS
+LIBID
+4
+QSETIDS
+16,17,18
+
+START LIBRARY ITEMS
+LIBID
+5
+QSETIDS
+19,20,21,22,23,24,25,26,27,28,29,30
+
+START LIBRARY ITEMS
+LIBID
+6
+QSETIDS
+31,32,33,34,35,36,37
+
+START LIBRARY ITEMS
+LIBID
+7
+QSETIDS
+38,39,40,41,42,43,44,45,46,47,48,49,50,51,52
+
+START LIBRARY ITEMS
+LIBID
+8
+QSETIDS
+53,54,55,56,57,58,59,60
+
+START LIBRARY ITEMS
+LIBID
+9
+QSETIDS
+61,62,63,64,65,66,67,68,69,70,71,72,73
+
+START QUESTION
+QID
+0
+
+UQID
+1521951346491038
+
+LASTMOD
+1523032148
+
+DESCRIPTION
+Accumulation and ROC #1
+
+AUTHOR
+Judson-Garcia,Julia, mb Boney,Jennifer
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["string","string","string","string","string","string"]
+
+$answerformat = "list"
+
+$answer[0] = "x1,x5"
+$answer[1] = "x1,x4,x5"
+$answer[2] = "x1,x4,x5"
+$answer[3] = "x3,x4"
+$answer[4] = "x2,x3"
+$answer[5] = "x1,x5"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Given the graph of <em>y </em>=&nbsp;<em>f</em>(<em>x</em>)&nbsp;below, at which of the marked&nbsp;<em>x</em>-values can the following statement be true? &nbsp;</p>
+<p>&nbsp;</p>
+<p>$Fig1</p>
+<p><em>(For each question, enter your answer as a comma-separated list, e.g.,&nbsp;</em> <strong>x1,x3,x5</strong>.&nbsp;<em>Enter&nbsp;</em><strong>none</strong> &nbsp;<em>if no points satisfy the given condition) &nbsp;</em></p>
+<p>a)&nbsp;<em>f</em>(<em>x</em>) &lt; 0 at&nbsp;<em>x&nbsp;</em>= $answerbox[0]</p>
+<p>b)&nbsp;<em>f&nbsp;<strong>'</strong></em>(<em>x</em>) &lt; 0 at&nbsp;<em>x&nbsp;</em>=&nbsp;$answerbox[1]</p>
+<p>c)&nbsp;<em>f</em>(<em>x</em>) is decreasing at&nbsp;<em>x&nbsp;</em>=&nbsp;$answerbox[2]</p>
+<p>d)&nbsp;<em>f '</em>(<em>x</em>) is decreasing at&nbsp;<em>x&nbsp;</em>=&nbsp;$answerbox[3]</p>
+<p>e) The rate of change of&nbsp;<em>f</em>(<em>x</em>) is positive at&nbsp;<em>x&nbsp;</em>=&nbsp;$answerbox[4]</p>
+<p>f) The rate of change of&nbsp;<em>f '</em>(<em>x</em>) is positive at&nbsp;<em>x&nbsp;</em>=&nbsp;$answerbox[5]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig1,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure1.png,
+Fig1,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure1_0.png,
+
+START QUESTION
+QID
+1
+
+UQID
+1522165373993980
+
+LASTMOD
+1522213226
+
+DESCRIPTION
+Accumulation and ROC #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = [" <em>f</em>(4)", " <em>f</em> '(4)", " <em>f</em> ''(4)",]
+
+$answers = ["positive","negative"]
+
+$displayformat = "select"
+$noshuffle = "answers"
+$noshuffle = "questions"
+
+$matchlist = "1,0,0"
+
+QCONTROL
+
+
+QTYPE
+matching
+
+QTEXT
+<p>Consider the function&nbsp;<em>f</em>(<em>x</em>) graphed below.&nbsp;</p>
+<p>$Fig2</p>
+<p>For this function, are the following nonzero quantities positive or negative?&nbsp;<br /><br /></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig2,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig2.png,
+
+START QUESTION
+QID
+2
+
+UQID
+1522177521094678
+
+LASTMOD
+1522846380
+
+DESCRIPTION
+Accumulation and ROC #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$answer = "1"
+
+QCONTROL
+
+
+QTYPE
+number
+
+QTEXT
+<p>$Fig3a $Fig3b<br /><br /> Graph A and B are approximate graphs of&nbsp;<em>f</em>(<em>x</em>) and&nbsp;<em>f&nbsp;</em>'(<em>x</em>) for&nbsp;<em>f</em>(<em>x</em>) =&nbsp;`x^2 - 2x +4`&nbsp;.&nbsp;</p>
+<p>So&nbsp;<em>f</em>(<em>x</em>) is increasing (and&nbsp;<em>f&nbsp;</em>'(<em>x</em>) is positive) and the interval (<em>a</em>,&nbsp;`oo`&nbsp;) for a = $answerbox</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig3a,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig3.1.png,Graph A
+Fig3b,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig3.2.png,GraphB
+
+START QUESTION
+QID
+3
+
+UQID
+1522179211329829
+
+LASTMOD
+1522867422
+
+DESCRIPTION
+Accumulation and ROC #4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calcinterval","number"]
+
+$answer[0]=("(0,3)U(5,8)")
+$answer[1]=("5")
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Below is the graph of <span style="text-decoration: underline;"><strong>the rate of change</strong></span>&nbsp;of a function <em><strong>f </strong></em><strong>'(<em>x</em>)</strong>&nbsp;defined on the interval (0,8).&nbsp;</p>
+<p>&nbsp;</p>
+<p>$Fig4</p>
+<p>a) For what values of&nbsp;<em>x</em> in (0,8) is&nbsp;<em>f</em>(<em>x</em>) increasing? (Use interval notation.)&nbsp;</p>
+<p>$answerbox[0]</p>
+<p>b) Find all values of&nbsp;<em>x</em> in (0,8) where&nbsp;<em>f</em>(<em>x</em>) has a local minimum. (If more than one value, separate using commas. If there are no local minima, enter None.)&nbsp;</p>
+<p>$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig4,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig4.png,
+
+START QUESTION
+QID
+4
+
+UQID
+1522190766975671
+
+LASTMOD
+1522881023
+
+DESCRIPTION
+Accumulation and ROC #5
+
+AUTHOR
+Judson-Garcia,Julia, mb Boney,Jennifer
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calcinterval","string","calcinterval","string","calcinterval","string"]
+
+$answerformat = "list"
+
+$answer[0] = "(0,2)"
+$answer[1] = "Increasing"
+$answer[2] = "(2,6)"
+$answer[3] = "Decreasing"
+$answer[4] = "(6,7)"
+$answer[5] = "Increasing"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Determine the intervals on which <em>g</em>(<em>x</em>) is increasing or decreasing given the graph below of its rate of change function <em>g</em> '(<em>x</em>).&nbsp;</p>
+<p>&nbsp;$Fig5</p>
+<p>Use interval notation for the intervals below. Type in "Decreasing" or "Increasing" to describe&nbsp;<em>g</em>(<em>x</em>).</p>
+<p>a) On Interval 1: $answerbox[0] &nbsp;&nbsp;<em>g</em>(<em>x</em>) is $answerbox[1]&nbsp;</p>
+<p>b)&nbsp;On Interval 2: $answerbox[2] &nbsp;&nbsp;<em>g</em>(<em>x</em>) is $answerbox[3]&nbsp;</p>
+<p>c)&nbsp;On Interval 3: $answerbox[4] &nbsp;&nbsp;<em>g</em>(<em>x</em>) is $answerbox[5]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig5,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig5.png,
+
+START QUESTION
+QID
+5
+
+UQID
+1522191445754992
+
+LASTMOD
+1522267271
+
+DESCRIPTION
+Accumulation and ROC #6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+//Provides the ability for choices
+
+$anstypes = ["choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices"];
+
+// each one has a single score and the display format of drop down
+
+
+$displayformat = "select";
+
+//the options
+
+$questions = ["positive","zero","negative"]
+
+//answers for corresponding answerboxes in table below 
+$answer[0] = "1"; $answer[1] = "2"; $answer[2] = "0"; $answer[3] = "0"; $answer[4] = "2"; $answer[5] = "2"; $answer[6] = "1"; $answer[7] = "1"; $answer[8] = "2"; $answer[9] = "0"; $answer[10] = "0"; $answer[11] = "0"; $answer[12] = "2"; $answer[13] = "2"; $answer[14] = "0"
+
+
+$noshuffle = "answers"
+$noshuffle = "questions"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>At exactly two of the labeled points in the graph below, which shows&nbsp;<em>h</em>(<em>x</em>), the rate of change,&nbsp;<em>h'</em>(<em>x</em>) is 0. The second derivative&nbsp;<em>h''</em>(<em>x</em>)<em>&nbsp;</em>is not zero at any of the labeled points.<em>&nbsp;</em>Select the<em>&nbsp;</em>correct signs for for each&nbsp;<em>h</em>(<em>x</em>),&nbsp;<em>h'</em>(<em>x</em>), and&nbsp;<em>h''</em>(<em>x</em>) at each marked point.&nbsp;</p>
+<p>$Fig6</p>
+<table style="height: 150px; width: 504px; border-color: black;" border="black">
+<tbody>
+<tr>
+<td style="width: 37px;">Point</td>
+<td style="width: 110.77940368652344px; text-align: center;">A</td>
+<td style="width: 103.22059631347656px; text-align: center;">B</td>
+<td style="width: 107px; text-align: center;">C</td>
+<td style="width: 107px; text-align: center;">D</td>
+<td style="width: 107px; text-align: center;">E</td>
+</tr>
+<tr>
+<td style="width: 37px;"><em>h</em>(<em>x</em>)</td>
+<td style="width: 110.77940368652344px; text-align: left;">$answerbox[0]</td>
+<td style="width: 103.22059631347656px;">$answerbox[1]</td>
+<td style="width: 107px;">$answerbox[2]</td>
+<td style="width: 107px;">$answerbox[3]</td>
+<td style="width: 107px;">$answerbox[4]</td>
+</tr>
+<tr>
+<td style="width: 37px;"><em>h'</em>(<em>x</em>)</td>
+<td style="width: 110.77940368652344px;">$answerbox[5]</td>
+<td style="width: 103.22059631347656px;">$answerbox[6]</td>
+<td style="width: 107px;">$answerbox[7]</td>
+<td style="width: 107px;">$answerbox[8]</td>
+<td style="width: 107px;">$answerbox[9]</td>
+</tr>
+<tr>
+<td style="width: 37px;"><em>h''</em>(<em>x</em>)</td>
+<td style="width: 110.77940368652344px;">$answerbox[10]</td>
+<td style="width: 103.22059631347656px;">$answerbox[11]</td>
+<td style="width: 107px;">$answerbox[12]</td>
+<td style="width: 107px;">$answerbox[13]</td>
+<td style="width: 107px;">$answerbox[14]</td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p><br /><br /></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig6,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig6.png,
+
+START QUESTION
+QID
+6
+
+UQID
+1522261634803820
+
+LASTMOD
+1522262128
+
+DESCRIPTION
+Accumulation and ROC #7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["string","string","string","string","string","string"]
+
+//$answerformat = "list"
+
+$answer[0] = "x6"
+$answer[1] = "x1"
+$answer[2] = "x4"
+$answer[3] = "x2"
+$answer[4] = "x3"
+$answer[5] = "x1"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The graph of&nbsp;<em>f'(x)&nbsp;</em>(NOT&nbsp;<em>f(x)</em>) is given below.</p>
+<p>$Fig7</p>
+<p>At which of the marked values of&nbsp;<em>x</em> is:</p>
+<p><em>(Enter your answer as "x1" or "x5")</em></p>
+<p>a)&nbsp;<em>f</em>(<em>x</em>) greatest?&nbsp;<em>x =&nbsp;</em>$answerbox[0]</p>
+<p>b)&nbsp;<em>f</em>(<em>x</em>) least?&nbsp;<em>x =&nbsp;</em>$answerbox[1]</p>
+<p>c)&nbsp;<em>f '</em>(<em>x</em>) greatest?&nbsp;<em>x =&nbsp;</em>$answerbox[2]</p>
+<p>d)&nbsp;<em>f '</em>(<em>x</em>) least?&nbsp;<em>x =&nbsp;</em>$answerbox[3]</p>
+<p>e)&nbsp;<em>f ''</em>(<em>x</em>) greatest?&nbsp;<em>x =&nbsp;</em>$answerbox[4]</p>
+<p>f)&nbsp;<em>f ''</em>(<em>x</em>) least?&nbsp;<em>x =&nbsp;</em>$answerbox[5]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig7,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure7.png,(Note that this is a rate of change graph!)
+
+START QUESTION
+QID
+7
+
+UQID
+1522262748016247
+
+LASTMOD
+1522271407
+
+DESCRIPTION
+Accumulation and ROC #8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+//Provides the ability for choices
+
+$anstypes = ["choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices","choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices", "choices","choices"];
+
+//each question has its own drop down
+$displayformat = "select";
+
+$questions[0] = ["increasing","decreasing","constant"];
+$questions[1] = ["nothing","local max","local min","inflection","corner"];
+$questions[2] = ["increasing","decreasing","constant"];
+$questions[3] = ["nothing","local max","local min","inflection","corner"];
+$questions[4] = ["increasing","decreasing","constant"];
+$questions[5] = ["nothing","local max","local min","inflection","corner"];
+$questions[6] = ["increasing","decreasing","constant"];
+$questions[7] = ["concave up","concave down","straight"];
+$questions[8] = ["concave up","concave down","straight"];
+$questions[9] = ["concave up","concave down","straight"];
+$questions[10] = ["concave up","concave down","straight"];
+$questions[11] = ["+","-", "0"];
+$questions[12] = ["+","-","0","undefined"];
+$questions[13] = ["+","-","0"];
+$questions[14] = ["+","-","0","undefined"];
+$questions[15] = ["+","-","0"];
+$questions[16] = ["+","-","0","undefined"];
+$questions[17] = ["+","-","0"];
+$questions[18] = ["increasing","decreasing","constant"];
+$questions[19] = ["increasing","decreasing","constant"];
+$questions[20] = ["increasing","decreasing","constant"];
+$questions[21] = ["increasing","decreasing","constant"];
+$questions[22] = ["+","-","0"];
+$questions[23] = ["+","-","0","undefined"];
+$questions[24] = ["+","-","0"];
+$questions[25] = ["+","-","0","undefined"];
+$questions[26] = ["+","-","0"];
+$questions[27] = ["+","-","0","undefined"];
+$questions[28] = ["+","-","0"];
+
+//the corresponding answer taken from the index array from each question
+
+$answer[0] = "1"; $answer[1] = "3"; $answer[2] = "1"; $answer[3] = "3"; $answer[4] = "1"; $answer[5] = "2"; $answer[6] = "0"; $answer[7] = "0"; $answer[8] = "1"; $answer[9] = "0"; $answer[10] = "0"; $answer[11] = "1"; $answer[12] = "2"; $answer[13] = "1"; $answer[14] = "1"; $answer[15] = "1"; $answer[16] = "2"; $answer[17] = "0"; $answer[18] = "0"; $answer[19] = "1"; $answer[20] = "0"; $answer[21] = "0"; $answer[22] = "0"; $answer[23] = "2"; $answer[24] = "1"; $answer[25] = "2"; $answer[26] = "0"; $answer[27] = "0"; $answer[28] = "0";
+
+
+$noshuffle = "answers"
+$noshuffle = "questions"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The graph of the function&nbsp;<em>p</em>(<em>x</em>)<em>&nbsp;is</em>&nbsp;given below. Assume that <em>p</em>(<em>x</em>) is as smooth as the graph allows.&nbsp;</p>
+<p>$Fig8</p>
+<p>Fill in the function analysis table.&nbsp;</p>
+<table style="height: 150px; width: 947.9006958007813px; border-color: black;" border="black">
+<tbody>
+<tr>
+<td style="width: 121px; text-align: center;"><em>x</em></td>
+<td style="width: 21px; text-align: center;"><em>x</em> &lt; -7</td>
+<td style="width: 116px; text-align: center;"><em>x</em> = -7</td>
+<td style="width: 116px; text-align: center;">-7 &lt;&nbsp;<em>x</em> &lt; -1</td>
+<td style="width: 116px; text-align: center;"><em>x =&nbsp;</em>-1</td>
+<td style="width: 116px; text-align: center;">-1 &lt;&nbsp;<em>x</em> &lt; 3</td>
+<td style="width: 116px; text-align: center;"><em>x&nbsp;</em>= 3</td>
+<td style="width: 173.90069580078125px; text-align: center;"><em>x</em> &gt; 3</td>
+</tr>
+<tr>
+<td style="width: 121px; text-align: center;"><em>p(x)</em></td>
+<td style="width: 21px; text-align: center;">&nbsp;$answerbox[0]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[1]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[2]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[3]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[4]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[5]</td>
+<td style="width: 173.90069580078125px; text-align: center;">&nbsp;$answerbox[6]</td>
+</tr>
+<tr>
+<td style="width: 121px; text-align: center;">&nbsp;</td>
+<td style="width: 21px; text-align: center;">&nbsp;$answerbox[7]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[8]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[9]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 173.90069580078125px; text-align: center;">&nbsp;$answerbox[10]</td>
+</tr>
+<tr>
+<td style="width: 121px; text-align: center;"><em>p'(x)</em></td>
+<td style="width: 21px; text-align: center;">&nbsp;$answerbox[11]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[12]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[13]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[14]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[15]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[16]</td>
+<td style="width: 173.90069580078125px; text-align: center;">&nbsp;$answerbox[17]</td>
+</tr>
+<tr>
+<td style="width: 121px; text-align: center;">&nbsp;</td>
+<td style="width: 21px; text-align: center;">&nbsp;$answerbox[18]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[19]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[20]</td>
+<td style="width: 116px; text-align: center;">----------</td>
+<td style="width: 173.90069580078125px; text-align: center;">&nbsp;$answerbox[21]</td>
+</tr>
+<tr>
+<td style="width: 121px; text-align: center;"><em>p''(x)</em></td>
+<td style="width: 21px; text-align: center;">&nbsp;$answerbox[22]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[23]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[24]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[25]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[26]</td>
+<td style="width: 116px; text-align: center;">&nbsp;$answerbox[27]</td>
+<td style="width: 173.90069580078125px; text-align: center;">&nbsp;$answerbox[28]</td>
+</tr>
+</tbody>
+</table>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig8,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure8.png,
+
+START QUESTION
+QID
+8
+
+UQID
+1522268167547949
+
+LASTMOD
+1522269516
+
+DESCRIPTION
+Accumulation and ROC #9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["string","string","string","string","string","string","string","string","string","string","string","string","string","string","string","string","string"]
+
+$noshuffle = "answers"
+$noshuffle = "questions"
+
+$answer[0] = "MIN"
+$answer[1] = "INFL"
+$answer[2] = "MAX"
+$answer[3] = "INFL"
+$answer[4] = "MIN"
+$answer[5] = "DEC"
+$answer[6] = "INC"
+$answer[7] = "INC"
+$answer[8] = "DEC"
+$answer[9] = "DEC"
+$answer[10] = "INC"
+$answer[11] = "CCU"
+$answer[12] = "CCU"
+$answer[13] = "CCD"
+$answer[14] = "CCD"
+$answer[15] = "CCU"
+$answer[16] = "CCU"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The picture below shows the rate of change function,&nbsp;<em>g</em> '(<em>x</em>).&nbsp;</p>
+<p>$Fig9</p>
+<p>For each of the labeled points on the graph, classify the corresponding &nbsp;point on the accumulation graph of&nbsp;<em>g</em>(<em>x</em>) as one of the following: "MAX", "MIN", "INFL", "INT" (short for maximum, minimum, inflection point,&nbsp;<em>x</em> -intercept)</p>
+<p>A: $answerbox[0]</p>
+<p>B: $answerbox[1]</p>
+<p>C:&nbsp;$answerbox[2]</p>
+<p>D:&nbsp;$answerbox[3]</p>
+<p>E:&nbsp;$answerbox[4]</p>
+<p>For each of the following intervals, classify whether the graph of&nbsp;<em>g</em>(<em>x</em>) is "INC" or "DEC" over that interval (short for increasing or decreasing).&nbsp;</p>
+<p>(-&nbsp;`oo`&nbsp;, A) $answerbox[5]</p>
+<p>(A,B)&nbsp;$answerbox[6]</p>
+<p>(B,C)&nbsp;$answerbox[7]</p>
+<p>(C,D)&nbsp;$answerbox[8]</p>
+<p>(D,E)&nbsp;$answerbox[9]</p>
+<p>(E,&nbsp;`oo`&nbsp;)&nbsp;$answerbox[10]</p>
+<p>For each of the following intervals, classify whether the graph of&nbsp;<em>g</em>(<em>x</em>) is "CCU" or "CCD" over that interval (short for concave up or concave down).&nbsp;</p>
+<p>(-&nbsp;`oo`&nbsp;, A)&nbsp;$answerbox[11]</p>
+<p>(A,B)&nbsp;$answerbox[12]</p>
+<p>(B,C)&nbsp;$answerbox[13]</p>
+<p>(C,D)&nbsp;$answerbox[14]</p>
+<p>(D,E)&nbsp;$answerbox[15]</p>
+<p>(E,&nbsp;`oo`&nbsp;)&nbsp;$answerbox[16]</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig9,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure9.png,
+
+START QUESTION
+QID
+9
+
+UQID
+1522270048978642
+
+LASTMOD
+1522270113
+
+DESCRIPTION
+Accumulation and ROC #10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["string","string","string"]
+
+$noshuffle = "all"
+
+$answer[0] = "A"
+$answer[1] = "B"
+$answer[2] = "C"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>$Fig10<br /><br /> Identify the graphs A(blue), B(red), C(green) as the graphs of a function&nbsp;<em>w</em>(<em>x</em>) and its derivatives&nbsp;<em>w'</em>(<em>x</em>) and&nbsp;<em>w''</em>(<em>x</em>).</p>
+<p>$answerbox[0] is the graph of the accumulation function,&nbsp;<em>w</em>(<em>x</em>).</p>
+<p>$answerbox[1] is the graph of the function's first derivative (rate of change), <em>w'</em>(<em>x</em>).</p>
+<p>$answerbox[2] is the graph of the function's second derivative,&nbsp;<em>w''</em>(<em>x</em>).&nbsp;</p>
+<p><strong>Hint: </strong>Remember that <em>w'</em>(<em>x</em>)&nbsp;is itself a function, and we can find the derivative of the function <em>w'</em>(<em>x</em>), which is called the second derivative of the function <em>w</em>(<em>x</em>)&nbsp;and denoted by <em>w''</em>(<em>x</em>).</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig10,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure10.png,
+
+START QUESTION
+QID
+10
+
+UQID
+1522270169646657
+
+LASTMOD
+1522964186
+
+DESCRIPTION
+Accumulation and ROC #11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = ["<em>f</em> ''(<em>x</em>)&nbsp;< 0 for all <em>x</em>","<em>f</em> ''(<em>x</em>)&nbsp; changes sign from + to -", "<em>f</em> ''(<em>x</em>)&nbsp;> 0 for all <em>x</em>", "<em>f</em> ''(<em>x</em>)&nbsp; changes sign from - to +"]
+
+$answer = "3"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+choices
+
+QTEXT
+<p>$Fig11</p>
+<p>Let <em>f</em>(<em>x</em>) be a function whose displayed graph is shown above, which of the following statements is <strong>CORRECT:</strong></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig11,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure11.png,
+
+START QUESTION
+QID
+11
+
+UQID
+1522271015784329
+
+LASTMOD
+1522271040
+
+DESCRIPTION
+Accumulation and ROC #12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$answer = -1
+
+QCONTROL
+
+
+QTYPE
+number
+
+QTEXT
+<p>You are given the graph of the function&nbsp;<em>f</em>(<em>x</em>):</p>
+<p>$Fig12</p>
+<p>Find the point where the second derivative changes signs from negative to positive.</p>
+<p>x = $answerbox</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig12,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure12.png,
+
+START QUESTION
+QID
+12
+
+UQID
+1522273759733354
+
+LASTMOD
+1522274609
+
+DESCRIPTION
+Accumulation and ROC #13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calcinterval","calcinterval","string"]
+
+$displayformat = "pointlist"
+
+$answer[0] = "(0,2)U(5,8)"
+$answer[1] = "(2,4)U(4,5)"
+$answer[2] = "(2,5),(5,5)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use the give graph of&nbsp;<em>q</em>(<em>x</em>) to answer the following questions.</p>
+<p>$Fig13</p>
+<p>a) Find the interval(s) on which <em>q</em>(<em>x</em>) is concave up. $answerbox[0]</p>
+<p>b) Find the interval(s) on which <em>q</em>(<em>x</em>) is concave down. $answerbox[1]</p>
+<p>c) Find the coordinates of the points of inflection.&nbsp;<strong>List your answers as points in the form&nbsp;</strong>(<em>a,b</em>). (Separate by commas, if needed). $answerbox[2]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig13,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure13.png,
+
+START QUESTION
+QID
+13
+
+UQID
+1522275341824435
+
+LASTMOD
+1522879401
+
+DESCRIPTION
+Accumulation and ROC #14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calcinterval","calcinterval","number","string"]
+
+
+
+$answer[0] = "(3,8)"
+$answer[1] = "(0,1)U(4,5)U(6,8)"
+$answer[2] = "3"
+$answer[3] = "1,4,5,6"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Below is a graph of&nbsp;<strong>the derivative&nbsp;</strong>(<em>f'</em>(<em>x</em>)) of a function defined on the interval (0,8).&nbsp;</p>
+<p>$Fig14</p>
+<p>&nbsp;Refer to the graph to answer each of the following questions.&nbsp;</p>
+<p>a) For what values of&nbsp;<em>x</em> in (0,8) is&nbsp;<em>f</em>(<em>x</em>) increasing? (Use interval notation.) $answerbox[0]</p>
+<p>b) For what values of&nbsp;<em>x</em> in (0,8) is&nbsp;<em>f</em>(<em>x</em>) concave down?&nbsp;(Use interval notation.) $answerbox[1]</p>
+<p>c)&nbsp;For what values of&nbsp;<em>x</em> in (0,8) does&nbsp;<em>f</em>(<em>x</em>) have a local minimum? (List the values and separate by commas, if needed. $answerbox[2]&nbsp;</p>
+<p>d)&nbsp;For what values of&nbsp;<em>x</em> in (0,8) does&nbsp;<em>f'</em>(<em>x</em>) have a local minimum and maximum? (List the values and separate by commas, if needed and from smallest to largest. $answerbox[3]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig14,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure14.png,
+
+START QUESTION
+QID
+14
+
+UQID
+1522293913592903
+
+LASTMOD
+1532409666
+
+DESCRIPTION
+7.2.2.5 Harry f, f', f''
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["choices","choices","choices"]
+
+$noshuffle = "all"
+
+$displayformat = "select"
+
+$questions = ["<em>f</em>(<em>x</em>)","<em>f'</em>(<em>x</em>)","<em>f''</em>(<em>x</em>)"]
+
+$answer[0] = "1"
+$answer[1] = "2"
+$answer[2] = "0"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p style="text-align: center;"><strong><a href="http://patthompson.net/ThompsonCalc/section_7_2.html" target="_blank" rel="noopener">Exercise 7.2.25</a> Harry&nbsp;<em>f, f', f''</em></strong></p>
+<p>Harry gave his sister the three displayed graphs shown below--one of <em>y</em> =&nbsp;<em>f</em>(<em>x</em>)&nbsp;one of <em>y</em> =&nbsp;<em>f'</em>(<em>x</em>), and one of <em>y</em> =&nbsp;<em>f''</em>(<em>x</em>). But Harry did not say which graph was which. Label the graphs accordingly.&nbsp;</p>
+<p>$Figabc</p>
+<p>(a) $answerbox[0] &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(b) $answerbox[1] &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(c) $answerbox[2]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Figabc,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig_7.2.4a.png,
+
+START QUESTION
+QID
+16
+
+UQID
+1522296245966444
+
+LASTMOD
+1522296340
+
+DESCRIPTION
+Critical Values #1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["number", "number","number","number"]
+
+$noshuffle = "all"
+
+$answer[0] = "8"
+$answer[1] = "262"
+$answer[2] = "4"
+$answer[3] = "326"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The function&nbsp;<em>f</em>(<em>x</em>) = 2<em>x<sup>3</sup> - </em>36<em>x</em><sup>2&nbsp;</sup>+ 192<em>x</em> + 6 has one local minimum at&nbsp;<em>x</em> = $answerbox[0] with the value of $answerbox[1] and a local maximum at&nbsp;<em>x</em> = $answerbox[2] with the value of $answerbox[3].&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+17
+
+UQID
+1522296984759045
+
+LASTMOD
+1522297330
+
+DESCRIPTION
+Critical Values #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["number", "number"]
+
+$noshuffle = "all"
+
+$answer[0] = "2"
+$answer[1] = "9"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The function&nbsp;<em>f</em>(<em>x</em>) = 2<em>x<sup>3</sup> - </em>33<em>x</em><sup>2&nbsp;</sup>+ 108<em>x</em>&nbsp;- 6 has two critical numbers. The smaller one is at the&nbsp;<em>x</em>-value $answerbox[0] and the larger one is at the&nbsp;<em>x</em>-value $answerbox[1].</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+18
+
+UQID
+1522297186117640
+
+LASTMOD
+1522297309
+
+DESCRIPTION
+Critical Values #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["number", "number","number","number"]
+
+$noshuffle = "all"
+
+$answer[0] = "4"
+$answer[1] = "-261"
+$answer[2] = "7"
+$answer[3] = "-234"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The function&nbsp;<em>f</em>(<em>x</em>) = -2<em>x<sup>3</sup>&nbsp;+&nbsp;</em>33<em>x</em><sup>2 </sup>-&nbsp;168<em>x</em> + 11 has one local minimum at&nbsp;<em>x</em> = $answerbox[0] with the value of $answerbox[1] and a local maximum at&nbsp;<em>x</em> = $answerbox[2] with the value of $answerbox[3].&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+19
+
+UQID
+1522298854881028
+
+LASTMOD
+1522298941
+
+DESCRIPTION
+Optimization #1 Luggage
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes  = ["choices","calculated","calculated","calculated","calculated","calculated","calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$displayformat = "select"
+$questions[0] = ["Height im cm","Length in cm","Width in cm","Volume in cubic cm"]
+
+$answer[0] = "3"
+
+$answer[1] = "50"
+$answer[2] = "50"
+$answer[3] = "125000"
+$answer[4] = "200/3"
+$answer[5] = "100/3"
+$answer[6] = "50"
+$answer[7] = "1000000/9"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Some airlines have restrictions on the size of items of luggage that passengers are allowed to take with them. Suppose that one has a rule that the sum of the length, width and height of any piece of luggage must be less than or equal to 150 cm. A passenger wants to take a box of the maximum allowable volume.</p>
+<p>What is the quantity being optimized? $answerbox[0]</p>
+<p>If the length and width are to be equal, what should the dimensions be?</p>
+<p>Length = width = $answerbox[1] cm</p>
+<p>Height = $answerbox[2] cm</p>
+<p>Volume = $answerbox[3] cm<sup>3</sup></p>
+<p>If the length is required to be twice the width, then what should the corresponding dimensions be?&nbsp;</p>
+<p>Length = $answerbox[4] cm</p>
+<p>Width = $answerbox[5] cm</p>
+<p>Height = $answerbox[6] cm</p>
+<p>Volume = $answerbox[7] cm<sup>3</sup></p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+20
+
+UQID
+1522343117071805
+
+LASTMOD
+1522435603
+
+DESCRIPTION
+Optimization #2 Box
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+$answer[0] = "1500*sqrt(3)"
+
+
+
+$reltolerance = .001
+$reqdecimals = 4
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If 900 square centimeters of material is available to make a box with a square base and an open top, find the largest possible volume of the box.</p>
+<p>Volume = $answerbox[0] cm<sup>3 &nbsp;</sup></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+21
+
+UQID
+1522445122707682
+
+LASTMOD
+1523469096
+
+DESCRIPTION
+Optimization #3 Fence
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["choices","calculated","calculated"]
+
+$reltolerance = .001
+$reqdecimals = 4
+
+$noshuffle = "all"
+$displayformat = "select"
+
+$questions[0] = ["The area enclosed","The cost to build the enclosure","The dimensions of the enclosure"]
+
+$answer[0] = "1"
+
+$answer[2] = "(800)^(.5)"
+$answer[1] = "320/((800)^(.5))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A fence is to be built to enclose a rectangular area of 320 square feet. The fence along three sides is to be made of material that costs 3 dollars per foot, and the material for the fourth side costs 12 dollars per foot. Find the dimensions of the enclosure that is most economical to construct.</p>
+<p>a) What quantity is being optimized? $answerbox[0]</p>
+<p>b) What are the dimensions of the enclosure that is most economical? (List the smaller dimension first.)&nbsp;</p>
+<p>$answerbox[1] x $answerbox[2]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+22
+
+UQID
+1522447263303657
+
+LASTMOD
+1522447871
+
+DESCRIPTION
+Optimization #4 Rectangle
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated", "calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "18"
+$answer[1] = "18"
+$answer[2] = "72"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the dimensions of the rectangle with an area of 324 square inches that has minimum perimeter, and then find the minimum perimeter.</p>
+<p>a) Dimensions: $answerbox[0] x $answerbox[1]</p>
+<p>b) Minimum Perimeter: $answerbox[2]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+23
+
+UQID
+1522447823642220
+
+LASTMOD
+1522447862
+
+DESCRIPTION
+Optimization #5 Rancher
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = 3(2000000)^(0.5)+6000000/(2000000^(0.5))
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A rancher wants to fence in an area of 3000000 square feet in a rectangular field and then divide it in half with a fence down the middle, parallel to one side.</p>
+<p>What is the shortest length of fence that the rancher can use?</p>
+<p>Length of fence = $answerbox[0] ft.</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+24
+
+UQID
+1522448153096876
+
+LASTMOD
+1522451892
+
+DESCRIPTION
+Optimization #6 Aluminum Can
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc", "numfunc","calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+$variables[0] = "r"
+$variables[1] = "r"
+
+$answer[0] = "2700/(pi*r^2)"
+$answer[1] = "2pi*r^2+5400/r"
+$answer[2] = "(5400/(4*pi))^(1/3)"
+$answer[3] = "2700/(pi*((5400/(4*pi))^(2/3)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>An aluminum can is to be constructed to contain 2700 cubic centimeters of liquid.&nbsp;</p>
+<p>Let&nbsp;<em>r</em> and&nbsp;<em>h</em> be the radius of the base and the height of the can respectively.&nbsp;</p>
+<p>a) Express&nbsp;<em>h</em> in terms of&nbsp;<em>r</em>.&nbsp;</p>
+<p><em>h&nbsp;</em> = $answerbox[0]</p>
+<p>b) Express the surface area of the can in terms of <em>r.&nbsp;</em></p>
+<p>Surface Area = $answerbox[1]</p>
+<p>c) Approximate the value of&nbsp;<em>r</em> that will minimize the amount of required material (i.e. the value of&nbsp;<em>r</em> that will minimize the surface area).&nbsp;</p>
+<p><em>r&nbsp;</em>=&nbsp;$answerbox[2]</p>
+<p>What is the corresponding height?</p>
+<p><em>h</em> =&nbsp;$answerbox[3]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+25
+
+UQID
+1522453717021730
+
+LASTMOD
+1522453812
+
+DESCRIPTION
+Optimization #7 Pipeline
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "(9/(1.5^2-1))^(1/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A small resort is situated on an island that lies exactly 3 miles from&nbsp;<strong><em>P</em></strong>, the nearest point to the island along a perfectly straight shoreline. 10 miles down the shoreline from&nbsp;<strong><em>P</em></strong> is the closest source of fresh water. If it costs 1.5 times as much money to lay pipe in the as it does on land, how far down the shoreline from&nbsp;<strong><em>P</em></strong> should the pipe from the island reach land in order to minimize the total construction costs?&nbsp;</p>
+<p>Distance from&nbsp;<strong><em>P</em></strong> = $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+26
+
+UQID
+1522454055828472
+
+LASTMOD
+1523476324
+
+DESCRIPTION
+Optimization #8 Norman Window
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "44(44/(4+pi))-2(44/(4+pi))^2-(pi/2)(44/(4+pi))^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A Norman window has the shape of a semicircle atop a rectangle so that the diameter of the semicircle is equal to the width of the rectangle. What is the area of the largest possible Norman window with a perimeter of 44 feet?</p>
+<p>Area = $answerbox[0] ft<sup>2</sup></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+27
+
+UQID
+1522625440348293
+
+LASTMOD
+1522625553
+
+DESCRIPTION
+Optimization #9 Ladder
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = (((3*(54^(1/3)+6))/(54^(1/3)))^2+(6+(54^(1/3)))^2)^(1/2)
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A fence 3 feet tall runs parallel to a tall building at a distance of 6 feet from the building.&nbsp;</p>
+<p>What is the length of the shortest ladder that will reach from the ground over the fence to the wall of the building?</p>
+<p>Length of Ladder = $answerbox[0]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+28
+
+UQID
+1522643061912340
+
+LASTMOD
+1522643113
+
+DESCRIPTION
+Optimization #10 Rain Gutter
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = ("pi/3")
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A rain gutter is to be constructed from a metal sheet of a width 30cm by bending up one-third of the sheet on each side through an angle&nbsp;`theta`&nbsp;. How should&nbsp;`theta`&nbsp;be chosen so that the gutter will carry the maximum amount of water?</p>
+<p>$Fig10</p>
+<p>`theta`&nbsp;= $answerbox[0] radians&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig10,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure10.gif,
+
+START QUESTION
+QID
+29
+
+UQID
+1522711798573016
+
+LASTMOD
+1523837764
+
+DESCRIPTION
+Optimization #11 Rectangle
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+
+$variables[0] = "L,W"
+
+
+
+$answer[0] = "((L+W)^2)/2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the maximum area of a rectangle that can be circumscribed about a given rectangle with length L and width W. (Your answer may be in terms of L and W.)</p>
+<p>$Fig11</p>
+<p>Area = $answerbox[0] square units&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig11,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure11.gif,
+
+START QUESTION
+QID
+30
+
+UQID
+1522732511293672
+
+LASTMOD
+1522732675
+
+DESCRIPTION
+Optimization #12 Cow
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "arctan(15/x)-arctan(7/x)"
+$answer[1] = ("sqrt(105)")
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A rectangular billboard 8 feet in height stands in a filed so that its bottom is 11 feet above the ground. A nearsighted cow with eye level at 4 feet above the ground stands&nbsp;<em>x</em> feet from the billboard. Express&nbsp;`theta`&nbsp;, the vertical angle subtended by the billboard at her eye, in terms of&nbsp;<em>x</em>. Then find the distance&nbsp;<em>x</em><sub>0</sub> the cow must stand from the billboard to maximize&nbsp;`theta`&nbsp;.</p>
+<p>$Fig12</p>
+<p>`theta`&nbsp;(<em>x</em>) = $answerbox[0]&nbsp;</p>
+<p>&nbsp;`theta`&nbsp; is maximized when&nbsp;<em>x</em><sub>0</sub>&nbsp;= $answerbox[1]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig12,https://mathcms.asu.edu/IMathAS/assessment/qimages/Figure12.gif,
+
+START QUESTION
+QID
+31
+
+UQID
+1522949890500283
+
+LASTMOD
+1522949982
+
+DESCRIPTION
+Implicit #1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(-(5x)/(9y))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`dy/dx`&nbsp;, where &nbsp;`5x^2+9y^2-5 = 0`&nbsp;.</p>
+<p>&nbsp;</p>
+<p>`dy/dx=`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+32
+
+UQID
+1522950503197670
+
+LASTMOD
+1522950558
+
+DESCRIPTION
+Implicit #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+//$answerformat = "function"
+//$variables = "x,y"
+
+$reltolerance = .01
+$reqdecimals = 4
+
+$answer = "(-12/(e^2-8))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>For the equation given below, evaluate the rate of change at the point (-1,2).</p>
+<p style="text-align: left;">&nbsp;`e^y+14-e^2 = 6x^2 +2y^2`&nbsp;</p>
+<p style="text-align: left;">&nbsp;`dy/dx`&nbsp; at (-1,2) = $answerbox[0]&nbsp;</p>
+<p style="text-align: left;">&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+33
+
+UQID
+1522950811049884
+
+LASTMOD
+1523991335
+
+DESCRIPTION
+Implicit #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "((6/x)-ln(y))/((x/y+5y^4))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`(dy)/(dx)`&nbsp;&nbsp; in terms of&nbsp;<em>x&nbsp;</em>and&nbsp;<em>y</em> if:&nbsp;&nbsp;`xln(y) + y^5 = 6ln(x)`&nbsp;&nbsp;.&nbsp;</p>
+<p>`(dy)/(dx)`&nbsp;&nbsp; = $answerbox[0]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+34
+
+UQID
+1522951202005534
+
+LASTMOD
+1522951628
+
+DESCRIPTION
+Implicit #4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(1-4xy^2(x+y)^(1/2))/(4x^2y(x+y)^(1/2)-1)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`dy/dx`&nbsp; by implicit differentiation.&nbsp;</p>
+<p>`sqrt(x+y) = 4 +x^2y^2`&nbsp;</p>
+<p>`dy/dx`&nbsp; = $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+35
+
+UQID
+1523040749979677
+
+LASTMOD
+1523040818
+
+DESCRIPTION
+Implicit #5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(cos(x)*(cos(y)-1))/(sin(y)*(sin(x)-1))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change function by implicit differentiation.</p>
+<p>`sin(x) + cos(y) = sin(x)cos(y)`&nbsp;</p>
+<p>&nbsp;`f'(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+36
+
+UQID
+1523384070402615
+
+LASTMOD
+1523989983
+
+DESCRIPTION
+Implicit #6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["calculated"]
+
+//$answerformat = "function"
+//$variables = "x,y"
+
+$reltolerance = .01
+$reqdecimals = 2
+
+$answer = "-9/64"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use implicit differentiation to find the slope of the tangent line (the rate of change) defined by&nbsp;`xy^8 + 8xy = 36&nbsp;`&nbsp;at the point (4,1).</p>
+<p>The slope of the tangent line to the curve at the give point is $answerbox[0]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+37
+
+UQID
+1523384184307353
+
+LASTMOD
+1523991181
+
+DESCRIPTION
+Implicit #7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+4
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(2xy e^(x^2y)-1)/(1-x^2 e^(x^2y))or (2xy - 1/(x+y))/(1/(x+y)-x^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change function by implicit differentiation.</p>
+<p>`e^(x^2y) = x + y`&nbsp;</p>
+<p>`dy/(dx) =&nbsp;`&nbsp;$answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+38
+
+UQID
+1523387193265457
+
+LASTMOD
+1523387521
+
+DESCRIPTION
+Related Rates #1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer = "-6.3/54"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A potter forms a piece of clay into a right circular cylinder. As she rolls it, the height&nbsp;`h`&nbsp;&nbsp;of the cylinder increases and the radius&nbsp;`r&nbsp;`&nbsp;&nbsp;decreases. Assume that no clay is lost in the process. Suppose the height of the cylinder is increasing by <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;"><span style="font-size: 14px; white-space: nowrap;">0.7&nbsp;</span> </span>centimeters per second. What is the rate at which the radius is changing when the radius is <span style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;"><span style="font-size: 14px; white-space: nowrap;">3</span> </span>&nbsp;centimeters and the height is 9<span id="MathJax-Element-5-Frame" class="MathJax" style="display: inline; font-style: normal; font-weight: normal; line-height: normal; font-size: 14px; text-indent: 0px; text-align: left; text-transform: none; letter-spacing: normal; word-spacing: 0px; word-wrap: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0px; min-height: 0px; border: 0px; padding: 0px; margin: 0px; color: #000000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-variant-caps: normal; orphans: auto; widows: auto; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; position: relative;" tabindex="0" role="presentation" data-mathml="&lt;math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;&gt;&lt;mn&gt;9&lt;/mn&gt;&lt;/math&gt;"><span id="MathJax-Span-13" class="math" role="math"><span id="MathJax-Span-14" class="mrow"><span id="MathJax-Span-15" class="mn">&nbsp;</span> </span> </span> </span>centimeters?</p>
+<p>&nbsp;`(dr)/dt`&nbsp;= $answerbox[0] cm/s.</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+39
+
+UQID
+1523388003989325
+
+LASTMOD
+1523388034
+
+DESCRIPTION
+Related Rates #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "80"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Boyle's law states that when a sample of gas is compressed at a constant temperature, the pressure&nbsp;<em>P</em>, and the volume&nbsp;<em>V</em> satisfy the equation&nbsp;<em>PV</em> =&nbsp;<em>C</em>, where&nbsp;<em>C</em> is a constant. Suppose that at a certain instant the volume is 600 cm<sup>3</sup>, the pressure is 150<em>kPa</em>, and the pressure is increasing at a rate of 20<em>kPa&nbsp;</em>per minute. At what rate is the volume decreasing at this instant?&nbsp;</p>
+<p>$answerbox[0] cm<sup>3</sup>/min</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+40
+
+UQID
+1523420730568378
+
+LASTMOD
+1523420850
+
+DESCRIPTION
+Related Rates #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "7*25+4*20"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The length of a rectangle is increasing at a rate of 7 cm/s and its width is increasing at a rate of 4 cm/s. When the length is 20 cm and the width is 25cm, how fast is the area of the rectangle increasing?</p>
+<p>`(dA)/(dt) =&nbsp;`&nbsp;$answerbox[0] cm<sup>2</sup>/s&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+41
+
+UQID
+1523421468903298
+
+LASTMOD
+1524163214
+
+DESCRIPTION
+Related Rates #4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "75/(250^2)*4"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A kite 75 feet above the ground moves horizontally at a speed of 4 ft/s. At what rate is the angle between the string and the horizontal decreasing when 250 feet of string has been let out?&nbsp;</p>
+<p>The angle is decreasing $answerbox[0] radians per second</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+42
+
+UQID
+1523487237525957
+
+LASTMOD
+1523487375
+
+DESCRIPTION
+Related Rates #5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "2*2*pi*2.8"
+$answer[1] = "6.6*2.8*2*pi*2.8"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A stone dropped into a still pond sends out a circular ripple whose radius increases at a constant rate of 2.8 ft/s.&nbsp;</p>
+<p>a) How rapidly is the area enclosed by the ripple increasing when the radius is 2 feet?</p>
+<p>The area is increasing at a rate of $answerbox[0] ft<sup>2</sup>/s.</p>
+<p>b) How rapidly is the area enclosed by the ripples at the end of 6.6 seconds.&nbsp;</p>
+<p>The area is increasing at a rate of $answerbox[1] ft<sup>2</sup>/s.</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+43
+
+UQID
+1523632659030411
+
+LASTMOD
+1523632677
+
+DESCRIPTION
+Related Rates #6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "9/(2*pi*(2/sqrt(pi)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Oil spilled from a ruptured tanker spreads in a circle who's area increases at a constant rate of 9 mi<sup>2</sup>/hr. How rapidly is the radius of the spill increasing when the area is 4 mi<sup>2</sup>?</p>
+<p>The radius is increasing at $answerbox[0] mi/hr.</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+44
+
+UQID
+1523634276924256
+
+LASTMOD
+1523634306
+
+DESCRIPTION
+Related Rates #7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "60*(3/sqrt(3^2+3^2))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A road perpendicular to a highway leads to a farmhouse located 3 miles away. An automobile traveling on the highway passes through this intersection at a speed of 60 mph.&nbsp;</p>
+<p>How fast is the distance between the automobile and the farmhouse increasing when the automobile is 3 miles past the intersection of the highway and the road?&nbsp;</p>
+<p>The distance between the automobile and the farmhouse is increasing at a rate of $answerbox[0] miles per hour.&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+45
+
+UQID
+1523634562714377
+
+LASTMOD
+1523634574
+
+DESCRIPTION
+Related Rates #8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "-30/40(11)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A jogger runs around a circular track of radius 50ft. Let (<em>x</em>,<em>y</em>) be her coordinates, where the origin is the center of the track. When the jogger's coordinates are (30,40), her x coordinate is changing at a rate of 11 ft/s/ Find&nbsp;<em>dy</em>/<em>dt.</em></p>
+<p><em>&nbsp;</em>`(dy)/(dt) =&nbsp;`&nbsp; $answerbox[0]&nbsp;ft/s&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+46
+
+UQID
+1523718631705091
+
+LASTMOD
+1523718941
+
+DESCRIPTION
+Related Rates #9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "360"
+$answer[1] = "12/125"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A television camera is positioned 4000 ft from the base of a rocket launching pad. The angle of elevation of the camera has to change at the correct rate in order to keep the rocket in sight. Also, the mechanism for focusing the camera has to take into account the increasing distance from the camera to the rising rocket. Let's assume the rocket rises vertically and its speed is 600 ft/s when it has risen 3000 ft.&nbsp;</p>
+<p>a) How fast is the distance from the television camera to the rocket changing at that moment?</p>
+<p>$answerbox[0] ft/s</p>
+<p>b) If the television camera is always kept aimed at the rocket, how fast is the camera's angle of elevation changing at that same moment?&nbsp;</p>
+<p>$answerbox[1] rad/s</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+47
+
+UQID
+1523724014317348
+
+LASTMOD
+1523724071
+
+DESCRIPTION
+Related Rates #10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02 
+$reqdecimals = 4
+
+$answer[0] = "1/2*4*pi*6^2*.2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A spherical snowball is melting in such a way that its diameter is decreasing at a rate of 0.2 cm/min. At what rate is the volume of the snowball decreasing when the diameter is 12cm?</p>
+<p>The volume is decreasing at a rate of $answerbox[0] cm<sup>3</sup>/min.</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+48
+
+UQID
+1523724245947507
+
+LASTMOD
+1523724252
+
+DESCRIPTION
+Related Rates #11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "2*16/(14^2)*0.6"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A spotlight on the ground is shining on a wall 16 meters away. If a woman, 2 meters tall, walks from the spotlight toward the building at a speed of 0.6 m/s, then how fast is the length of her shadow on the building decreasing when she is 2 meters from the building?</p>
+<p>$answerbox[0] m/s</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+49
+
+UQID
+1523724744909543
+
+LASTMOD
+1523726584
+
+DESCRIPTION
+Related Rates #12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "-(2*45*20)/(2*sqrt(90^2+45^2))"
+$answer[1] = "(2*45*20)/(2*sqrt(90^2+45^2))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A baseball diamond is a square with sides of length 90 ft. A batter hits the ball and runs towards first base with a speed of 20 ft/s.</p>
+<p>a) At what rate is his distance from second base changing when he is halfway to first base?</p>
+<p>$answerbox[0] ft/s</p>
+<p>b) At what rate is his distance changing from third base changing at the same moment?</p>
+<p>$answerbox[1] ft/s</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+50
+
+UQID
+1523750484414504
+
+LASTMOD
+1523750511
+
+DESCRIPTION
+Related Rates #13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "10/(pi*36)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A conical water tank with vertex down has a radius of 12 feet at the top and is 26 feet high. If water flows into the tank at a rate of 10 ft<sup>3</sup>/min, how fast is the depth of the water increasing when the water is 13 feet deep?</p>
+<p>The depth of the water is increasing at $answerbox[0] ft/min.&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+51
+
+UQID
+1523811889756658
+
+LASTMOD
+1523811956
+
+DESCRIPTION
+Related Rates #14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "40/(1/4*pi*14^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Gravel is being dumped from a conveyer belt at a rate of 40 ft<sup>3</sup>/min. The gravel pile forms the shape of a right circular cone whose base diameter and hight are always the same. How fast is the height of the pile increasing when the pile is 14 ft high?</p>
+<p>The height is increasing at $answerbox[0] ft/min</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+52
+
+UQID
+1523812296017982
+
+LASTMOD
+1523812321
+
+DESCRIPTION
+Related Rates #15
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "(3(0.1))(1/(cos^2(pi/5)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A hot air ballon rising vertically is tracked by an observer located 3 miles from the lift-off point. At a certain moment, the angle between the observer's line-of-sight and the horizontal is&nbsp;`pi/5`&nbsp;, and it is changing at a rate of 0.1 rad/min. How fast is the balloon rising at this moment?</p>
+<p>The balloon is rising at a rate of $answerbox[0] miles per minute.&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+53
+
+UQID
+1523838394446838
+
+LASTMOD
+1523838470
+
+DESCRIPTION
+Fund Thm P1 #1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = ["  The rate at which the oil leaks out after two hours.","  The number of gallons remaining in the tank after the first two hours have passed.","  The number of gallons of oil that leaked from the tank in the first two hours.","  The average rate at which oil leaked from the tank during the first two hours."]
+
+$answer = "2"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+choices
+
+QTEXT
+<p>If oil leaks from a tank at a rate of&nbsp;<em>r</em>(<em>t</em>) gallons per minute at time&nbsp;<em>t</em>, what does&nbsp;` int_0^120r(t)dt `&nbsp; represent?&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+54
+
+UQID
+1523838825400419
+
+LASTMOD
+1524694607
+
+DESCRIPTION
+Fund Thm P1 #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = ["The change in the charge <em>Q</em> from time <em>t = a</em> to <em>t = b</em>.","The amount of current in <em>I</em> in the wire between time <em>t = a</em> to <em>t = b</em>.", "The total charge <em>Q</em> at time <em>t = b</em>.", "The total charge <em>Q</em> at time <em>t = a</em>."]
+
+$answer = "0"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+choices
+
+QTEXT
+<p>The current&nbsp;<em>I</em> in a wire is defined as the derivative of the charge&nbsp;<em>Q; </em>in other words,&nbsp;`I(t) = Q'(t)`&nbsp;&nbsp;. What does&nbsp;`int_a^bI(t)dt`&nbsp; represent?</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+55
+
+UQID
+1523901048374895
+
+LASTMOD
+1523901177
+
+DESCRIPTION
+Fund Thm P1 #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = ["The average rate at which the bee population increases over the first 15 weeks.","The total bee population after 15 weeks.","The total increase in the bee population after 15 weeks.","The rate at which the bee population increases after 15 weeks have passed."]
+
+$answer = "1"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+choices
+
+QTEXT
+<p>A honeybee population starts with 100 bees and increases at a rate of&nbsp;`n'(t)`&nbsp; bees per week. What does&nbsp;`100+int_0^15n'(t)dt`&nbsp;represent?&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+56
+
+UQID
+1523902012720594
+
+LASTMOD
+1523902039
+
+DESCRIPTION
+Fund Thm P1 #4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$questions = ["The increase in the child's weight (in pounds) between the ages of 5 and 10.","The rate of growth of the child (in pounds per year) between the ages of 5 and 10.","The increase in the child's weight (in pounds) during his/her first five years of life.","The rate of growth of the child (in pounds per year) during his/her first five years of life."]
+
+$answer = "0"
+
+$noshuffle = "all"
+
+QCONTROL
+
+
+QTYPE
+choices
+
+QTEXT
+<p>If&nbsp;`w'(t)&nbsp;`&nbsp;is the rate of the growth of a child in pounds per year, what does&nbsp;`int_5^10w'(t)dt`&nbsp; represent?&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+57
+
+UQID
+1523914225607415
+
+LASTMOD
+1523914288
+
+DESCRIPTION
+Fund Thm P1 #5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .01
+$reqdecimals = 4
+
+$answer[0] = "200*15-2*15^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Water flows from the bottom of a storage tank at a rate of&nbsp;`r(t) = 200 -4t`&nbsp; liters per minute, where&nbsp;`0 &lt;= t &lt;= 50`&nbsp;. Find the amount of water (in liters) that flows from the tank during the first 15 minutes.&nbsp;</p>
+<p>Amount of water in liters = $answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+58
+
+UQID
+1523915230201669
+
+LASTMOD
+1524791661
+
+DESCRIPTION
+Fund Thm P1 #6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "8cos(x)+5sin(x)+7tan(x)-8e^x+7sin^-1(x)+6tan^-1(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Evaluate the indefinite integral.</p>
+<p>&nbsp;`int(-8sin(x)+5cos(x)+7sec^2(x)-8e^x+7/sqrt(1-x^2)+6/(1+x^2))dx`&nbsp; =</p>
+<p>$answerbox[0] +&nbsp;<em>C</em>.</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+59
+
+UQID
+1523917423651335
+
+LASTMOD
+1523917591
+
+DESCRIPTION
+Fund Thm P1 #7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = "calculated"
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "-5(8)^2-4(8)-(-5(2)^2-4(2))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use the Fundamental Theorem of Calculus to evaluate (if it exists).&nbsp;</p>
+<p>&nbsp;`int_2^8(-10x-4)dx`&nbsp;</p>
+<p>If the integral does not exist, type "DNE" as your answer.&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+60
+
+UQID
+1523918090866539
+
+LASTMOD
+1523918135
+
+DESCRIPTION
+Fund Thm P1 #8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = "calculated"
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "5360"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The traffic flow rate past a certain point on a highway is&nbsp;`q(t) = 1000 + 2200t -390t^2&nbsp;`&nbsp;where&nbsp;<em>t</em> is in hours and&nbsp;<em>t&nbsp;</em>= 0 occurs at 8 AM. How many cars pass by during 8AM to 10AM?&nbsp;</p>
+<p>$answerbox[0] cars.&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+61
+
+UQID
+1523919949754617
+
+LASTMOD
+1524791533
+
+DESCRIPTION
+Fund Thm P2 #1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = "numfunc"
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "t"
+
+$answer[0] = "1/6(1+tan(t))^6"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Evaluate the indefinite integral&nbsp;</p>
+<p>&nbsp;`int &nbsp;1(1+tan(t))^5sec^2(t)dt`&nbsp;</p>
+<p>$answerbox[0] +&nbsp;<em>C&nbsp;</em></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+62
+
+UQID
+1523921354677544
+
+LASTMOD
+1524791560
+
+DESCRIPTION
+Fund Thm P2 #2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = "numfunc"
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "-(2/3)(1/8)(7-sin(8x))^(3/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Evaluate the indefinite integral.&nbsp;</p>
+<p>&nbsp;`int &nbsp;cos(8x)sqrt(7-sin(8x)dx =&nbsp;`&nbsp;</p>
+<p>$answerbox[0] +&nbsp;<em>C</em></p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+63
+
+UQID
+1523988081276113
+
+LASTMOD
+1524791583
+
+DESCRIPTION
+Fund Thm P2 #3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "1/7ln(7sin(x)+28)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Evaluate the indefinite integral.&nbsp;</p>
+<p>`int &nbsp;cos(x)/(7sin(x) +28)dx`&nbsp;</p>
+<p>$answerbox[0] +&nbsp;<em>C</em>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+64
+
+UQID
+1523989916572368
+
+LASTMOD
+1523992406
+
+DESCRIPTION
+Fund Thm P2 #4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated","calculated","calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+
+$answer[0] = "55"
+$answer[1] = "55e^(-0.04*60)"
+$answer[2] = "(-55/0.04e^(-0.04*60))-(-55/0.04e^(-0.04*0))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Oil is leaking out of a ruptured tanker at the rate of&nbsp;`r(t) = 55e^(-0.04t)`&nbsp; thousand liters per minute.</p>
+<p>a) At what rate is the oil leaking out a&nbsp;<em>t</em> = 0? $answerbox[0] thousand liters per minute.</p>
+<p>b) At what rate is the oil leaking out at&nbsp;<em>t</em> = 60? $answerbox[1] thousand liters per minute.</p>
+<p>c) How many thousands of liters leaked out during the first hour? $answerbox[2] thousand liters</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+65
+
+UQID
+1523993286106211
+
+LASTMOD
+1524095392
+
+DESCRIPTION
+Fund Thm P2 #5
+
+AUTHOR
+Judson-Garcia,Julia, mb Boney,Jennifer
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "(2(4)+10*2/3(4^(3/2)))-(2(0)+10*2/3(0^(3/2)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>The linear density of a rod length 4 meters is given by&nbsp;</p>
+<p>&nbsp;` rho (x) = 2 + 10sqrt(x)`&nbsp;</p>
+<p>measured in kilograms per meter, where&nbsp;<em>x</em> is measured in meters from one end of the rod.</p>
+<p>Total mass in kilograms = $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+66
+
+UQID
+1523994290140769
+
+LASTMOD
+1524794479
+
+DESCRIPTION
+Fund Thm P2 #6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "t"
+
+$answer[0] = "-5/(pi*2)*1/2cos((2*pi*t)/5)+5/(pi*2)*1/2cos((2*pi*0)/5)"
+
+//simplified 5/(4*pi)*(1-cos(2/5*pi*t))
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Breathing is cyclic and a full respiratory cycle from beginning of inhalation to the end of exhalation takes about 5 seconds. The maximum rate of air flow into the lungs is about 0.5 L/s.&nbsp;</p>
+<p>This explains, in part, why the function&nbsp;`f(t) = 1/2sin((2pit)/5)`&nbsp; has often been used to model the rate of air flow into the lungs.&nbsp;</p>
+<p>Use this model to find the volume (in liters) of inhaled air into the lungs at time&nbsp;<em>t</em>.&nbsp;</p>
+<p>Volume at time&nbsp;<em>t</em> = $answerbox[0] liters</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+67
+
+UQID
+1523995536450679
+
+LASTMOD
+1523995599
+
+DESCRIPTION
+Fund Thm P2 #7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "450.268/1.12567e^(1.12567(3))-450.268/1.12567e^(1.12567(0))+700"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A bacteria population starts with 700 bacteria and grows at a rate of&nbsp;`r(t) = 450.268e^(1.12567t)`&nbsp; bacteria per hour. How many bacteria will there be after three hours?&nbsp;</p>
+<p>Number of bacteria after 3 hours = $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+68
+
+UQID
+1523995978192169
+
+LASTMOD
+1523996014
+
+DESCRIPTION
+Fund Thm P2 #8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$answer[0] = "1253"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A population of insects increases at a rate of&nbsp;`220+6t+0.9t^2`&nbsp; &nbsp;insects per day. Find the insect population after 5 days, assuming there are 40 insects at&nbsp;<em>t</em> = 0. (Round your answer to the nearest whole number.)</p>
+<p>$answerbox[0] insects</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+69
+
+UQID
+1523996420440212
+
+LASTMOD
+1524797967
+
+DESCRIPTION
+Fund Thm P2 #9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "(cos(sqrt(x))/sqrt(x)^10*1/(2sqrt(x)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use part 1 of the Fundamental Theorem of Calculus to find the derivative of&nbsp;</p>
+<p>`y = int_-5^sqrt(x) cost/t^(10)dt`&nbsp;</p>
+<p>`dy/dx =&nbsp;`&nbsp; &nbsp;$answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+70
+
+UQID
+1523997218206397
+
+LASTMOD
+1524791642
+
+DESCRIPTION
+Fund Thm P2 #10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+$answer[0] = "(2(x^3)-1)^3*3x^2-((2(x^5)-1)^3*5x^4)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the derivative of the following function&nbsp;</p>
+<p>&nbsp;`F(x) = int_(x^5)^(x^3) (2t-1)^3dt&nbsp;`&nbsp;</p>
+<p>using the Fundamental Theorem of Calculus.</p>
+<p>`F'(x) =&nbsp;`&nbsp; &nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+71
+
+UQID
+1523997752491148
+
+LASTMOD
+1524791461
+
+DESCRIPTION
+Fund Thm P2 #11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$noshuffle = "all"
+
+//$reltolerance = .02
+//$reqdecimals = 4
+
+$variables = "x"
+
+$answer[0] = "(cos((sin(x))^5)+sin(x))(cos(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use part 1 of the Fundamental Theorem of Calculus to find the derivative of&nbsp;</p>
+<p>`h(x) = int_(-3)^(sin(x)) (cos(t^5) + t)dt`</p>
+<p>`h'(x) =&nbsp;`&nbsp; &nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+72
+
+UQID
+1523998072943972
+
+LASTMOD
+1524791474
+
+DESCRIPTION
+Fund Thm P2 #12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "(5/4(6^4)-3(6))-(5/4(1^4)-3(1))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the area of the region under the curve&nbsp;`y = 5x^3 - 3`&nbsp; &nbsp;and above the&nbsp;<em>x</em> - axis, for&nbsp;`1&lt;=x&lt;=6`&nbsp;.&nbsp;</p>
+<p>Area = $answerbox[0] square units</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+73
+
+UQID
+1523998412187877
+
+LASTMOD
+1524791480
+
+DESCRIPTION
+Fund Thm P2 #13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+$noshuffle = "all"
+
+$reltolerance = .02
+$reqdecimals = 4
+
+$answer[0] = "(6(sqrt(6/5)) - 5/3(sqrt(6/5))^3)-(6*-(sqrt(6/5)) - 5/3*-(sqrt(6/5))^3)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the area of the region under the curve&nbsp;`y = 6 - 5x^2`&nbsp; and above the&nbsp;<em>x</em> - axis.&nbsp;</p>
+<p>Area = $answerbox[0] square units</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+74
+
+UQID
+1532548917145822
+
+LASTMOD
+1533759199
+
+DESCRIPTION
+Basic Differentiation 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "14x-2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = 7x^2 - 2x - 27`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+75
+
+UQID
+1532548955520923
+
+LASTMOD
+1533759235
+
+DESCRIPTION
+Basic Differentiation 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "48x^7 - 20x^4 -15x^2 + 6"
+$answer[1] = "48(4)^7 - 20(4)^4 -15(4)^2 + 6"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = 6x^8 - 4x^5 -5x^3 +6x`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+<p>Find&nbsp;`r_(f)(4) = `&nbsp;$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+76
+
+UQID
+1532549007628935
+
+LASTMOD
+1533759306
+
+DESCRIPTION
+Basic Differentiation 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "7cos(t)+4*pi*sin(t)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = 7sin(t) - 4picos(t)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+77
+
+UQID
+1532549038742525
+
+LASTMOD
+1533759325
+
+DESCRIPTION
+Basic Differentiation 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "t"
+
+$answer[0] = "-(3sqrt(5))/t^4"
+$answer[1] = "-(3sqrt(5))/(1)^4"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = sqrt(5)/t^3`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+<p>Find&nbsp;`r_(f)(1) = `&nbsp;$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+78
+
+UQID
+1532549070315617
+
+LASTMOD
+1533759298
+
+DESCRIPTION
+Basic Differentiation 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "-4/x^2-10/x^3"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = 4+4/x+5/x^2`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+79
+
+UQID
+1532549179537537
+
+LASTMOD
+1533759345
+
+DESCRIPTION
+Basic Differentiation 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "14x-39"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = (x-6)(7x+3)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+80
+
+UQID
+1532549230108103
+
+LASTMOD
+1533759355
+
+DESCRIPTION
+Basic Differentiation 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "-4t^-3"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = 2t^-2`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+81
+
+UQID
+1532549260816212
+
+LASTMOD
+1533759391
+
+DESCRIPTION
+Basic Differentiation 8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "r"
+$answer[0] = "4*pi*r^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`V(r) = 4/3pir^3`&nbsp;, find the rate of change function of <em>V</em>.</p>
+<p>&nbsp;`r_(V)(r) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+82
+
+UQID
+1532549292803911
+
+LASTMOD
+1533759410
+
+DESCRIPTION
+Basic Differentiation 9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "27/2x^(1/2)-18x^(-1/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = 9sqrt(x)(x - 4)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+83
+
+UQID
+1532549320327280
+
+LASTMOD
+1533759438
+
+DESCRIPTION
+Basic Differentiation 10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "21/2x^(5/2)-18+6x^(-1/2)"
+$answer[1] = "21/2(3)^(5/2)-18+6(3)^(-1/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = 3sqrt(x)(x^3-6sqrt(x) +4)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+<p>Find&nbsp;`r_(f)(3) = `&nbsp;$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+84
+
+UQID
+1532549361115661
+
+LASTMOD
+1533759518
+
+DESCRIPTION
+Basic Differentiation 11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answer[0] = "0"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`g(x) = 6pi^9`&nbsp;, find the rate of change of&nbsp;`g`&nbsp;.</p>
+<p>`r_(g)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+85
+
+UQID
+1532549394522675
+
+LASTMOD
+1533759544
+
+DESCRIPTION
+Basic Differentiation 12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "u"
+$answer[0] = "sqrt(5) + sqrt(2)/2u^(-1/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(u) = sqrt(5)u + sqrt(2u)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(u) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+86
+
+UQID
+1532549437208262
+
+LASTMOD
+1533759569
+
+DESCRIPTION
+Basic Differentiation 13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "9/2x^(1/2)+5/2x^(-1/2)-33/2x^(-3/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = (3x^2 + 5x +33)/sqrt(x)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+87
+
+UQID
+1532549463050353
+
+LASTMOD
+1533759581
+
+DESCRIPTION
+Basic Differentiation 14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "3-4x^(-2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = (3x^5 - 3x^4 +4x^3)/x^4`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+88
+
+UQID
+1532549484139132
+
+LASTMOD
+1533759601
+
+DESCRIPTION
+Basic Differentiation 15
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "5/2t^(-1/2)-4t^(-3/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = 5sqrt(t)+8/sqrt(t)`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+89
+
+UQID
+1532549702365315
+
+LASTMOD
+1533759619
+
+DESCRIPTION
+Basic Differentiation 16
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+$answer[0] = "-39/2x^(11/2)-28x^(-9/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(x) = -3x^6sqrt(x) + 8/(x^3sqrt(x))`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+90
+
+UQID
+1532549735523164
+
+LASTMOD
+1533759638
+
+DESCRIPTION
+Basic Differentiation 17
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "1/7cos(t) -9/t^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = sin(t)/7 + 9/t `&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+91
+
+UQID
+1532551515561775
+
+LASTMOD
+1533759655
+
+DESCRIPTION
+Basic Differentiation 18
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "2/3t^(-1/3) +3t^(1/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>If&nbsp;`f(t) = root(3)(t^2) + 2sqrt(t^3)&nbsp;`&nbsp;, find the rate of change function of&nbsp;<em>f</em>.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+92
+
+UQID
+1532551832541001
+
+LASTMOD
+1533759759
+
+DESCRIPTION
+Basic Differentiation 19
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","numfunc"]
+
+$variables = "x"
+
+$answer[0] = "2cos(x) -7sin(x)"
+$answer[1] = "-2sin(x) - 7cos(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the first and second derivative of the function.</p>
+<p>&nbsp;`f(x) = 2sin(x) + 7cos(x)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]</p>
+<p>&nbsp;`r_(r_f(x))(x) =&nbsp;`&nbsp;$answerbox[1]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+93
+
+UQID
+1532551902361659
+
+LASTMOD
+1533759769
+
+DESCRIPTION
+Basic Differentiation 20
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","numfunc","calculated","calculated"]
+
+$variables = "t"
+
+$answer[0] = "t^2 - 8t +16"
+$answer[1] = "2t - 8"
+$answer[2] = "-6"
+$answer[3] = "0"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Suppose that the equation of motion for a particle (where&nbsp;<em>s</em> is in meters and&nbsp;<em>t</em> in seconds) is&nbsp;</p>
+<p>`s = 1/3t^3 - 4t^2 +16t + 6`&nbsp;&nbsp;</p>
+<p>a) Find the velocity and acceleration as functions of&nbsp;<em>t</em>.</p>
+<p>Velocity at time&nbsp;<em>t</em> = $answerbox[0]</p>
+<p>Acceleration at time&nbsp;<em>t</em> = $answerbox[1]</p>
+<p>c) Find the acceleration after 1 second:&nbsp;</p>
+<p>Acceleration after 1 second: $answerbox[2]</p>
+<p>d) Find the acceleration at the instant when the velocity is 0.</p>
+<p>Acceleration: $answerbox[3]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+94
+
+UQID
+1532551982690668
+
+LASTMOD
+1532551982
+
+DESCRIPTION
+Basic Differentiation 21
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated","calculated","calculated"]
+
+$reltolerance = 0.0001
+$reqdecimals = 4
+
+$answer[0] = "8*pi"
+$answer[1] = "32*pi"
+$answer[2] = "48*pi"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A spherical ballon is being inflated. Find the rate at which the surface area of the ballon is increasing with respect to the radius&nbsp;<em>r&nbsp;</em>when:</p>
+<p>a)&nbsp;`r = 1&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>b)&nbsp;`r = 4 `&nbsp; $answerbox[1]&nbsp;</p>
+<p>c)&nbsp;`r = 6 `&nbsp; $answerbox[2]&nbsp;</p>
+<p>Hint: The surface area of a sphere is&nbsp;`S = 4pir^2`&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+95
+
+UQID
+1532553074250780
+
+LASTMOD
+1533759852
+
+DESCRIPTION
+Product and Quotient 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "9x^8*cos(x)-x^9*sin(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = x^9cos(x)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+96
+
+UQID
+1532553110747708
+
+LASTMOD
+1533759876
+
+DESCRIPTION
+Product and Quotient 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "-15/(5x+3)^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = 3/(5x+3)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+97
+
+UQID
+1532553150650975
+
+LASTMOD
+1533759887
+
+DESCRIPTION
+Product and Quotient 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "(3x-7x^3)(1/(2sqrt(x)))+(2+sqrt(x))(3-21x^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (3x-7x^3)(2+sqrt(x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+98
+
+UQID
+1532553331069330
+
+LASTMOD
+1533759897
+
+DESCRIPTION
+Product and Quotient 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "-sin(x)-7sec^2(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = cos(x)-7tan(x)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+99
+
+UQID
+1532553525639645
+
+LASTMOD
+1533759914
+
+DESCRIPTION
+Product and Quotient 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "(t^2+6t+6)(-8t^-3-18t^-4)+(2t+6)(4t^-2+6t^-3)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(t) = (t^2+6t+6)(4t^-2+6t^-3)`&nbsp;.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+100
+
+UQID
+1532553549872276
+
+LASTMOD
+1533759940
+
+DESCRIPTION
+Product and Quotient 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "(-16x)/(2+x^2)^2"
+$answer[1] = "-16/9"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (6-x^2)/(2+x^2)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+<p>What is the rate of change at&nbsp;`x = 1`&nbsp;?</p>
+<p>&nbsp;$answerbox[1]&nbsp;&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+101
+
+UQID
+1532553585188870
+
+LASTMOD
+1533759952
+
+DESCRIPTION
+Product and Quotient 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "2/(sqrt(x)(sqrt(x)+2)^2)"
+$answer[1] = "2/(sqrt(2)(sqrt(2)+2)^2)"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (sqrt(x) - 2)/(sqrt(x) + 2)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+<p>What is the rate of change at&nbsp;`x = 2`&nbsp;?</p>
+<p>&nbsp;$answerbox[1]&nbsp;&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+102
+
+UQID
+1532553887948840
+
+LASTMOD
+1533760350
+
+DESCRIPTION
+Product and Quotient 8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "-8x(cos(x)-sin(x))-8(sin(x)+cos(x))"
+$answer[1] = "-8(pi/6)(cos(pi/6)-sin(pi/6))-8(sin(pi/6)+cos(pi/6))"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = -8x(cos(x)+sin(x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+<p>What is the rate of change at&nbsp;`x = pi/6`&nbsp;?</p>
+<p>&nbsp;$answerbox[1]&nbsp;&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+103
+
+UQID
+1532553920164423
+
+LASTMOD
+1533760406
+
+DESCRIPTION
+Product and Quotient 9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "-6-6pi"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (6x)/(sin(x)+cos(x))`&nbsp; at&nbsp;`x = -pi`&nbsp;.</p>
+<p>`r_(f)(pi) = `&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+104
+
+UQID
+1532553955734860
+
+LASTMOD
+1533760417
+
+DESCRIPTION
+Product and Quotient 10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$answer[0] = "2(x^2cos(x)+2xsin(x))"
+$answer[1] = "18cos(3)+12sin(3)"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (2x^2tan(x))/sec(x)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+<p>What is the rate of change at&nbsp;`x = 3`&nbsp;?</p>
+<p>&nbsp;$answerbox[1]&nbsp;&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+105
+
+UQID
+1532554448949944
+
+LASTMOD
+1533760425
+
+DESCRIPTION
+Product and Quotient 11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "7-2/x^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (7x^5+8x^4+2x^3)/(x^4)`&nbsp;.</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+106
+
+UQID
+1532554480126824
+
+LASTMOD
+1533760436
+
+DESCRIPTION
+Product and Quotient 12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "tan(x)(5cos(x)-6sin(x))+sec^2(x)(5sin(x)+6cos(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = tan(x)(5sin(x)+6cos(x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+107
+
+UQID
+1532554519018956
+
+LASTMOD
+1533760537
+
+DESCRIPTION
+Product and Quotient 13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "7(sec(pi/6)(sec^2(pi/6))+tan(pi/6)(sec(pi/6)tan(pi/6)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Let&nbsp;`f(x) = 7sec(x)`&nbsp;.&nbsp;</p>
+<p>Then,&nbsp;`r_(r_(f)(x))(pi/6) =&nbsp;`&nbsp; $answerbpx[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+108
+
+UQID
+1532554559714334
+
+LASTMOD
+1533760506
+
+DESCRIPTION
+Product and Quotient 14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated","calculated"]
+
+$answer[0] = "-1.5"
+$answer[1] = "4.5"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>$Fig_2416</p>
+<p>The graphs of the function<em> f</em> (given in blue) and&nbsp;<em>g</em> (given in red) are plotted above.&nbsp;</p>
+<p>Suppose that&nbsp;`u(x) = f(x)g(x)&nbsp;`&nbsp;and&nbsp;`v(x) = f(x)/g(x)`&nbsp;. Find each of the following:</p>
+<p>`r_(u)(1) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;`r_(v)(1) =&nbsp;`&nbsp; $answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig_2416,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig_2416.png,
+
+START QUESTION
+QID
+109
+
+UQID
+1532554822009614
+
+LASTMOD
+1533761104
+
+DESCRIPTION
+Chain Rule 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "1/(2sqrt(2x^2+5x+3))(4x+5)"
+$answer[1] = "1/(2sqrt(2(3)^2+5*3+3))(4*3+5)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = sqrt(2x^2+5x+3)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>Find the rate of change at&nbsp;`x=3`&nbsp;.</p>
+<p>`r_(f)(3) =&nbsp;`&nbsp; $answerbox[1]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+110
+
+UQID
+1532554896008718
+
+LASTMOD
+1533761118
+
+DESCRIPTION
+Chain Rule 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "-3(3x+3)^-4(3)"
+$answer[1] = "-3(3*1+3)^-4(3)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (3x+3)^-3`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>Find the rate of change at&nbsp;`x=1`&nbsp;.</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp; $answerbox[1]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+111
+
+UQID
+1532554964873809
+
+LASTMOD
+1533761135
+
+DESCRIPTION
+Chain Rule 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "1/(2sqrt(3+9tan(x)))(9sec^2(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = sqrt(3+9tan(x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+112
+
+UQID
+1532554986352426
+
+LASTMOD
+1533761157
+
+DESCRIPTION
+Chain Rule 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "3cos(3x-6)*3"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = 3sin(3x-6)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+113
+
+UQID
+1532555004597234
+
+LASTMOD
+1533761167
+
+DESCRIPTION
+Chain Rule 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "7*4cos^3(x)(-sin(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = 7cos^4(x)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+114
+
+UQID
+1532555267039503
+
+LASTMOD
+1533761202
+
+DESCRIPTION
+Chain Rule 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["string","string","string","string"]
+
+$answer[0] = "A or a"
+$answer[1] = "C or c"
+$answer[2] = "D or d"
+$answer[3] = "B or b"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Match the functions and their derivatives:</p>
+<p>$answerbox[0]&nbsp;<strong>1.</strong>&nbsp;`y = sin(x)tan(x)`&nbsp;</p>
+<p>$answerbox[1]&nbsp;<strong>2.</strong>&nbsp;`y = cos^3(x)`&nbsp;</p>
+<p>$answerbox[2]&nbsp;<strong>3.&nbsp;</strong>`y = cos(tan(x))`&nbsp;</p>
+<p>$answerbox[3]&nbsp;<strong>4.</strong>&nbsp;`y = tan(x)`&nbsp;</p>
+<p><strong>A.</strong>&nbsp;`y' = sin(x) +tan(x)sec(x)`&nbsp;</p>
+<p><strong>B.&nbsp;</strong>`y' = 1+tan^2(x)`&nbsp;</p>
+<p><strong>C.&nbsp;</strong>`y' = -3cos^3(x)tan(x)`&nbsp;</p>
+<p><strong>D.</strong>&nbsp;`y' = -sin(tan(x))/cos^2(x)`&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+115
+
+UQID
+1532555287879376
+
+LASTMOD
+1533761634
+
+DESCRIPTION
+Chain Rule 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "5sec(6x)tan(6x)*6"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = 5sec(6x)`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+116
+
+UQID
+1532555314771000
+
+LASTMOD
+1533761658
+
+DESCRIPTION
+Chain Rule 8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "6(-4x^2-8)^5(-8x)(-8x^2+4)^14+(-4x^2-8)^6(14(-8x^2+4)^13)(-16x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (-4x^2-8)^6(-8x^2+4)^14`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+117
+
+UQID
+1532555366748075
+
+LASTMOD
+1533761723
+
+DESCRIPTION
+Chain Rule 9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "7cos(cos(x))(-sin(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = 7(sin(cos(x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+118
+
+UQID
+1532555401216222
+
+LASTMOD
+1533761739
+
+DESCRIPTION
+Chain Rule 10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "8/7(4t-7/t)^(1/7)(4+7/t^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(t) = (4t-7/t)^(8/7)`&nbsp;.</p>
+<p>&nbsp;`r_(f)(t) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+119
+
+UQID
+1532555418838514
+
+LASTMOD
+1533761791
+
+DESCRIPTION
+Chain Rule 11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "13(4+cos^2(x))^12(2cos(x)(-sin(x)))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (4+cos^2(x))^13`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+120
+
+UQID
+1532556008568547
+
+LASTMOD
+1533761814
+
+DESCRIPTION
+Chain Rule 12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "2(8-8x)^(-1/2)+8x(8-8x)^(-3/2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of&nbsp;`f(x) = (2x)/(sqrt(8-8x))`&nbsp;.</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+121
+
+UQID
+1532556033587370
+
+LASTMOD
+1533761906
+
+DESCRIPTION
+Chain Rule 13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated","numfunc","calculated"]
+
+$variables = "x"
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "2x^2(-sin(5x))(5)+4x(cos(5x))"
+$answer[1] = "2(3)^2(-sin(5*3))(5)+4*3(cos(5*3))"
+$answer[2] = "-50x^2cos(5x)-40xsin(5x)+4cos(5x)"
+$answer[3] = "-50(3)^2cos(5*3)-40*3sin(5*3)+4cos(5*3)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Let &nbsp;`f(x) = 2x^2cos(5x)`&nbsp;.</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp; $answerbox[0]&nbsp;` `&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(3) =&nbsp;`&nbsp; $answerbox[1]</p>
+<p>&nbsp;`r_(r_(f)(x))(x) =&nbsp;`&nbsp; $answerbox[2]</p>
+<p>`r_(r_(f)(x))(3) =&nbsp;`&nbsp; $answerbox[3]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+122
+
+UQID
+1532556058332203
+
+LASTMOD
+1533761950
+
+DESCRIPTION
+Chain Rule 14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated","calculated"]
+
+$answer[0] = "6"
+$answer[1] = "9"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A table of values for&nbsp;<em>f</em>,&nbsp;<em>g</em>,&nbsp;<em>f</em> ', and&nbsp;<em>g</em>' is given below.</p>
+<p>$Fig_2515</p>
+<p>a) If&nbsp;`h(x) = f(g(x))`&nbsp;, then&nbsp;`h'(3) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+<p>b) If&nbsp;`H(x) = g(f(x))`&nbsp;, then&nbsp;`H'(2) =&nbsp;`&nbsp; $answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+QIMGS
+Fig_2515,https://mathcms.asu.edu/IMathAS/assessment/qimages/Fig_2515.png,
+
+START QUESTION
+QID
+123
+
+UQID
+1532556126467255
+
+LASTMOD
+1533761964
+
+DESCRIPTION
+Chain Rule 15
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$answer[0] = "0.45cos((2*pi*t)/4.9)((2*pi)/4.9)"
+$answer[1] = "0.45cos((2*pi*1)/4.9)((2*pi)/4.9)"
+
+$variables = "t"
+
+$reltolerance 0.0001
+$reqdecimals = 4
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>A Cepheid variable star is a star whose brightness alternately increases and decreases. Suppose that Cephei Joe is a star for which the interval between times of maximum brightness is 4.9 days. Its average brightness is 3.7 and the brightness changes by +/-0.45. Using this data, we can construct a mathematical model for the brightness of Cephei Joe at time <em>t</em>, where <em>t</em>&nbsp;is measured in days.&nbsp;</p>
+<p>`B(t) = 3.7 + 0.45sin((2pit)/4.9)`&nbsp;</p>
+<p>a) Find the rate of change of the brightness after&nbsp;<em>t</em> days:</p>
+<p>$answerbox[0]&nbsp;</p>
+<p>b) Find the rate of change of the brightness after 1 day:</p>
+<p>$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+124
+
+UQID
+1532556149700952
+
+LASTMOD
+1532556149
+
+DESCRIPTION
+Chain Rule 16
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answer[0] = "2^23sin(2x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the 23<sup>rd</sup> derivative of&nbsp;`y = cos(2x)`&nbsp; by finding the first few derivatives and observing the pattern that occurs.&nbsp;`&nbsp;`&nbsp;</p>
+<p>&nbsp;`(d^(23)y)/(dx^23) =&nbsp;`&nbsp; $answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+125
+
+UQID
+1532557122079923
+
+LASTMOD
+1533762042
+
+DESCRIPTION
+Exponential and Log 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "4/x"
+$answer[1] = "2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = 4ln(7x)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+<p>What is the rate of change at `x = 2`&nbsp;?</p>
+<p>`r_(f)(2) =&nbsp;`&nbsp;$answerbox[1] &nbsp;` `&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+126
+
+UQID
+1532557139998105
+
+LASTMOD
+1533762065
+
+DESCRIPTION
+Exponential and Log 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "2(ln(x))*1/x"
+$answer[1] = "4/e^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = (ln(x))^2`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+<p>What is the rate of change at `x = e^2`&nbsp;?</p>
+<p>`r_(f)(e^2) =&nbsp;`&nbsp;$answerbox[1] &nbsp;` `&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+127
+
+UQID
+1532557316405626
+
+LASTMOD
+1533762115
+
+DESCRIPTION
+Exponential and Log 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "5x^2(1/x)+10x(ln(x))"
+$answer[1] = "5(e^4)^2(1/(e^4))+10(e^4)(ln(e^4))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = ln(x)5x^2`&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+<p>What is the rate of change at `x = e^4`&nbsp;?</p>
+<p>&nbsp;`r_(f)(e^4) =&nbsp;`&nbsp;$answerbox[1] &nbsp;` `&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+128
+
+UQID
+1532557339851141
+
+LASTMOD
+1533762121
+
+DESCRIPTION
+Exponential and Log 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "1/(x+6)^5(5(x+6)^4)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>`y = ln((x+6)^5)`&nbsp;&nbsp;</p>
+<p>`dy/dx =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+129
+
+UQID
+1532557360203344
+
+LASTMOD
+1533762127
+
+DESCRIPTION
+Exponential and Log 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "t"
+
+$answer[0] = "1/(4t^2+9t+9)(8t+9)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>`y = ln(4t^2+9t+9)`&nbsp;&nbsp;</p>
+<p>`dy/dt`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+130
+
+UQID
+1532557375920842
+
+LASTMOD
+1533762189
+
+DESCRIPTION
+Exponential and Log 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "-4/3(1/ln(6)^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function at&nbsp;`x = 1`&nbsp;</p>
+<p>&nbsp;`f(x) = 4/ln(x^2+5)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+131
+
+UQID
+1532557424969977
+
+LASTMOD
+1533762201
+
+DESCRIPTION
+Exponential and Log 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "-2/9(ln(3))^(-2/3)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function at&nbsp;`x = 1`&nbsp;</p>
+<p>&nbsp;`f(x) = root(3)(ln(4-x^2))&nbsp;`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+132
+
+UQID
+1532557450623659
+
+LASTMOD
+1533762219
+
+DESCRIPTION
+Exponential and Log 8
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "5^x(1/(xln(7)))+log_7(x)(5^xln(5))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = 5^xlog_(7)(x)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>(To enter in log functions with a base type 'log_4(x)' that will look like&nbsp;`log_4(x)`&nbsp;)</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+133
+
+UQID
+1532557558576990
+
+LASTMOD
+1533762255
+
+DESCRIPTION
+Exponential and Log 9
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "1/((4(2)^2+1)(ln(7)))(8*2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function at&nbsp;`x=2`&nbsp;</p>
+<p>&nbsp;`f(x) = log_(7)(4x^2+1)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(2) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>(To enter in log functions with a base type 'log_4(x)' that will look like&nbsp;`log_4(x)`&nbsp;)</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+134
+
+UQID
+1532557708678719
+
+LASTMOD
+1533762276
+
+DESCRIPTION
+Exponential and Log 10
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "-3sin(6ln(x))(6/x)"
+$answer[1] = "-3sin(6ln(1))(6/1)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = 3cos(6ln(x))`&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+<p>What is the rate of change at `x = 1`&nbsp;?</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp;$answerbox[1] &nbsp;` `&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+135
+
+UQID
+1532557729028800
+
+LASTMOD
+1533762289
+
+DESCRIPTION
+Exponential and Log 11
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "-5csc^2(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the second derivative of the function&nbsp;</p>
+<p>&nbsp;`f(x) = 5ln(sin(x))`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(r_(f)(x))(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+136
+
+UQID
+1532557743774644
+
+LASTMOD
+1533762380
+
+DESCRIPTION
+Exponential and Log 12
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "1/2(4/(4x-6)-3/(3x+6))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = ln(sqrt((4x-6)/(3x+6)))`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+137
+
+UQID
+1532557767161789
+
+LASTMOD
+1533762394
+
+DESCRIPTION
+Exponential and Log 13
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+
+$answer[0] = "0"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = e^7 + ln(9)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+138
+
+UQID
+1532557783619354
+
+LASTMOD
+1533762408
+
+DESCRIPTION
+Exponential and Log 14
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "(4x^2+x-1)e^x+(e^x)(8x+1)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`g(x) = (4x^2+x-1)e^x`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(g)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+139
+
+UQID
+1532557820037180
+
+LASTMOD
+1533762438
+
+DESCRIPTION
+Exponential and Log 15
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "13/225(e^1)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function at&nbsp;`x=1`&nbsp;</p>
+<p>&nbsp;`f(x) = e^x/(x^2+14)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+140
+
+UQID
+1532557836446287
+
+LASTMOD
+1533762449
+
+DESCRIPTION
+Exponential and Log 16
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "10e^3-e(e(3)^(e-1))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function at&nbsp;`x=3`&nbsp;</p>
+<p>&nbsp;`f(x) = 10e^x - ex^e`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(3) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+141
+
+UQID
+1532557856068239
+
+LASTMOD
+1533762461
+
+DESCRIPTION
+Exponential and Log 17
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "9/x+6/(x+4)+(9*2x)/(x^2+9)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = ln(x^9(x+4)^6(x^2+9)^9)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+142
+
+UQID
+1532557872223831
+
+LASTMOD
+1533762471
+
+DESCRIPTION
+Exponential and Log 18
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "e^(sqrt(4x+7))(1/(2sqrt(4x+7)))(4)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = e^sqrt(4x+7)`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+143
+
+UQID
+1532557930429927
+
+LASTMOD
+1533762478
+
+DESCRIPTION
+Exponential and Log 19
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "14^(-5/x)(ln(14))(5/x^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>`y = 14^(-5/x)`&nbsp;&nbsp;</p>
+<p>`dy/dx =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+144
+
+UQID
+1532557969389085
+
+LASTMOD
+1532557969
+
+DESCRIPTION
+Exponential and Log 20
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "((8+e^x)(5e^(5x))-e^(5x)(e^x))/(8+e^x)^2"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>`y = e^(5x)/(8+e^x)`&nbsp;&nbsp;</p>
+<p>`dy/dx =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+145
+
+UQID
+1532557999153226
+
+LASTMOD
+1533762500
+
+DESCRIPTION
+Exponential and Log 21
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "4e^(xcos(x))(x(-sin(x))+cos(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`f(x) = 4e^(xcos(x))`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+146
+
+UQID
+1532558042055016
+
+LASTMOD
+1533762516
+
+DESCRIPTION
+Exponential and Log 22
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","numfunc"]
+
+$variables = "x"
+
+$answer[0] = "2x(1/x)+2ln(x)"
+$answer[1] = "2/x"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the first and second derivative of the function&nbsp;</p>
+<p>&nbsp;`y = 2xln(x)`&nbsp;&nbsp;</p>
+<p>&nbsp;`y' =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>`y'' =&nbsp;`&nbsp;$answerbox[1]&nbsp;</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+147
+
+UQID
+1532558063683652
+
+LASTMOD
+1533762530
+
+DESCRIPTION
+Exponential and Log 23
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "4sec(x)tan(x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the second derivative of the function&nbsp;</p>
+<p>&nbsp;`f(x) = 4ln(sec(x)+tan(x))`&nbsp;&nbsp;</p>
+<p>&nbsp;`r_(r_(f)(x))(x) =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+<p>(You may want to simplify the first derivative before you find the second derivative.)</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+148
+
+UQID
+1532558241851547
+
+LASTMOD
+1533762604
+
+DESCRIPTION
+Inverse Trig 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "6(1/sqrt(1-(x^2)^2))(2x)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = 6sin^-1(x^2)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+149
+
+UQID
+1532558274638428
+
+LASTMOD
+1533762629
+
+DESCRIPTION
+Inverse Trig 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$variables = "x"
+
+$answer[0] = "3(1/(1+(7x)^2))(7)"
+$answer[1] = "3(1/(1+(7*4)^2))(7)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>What is the rate of change of the function&nbsp;</p>
+<p>`f(x) = 3arctan(7x)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+<p>What is the rate of change at&nbsp;`x = 4`&nbsp;?</p>
+<p>`r_(f)(4) =&nbsp;`&nbsp;$answerbox[1]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+150
+
+UQID
+1532558295492063
+
+LASTMOD
+1533762668
+
+DESCRIPTION
+Inverse Trig 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "x^3(1/(1+(4x)^2))(4)+3x^2(tan^-1(4x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = x^3tan^-1(4x)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+151
+
+UQID
+1532558320821928
+
+LASTMOD
+1533762686
+
+DESCRIPTION
+Inverse Trig 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "1/(1+(8^x)^2)(8^x)(ln(8))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = tan^-1(8^x)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+152
+
+UQID
+1532558343895704
+
+LASTMOD
+1533762706
+
+DESCRIPTION
+Inverse Trig 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "3x^3(1/(1+(3x^2)^2))(6x)+9x^2tan^-1(3x^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = 3x^3arctan(3x^2)`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+153
+
+UQID
+1532558372536389
+
+LASTMOD
+1533762717
+
+DESCRIPTION
+Inverse Trig 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "8(1/(1+(6sin(2x))^2))(6cos(2x))(2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = 8tan^-1(6sin(2x))`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+154
+
+UQID
+1532558390181517
+
+LASTMOD
+1533762739
+
+DESCRIPTION
+Inverse Trig 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+2
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$domain = "-1.2,-1"
+
+$answer[0] = "(8sin^(-1)(4x+5))/sqrt(1 - (4x+5)^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function</p>
+<p>&nbsp;`f(x) = (sin^-1(4x+5))^2`&nbsp;</p>
+<p>`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+155
+
+UQID
+1533133420449625
+
+LASTMOD
+1533133420
+
+DESCRIPTION
+Tower Function 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$variables = "x"
+
+$answer[0] = "3(cos(x)/x-sin(x)ln(x))x^(3cos(x))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function&nbsp;</p>
+<p>&nbsp;`y = x^(3cos(x))`&nbsp;&nbsp;</p>
+<p>`dy/dx =&nbsp;`&nbsp;&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+156
+
+UQID
+1533133454623491
+
+LASTMOD
+1533762804
+
+DESCRIPTION
+Tower Function 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc","calculated"]
+
+$variables = "x"
+$reqdecimals = 4
+$reltolerance = 0.0001
+
+$answer[0] = "x^(4x)(4ln(x)+4)"
+$answer[1] = "4"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change of the function using logarithmic differentiation</p>
+<p>&nbsp;`f(x) = x^(4x)`&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+<p>What is the rate of change at `x = 1`&nbsp;?</p>
+<p>&nbsp;`r_(f)(1) =&nbsp;`&nbsp;$answerbox[1] &nbsp;` `&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+157
+
+UQID
+1533134115005969
+
+LASTMOD
+1533145448
+
+DESCRIPTION
+Implicit 1
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(-(5x)/(9y))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`dy/dx`&nbsp;, where &nbsp;`5x^2+9y^2-5 = 0`&nbsp;.</p>
+<p>&nbsp;</p>
+<p>`dy/dx=`&nbsp;$answerbox[0]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+158
+
+UQID
+1533135118140764
+
+LASTMOD
+1533145442
+
+DESCRIPTION
+Implicit 2
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+//$answerformat = "function"
+//$variables = "x,y"
+
+$reltolerance = .01
+$reqdecimals = 4
+
+$answer = "(-12/(e^2-8))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>For the equation given below, evaluate the rate of change at the point (-1,2).</p>
+<p style="text-align: left;">&nbsp;`e^y+14-e^2 = 6x^2 +2y^2`&nbsp;</p>
+<p style="text-align: left;">&nbsp;`dy/dx`&nbsp; at (-1,2) = $answerbox[0]&nbsp;</p>
+<p style="text-align: left;">&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+159
+
+UQID
+1533145283136587
+
+LASTMOD
+1533145435
+
+DESCRIPTION
+Implicit 3
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "((6/x)-ln(y))/((x/y+5y^4))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`(dy)/(dx)`&nbsp;&nbsp; in terms of&nbsp;<em>x&nbsp;</em>and&nbsp;<em>y</em> if:&nbsp;&nbsp;`xln(y) + y^5 = 6ln(x)`&nbsp;&nbsp;.&nbsp;</p>
+<p>`(dy)/(dx)`&nbsp;&nbsp; = $answerbox[0]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+160
+
+UQID
+1533145320436116
+
+LASTMOD
+1533145430
+
+DESCRIPTION
+Implicit 4
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(1-4xy^2(x+y)^(1/2))/(4x^2y(x+y)^(1/2)-1)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find&nbsp;`dy/dx`&nbsp; by implicit differentiation.&nbsp;</p>
+<p>`sqrt(x+y) = 4 +x^2y^2`&nbsp;</p>
+<p>`dy/dx`&nbsp; = $answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+161
+
+UQID
+1533145339963294
+
+LASTMOD
+1533762865
+
+DESCRIPTION
+Implicit 5
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(cos(x)*(cos(y)-1))/(sin(y)*(sin(x)-1))"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change function by implicit differentiation.</p>
+<p>`sin(x) + cos(y) = sin(x)cos(y)`&nbsp;</p>
+<p>&nbsp;`r_(f)(x) =&nbsp;`&nbsp;$answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+162
+
+UQID
+1533145382703447
+
+LASTMOD
+1533762944
+
+DESCRIPTION
+Implicit 6
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["calculated"]
+
+//$answerformat = "function"
+//$variables = "x,y"
+
+$reltolerance = .01
+$reqdecimals = 2
+
+$answer = "-9/64"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Use implicit differentiation to find the slope of the tangent line (the rate of change) defined by&nbsp;`xy^8 + 8xy = 36&nbsp;`&nbsp;at the point (4,1).</p>
+<p>The rate of change of the tangent line to the curve at the give point is $answerbox[0]</p>
+<p>&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+163
+
+UQID
+1533145406811921
+
+LASTMOD
+1533145406
+
+DESCRIPTION
+Implicit 7
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc"]
+
+$answerformat = "function"
+$variables = "x,y"
+
+$answer = "(2xy e^(x^2y)-1)/(1-x^2 e^(x^2y))or (2xy - 1/(x+y))/(1/(x+y)-x^2)"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p>Find the rate of change function by implicit differentiation.</p>
+<p>`e^(x^2y) = x + y`&nbsp;</p>
+<p>`dy/(dx) =&nbsp;`&nbsp;$answerbox[0]</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
+
+START QUESTION
+QID
+15
+
+UQID
+1533153642885716
+
+LASTMOD
+1533758157
+
+DESCRIPTION
+6.3.4.4 Chemical Reaction
+
+AUTHOR
+Judson-Garcia,Julia
+
+OWNERID
+13
+
+USERIGHTS
+3
+
+CONTROL
+$anstypes = ["numfunc","calculated","calculated","choices","choices"]
+
+$variables = "t"
+
+$answer[0] = "18-6t"
+$answer[1] = "18-6(2)"
+$answer[2] = "18-6(4)"
+
+$questions[3] = ["increasing","decreasing","neither"]
+$answer[3] = "0"
+$questions[4] = ["increasing","decreasing","neither"]
+$answer[4] = "1"
+
+QCONTROL
+
+
+QTYPE
+multipart
+
+QTEXT
+<p style="text-align: center;"><strong><a href="http://patthompson.net/ThompsonCalc/section_6_3.html" target="_blank" rel="noopener">Exercise 6.3.4.4</a> Chemical Reaction</strong></p>
+<p style="text-align: left;">In one kind of chemical reaction two separate substances combine to form a third substance. The function&nbsp;`g`&nbsp;, defined as&nbsp;`g(t) = 18t-3t^2`&nbsp;, gives the accumulated amount of the third substance&nbsp;`t`&nbsp; minutes since the reaction began.&nbsp;</p>
+<p style="text-align: left;">a. What is&nbsp;`r_g`&nbsp;,&nbsp;`g`&nbsp;'s exact rate of change function, in closed form?</p>
+<p style="text-align: left;">$answerbox[0]&nbsp;</p>
+<p style="text-align: left;">b. At what rate is the third substance being produced at the moment that 2 minutes have passes? At the moment that four minutes have passed?&nbsp;</p>
+<p style="text-align: left;">The rate the third substance is being produced at 2 minutes is $answerbox[1].</p>
+<p style="text-align: left;">The rate the third substance is being produced at 4 minutes is $answerbox[2].</p>
+<p style="text-align: left;">c. At&nbsp;`x=2`&nbsp; minutes the amount of the third substance is&nbsp;</p>
+<p style="text-align: left;">$answerbox[3]</p>
+<p style="text-align: left;">At&nbsp;`x=4`&nbsp; minutes the amount of the third substance is&nbsp;</p>
+<p style="text-align: left;">$answerbox[4]&nbsp;</p>
+
+ANSWER
+
+
+SOLUTION
+
+
+SOLUTIONOPTS
+6
+
+EXTREF
+
+
+LICENSE
+1
+
+ANCESTORAUTHORS
+
+
+OTHERATTRIBUTION
+
